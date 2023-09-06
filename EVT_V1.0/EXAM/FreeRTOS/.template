@@ -1,0 +1,16 @@
+
+Toolchain=
+Series=
+Description=
+Address=0x00000000
+Target Path=obj\FreeRTOS.hex
+Erase All=true
+Program=true
+Verify=true
+Reset=true
+
+
+Vendor=WCH
+MCU=CH582M
+Mcu Type=CH59x
+Link=WCH-Link

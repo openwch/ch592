@@ -1,0 +1,12 @@
+
+Vendor=WCH
+MCU=CH583M
+Mcu Type=CH58x
+Link=WCH-Link
+Address=0x00000000
+Target Path=obj\adv_ali_light.hex
+Erase All=false
+Program=false
+Verify=false
+Reset=false
+CLKSpeed=1

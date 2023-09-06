@@ -1,0 +1,12 @@
+
+Vendor=WCH
+MCU=CH582M
+Mcu Type=CH58x
+Link=WCH-Link
+Address=0x00000000
+Target Path=obj\ADC.hex
+Erase All=true
+Program=true
+Verify=true
+Reset=true
+CLKSpeed=2
