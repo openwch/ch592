@@ -28,6 +28,9 @@
 // What is the advertising interval when device is discoverable (units of 625us, min is 160=100ms)
 #define DEFAULT_ADVERTISING_INTERVAL    160
 
+// Periodic advertising interval(n * 1.25 mSec) (80 = 100ms)
+#define DEFAULT_PERIODIC_INTERVAL       80
+
 // Company Identifier: WCH
 #define WCH_COMPANY_ID                  0x07D7
 
@@ -168,8 +171,8 @@ void Broadcaster_Init()
         GAP_SetParamValue(TGAP_DISC_ADV_INT_MAX, advInt);
 
         // Set periodic advertising interval (n * 1.25 mSec) (80 = 100ms)
-        GAP_SetParamValue(TGAP_PERIODIC_ADV_INT_MIN, 80);
-        GAP_SetParamValue(TGAP_PERIODIC_ADV_INT_MAX, 80);
+        GAP_SetParamValue(TGAP_PERIODIC_ADV_INT_MIN, DEFAULT_PERIODIC_INTERVAL);
+        GAP_SetParamValue(TGAP_PERIODIC_ADV_INT_MAX, DEFAULT_PERIODIC_INTERVAL);
         GAP_SetParamValue(TGAP_PERIODIC_ADV_PROPERTIES, GAP_PERI_PROPERTIES_INCLUDE_TXPOWER);
         GAP_SetParamValue(TGAP_ADV_SECONDARY_PHY, GAP_PHY_VAL_LE_1M);
         GAP_SetParamValue(TGAP_ADV_SECONDARY_MAX_SKIP, 0);
@@ -227,7 +230,7 @@ uint16_t Broadcaster_ProcessEvent(uint8_t task_id, uint16_t events)
         // Change periodic adv data
         periodicAdvertData[5]++;
         GAPRole_SetParameter(GAPROLE_PERIODIC_ADVERT_DATA, sizeof(periodicAdvertData), periodicAdvertData);
-        tmos_start_task(Broadcaster_TaskID, SBP_PERIODIC_EVT, 160);
+        tmos_start_task(Broadcaster_TaskID, SBP_PERIODIC_EVT, DEFAULT_PERIODIC_INTERVAL*2);
         return (events ^ SBP_PERIODIC_EVT);
     }
 

@@ -137,12 +137,6 @@ void PWR_PeriphWakeUpCfg(FunctionalState s, uint8_t perph, WakeUP_ModeypeDef mod
         sys_safe_access_enable();
         R8_SLP_WAKE_CTRL &= ~perph;
         sys_safe_access_disable();
-        if(perph & RB_SLP_GPIO_WAKE)
-        {
-            sys_safe_access_enable();
-            R8_SLP_WAKE_CTRL &= ~RB_GPIO_WAKE_MODE;
-            sys_safe_access_disable();
-        }
     }
     else
     {
@@ -164,12 +158,6 @@ void PWR_PeriphWakeUpCfg(FunctionalState s, uint8_t perph, WakeUP_ModeypeDef mod
         sys_safe_access_enable();
         R8_SLP_WAKE_CTRL |= RB_WAKE_EV_MODE | perph;
         sys_safe_access_disable();
-        if(perph & RB_SLP_GPIO_WAKE)
-        {
-            sys_safe_access_enable();
-            R8_SLP_WAKE_CTRL |= RB_GPIO_WAKE_MODE;
-            sys_safe_access_disable();
-        }
         sys_safe_access_enable();
         R8_SLP_POWER_CTRL &= ~(RB_WAKE_DLY_MOD);
         sys_safe_access_disable();
@@ -303,21 +291,18 @@ __HIGH_CODE
 void LowPower_Sleep(uint16_t rm)
 {
     __attribute__((aligned(4))) uint8_t MacAddr[6] = {0};
-    uint8_t x32Kpw, x32Mpw;
+    uint8_t x32Mpw;
     uint16_t power_plan;
 
     GetMACAddress(MacAddr);
 
-    x32Kpw = R8_XT32K_TUNE;
     x32Mpw = R8_XT32M_TUNE;
     x32Mpw = (x32Mpw & 0xfc) | 0x03; // 150%额定电流
-    x32Kpw = (x32Kpw & 0xfc) | 0x01; // LSE驱动电流降低到额定电流
 
     sys_safe_access_enable();
     R8_BAT_DET_CTRL = 0; // 关闭电压监控
     sys_safe_access_disable();
     sys_safe_access_enable();
-    R8_XT32K_TUNE = x32Kpw;
     R8_XT32M_TUNE = x32Mpw;
     sys_safe_access_disable();
 
@@ -344,6 +329,10 @@ void LowPower_Sleep(uint16_t rm)
     __WFI();
     __nop();
     __nop();
+
+    sys_safe_access_enable();
+    R16_POWER_PLAN &= ~RB_PWR_PLAN_EN;
+    sys_safe_access_disable();
 
     sys_safe_access_enable();
     R16_POWER_PLAN &= ~RB_XT_PRE_EN;

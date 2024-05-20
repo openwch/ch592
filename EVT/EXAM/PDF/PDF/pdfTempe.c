@@ -289,7 +289,7 @@ int pdf_create( char *file_name )
       LPDF_Page_EndText(page[0]);
 
       LPDF_Page_SaveContext(page[0]);
-      LPDF_SaveToFile( pTemp, file_name);
+      LPDF_SaveToFile( pTemp );
   }
 #endif
   close_file( );

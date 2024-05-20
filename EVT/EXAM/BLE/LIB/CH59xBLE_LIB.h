@@ -1,7 +1,7 @@
 /********************************** (C) COPYRIGHT ******************************
  * File Name         : CH59xBLE_LIB.H
  * Author            : WCH
- * Version           : V1.20
+ * Version           : V1.30
  * Date              : 2023/02/13
  * Description       : head file
  * Copyright (c) 2023 Nanjing Qinheng Microelectronics Co., Ltd.
@@ -75,6 +75,8 @@ typedef uint32_t (*pfnFlashReadCB)( uint32_t addr, uint32_t num, uint32_t *pBuf 
 typedef uint32_t (*pfnFlashWriteCB)( uint32_t addr, uint32_t num, uint32_t *pBuf );
 // Define function type that get system clock count
 typedef uint32_t (*pfnGetSysClock)( void );
+// Define function type that enable/disable system clock interrupt
+typedef void (*pfnSetSysClockIRQ)( void );
 
 /* BLE library config struct */
 typedef struct tag_ble_config
@@ -103,6 +105,8 @@ typedef struct tag_ble_config
     pfnLibStatusErrorCB staCB;      // Register a program that library status callback
     pfnFlashReadCB readFlashCB;     // Register a program that read flash
     pfnFlashWriteCB writeFlashCB;   // Register a program that write flash
+    uint8_t PeripheralNumber;       // RESV
+    uint8_t CentralNumber;          // RESV
 } bleConfig_t; // Library initialization call BLE_LibInit function
 
 /* BLE pa control config struct */
@@ -113,6 +117,7 @@ typedef struct tag_ble_clock_config
   uint16_t ClockFrequency;        // The timing clock frequency(Hz)
   uint16_t ClockAccuracy;         // The timing clock accuracy(ppm)
   uint8_t  irqEnable;             // resv
+  pfnSetSysClockIRQ SetPendingIRQ;
 }bleClockConfig_t;
 
 /* BLE pa control config struct */
@@ -140,7 +145,7 @@ typedef struct
 /*********************************************************************
  * GLOBAL MACROS
  */
-#define VER_FILE  "CH59x_BLE_LIB_V1.2"
+#define VER_FILE  "CH59x_BLE_LIB_V1.3"
 extern const uint8_t VER_LIB[];  // LIB version
 #define SYSTEM_TIME_MICROSEN            625   // unit of process event timer is 625us
 #define MS1_TO_SYSTEM_TIME(x)  ((x)*1000/SYSTEM_TIME_MICROSEN)   // transform unit in ms to unit in 625us ( attentional bias )
@@ -3895,9 +3900,6 @@ extern bStatus_t GAP_SetParamValue( uint16_t paramID, uint16_t paramValue );
 
 /**
  * @brief   Get a GAP Parameter value.
- *
- * @note    This function is the same as GAP_PasskeyUpdate(), except that
- *          the passkey is passed in as a non-string format.
  *
  * @param   paramID - parameter ID: @ref GAP_PARAMETER_ID_DEFINES
  *

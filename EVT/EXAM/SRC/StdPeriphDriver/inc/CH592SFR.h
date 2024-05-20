@@ -1359,7 +1359,6 @@ extern "C" {
 #define  RB_UH_PORT_EN      0x01      // enable USB port: 0=disable, 1=enable port, automatic disabled if USB device detached
 
 #define R8_USB_INT_EN       (*((PUINT8V)0x40008002))  // USB interrupt enable
-#define  RB_UIE_DEV_SOF     0x80      // enable interrupt for SOF received for USB device mode
 #define  RB_UIE_DEV_NAK     0x40      // enable interrupt for NAK responded for USB device mode
 #define  RB_MOD_1_WIRE      0x20      // enable single wire mode
 #define  RB_UIE_FIFO_OV     0x10      // enable interrupt for FIFO overflow
@@ -1402,12 +1401,10 @@ extern "C" {
 #define  RB_UIS_TOKEN0      0x10      // RO, current token PID code bit 0 received for USB device mode
 #define  MASK_UIS_TOKEN     0x30      // RO, bit mask of current token PID code received for USB device mode
 #define  UIS_TOKEN_OUT      0x00
-#define  UIS_TOKEN_SOF      0x10
 #define  UIS_TOKEN_IN       0x20
 #define  UIS_TOKEN_SETUP    0x30
 // bUIS_TOKEN1 & bUIS_TOKEN0: current token PID code received for USB device mode, keep last status during SETUP token, clear RB_UIF_TRANSFER ( RB_UIF_TRANSFER from 1 to 0 ) to set free
 //   00: OUT token PID received
-//   01: SOF token PID received
 //   10: IN token PID received
 //   11: free
 #define  MASK_UIS_ENDP      0x0F      // RO, bit mask of current transfer endpoint number for USB device mode

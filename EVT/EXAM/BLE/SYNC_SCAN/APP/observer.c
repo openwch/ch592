@@ -30,9 +30,6 @@
 // Scan duration in (625us)
 #define DEFAULT_SCAN_DURATION            4800
 
-// Creat sync timeout in (625us)
-#define DEFAULT_CREAT_SYNC_TIMEOUT       4800
-
 // Discovey mode (limited, general, all)
 #define DEFAULT_DISCOVERY_MODE           DEVDISC_MODE_ALL
 
@@ -68,6 +65,9 @@ static uint8_t ObserverTaskId;
 
 // Number of scan results and scan result index
 static uint8_t ObserverScanRes;
+
+// Current sync status
+static uint8_t syncStatus=0;
 
 // Scan result list
 static gapDevRec_t ObserverDevList[DEFAULT_MAX_SCAN_RES];
@@ -166,6 +166,7 @@ uint16_t Observer_ProcessEvent(uint8_t task_id, uint16_t events)
 
     if(events & START_SYNC_TIMEOUT_EVT)
     {
+        syncStatus = 0;
         GAPRole_CancelSync();
         PRINT("Creat SYNC timeout, restart discovery..\n");
         GAPRole_ObserverStartDiscovery(DEFAULT_DISCOVERY_MODE,
@@ -230,13 +231,19 @@ static void ObserverEventCB(gapRoleEvent_t *pEvent)
         {
             PRINT("Discovery over...\n");
             ObserverScanRes = 0;
+            if( syncStatus < 2 )
+            {
+                GAPRole_ObserverStartDiscovery(DEFAULT_DISCOVERY_MODE,
+                                               DEFAULT_DISCOVERY_ACTIVE_SCAN,
+                                               DEFAULT_DISCOVERY_WHITE_LIST);
+            }
         }
         break;
 
         case GAP_EXT_ADV_DEVICE_INFO_EVENT:
         {
             if(tmos_memcmp(PeerAddrDef, pEvent->deviceExtAdvInfo.addr, B_ADDR_LEN) &&
-               pEvent->deviceExtAdvInfo.periodicAdvInterval != 0)
+               (pEvent->deviceExtAdvInfo.periodicAdvInterval != 0) && (!syncStatus))
             {
                 gapCreateSync_t sync = {0};
                 uint8_t           state;
@@ -252,7 +259,8 @@ static void ObserverEventCB(gapRoleEvent_t *pEvent)
 
                 PRINT("GAPRole_CreateSync %d return %d...\n ", pEvent->deviceExtAdvInfo.periodicAdvInterval, state);
                 if (state == SUCCESS) {
-                    tmos_start_task(ObserverTaskId, START_SYNC_TIMEOUT_EVT, DEFAULT_CREAT_SYNC_TIMEOUT);
+                    syncStatus = 1;
+                    tmos_start_task(ObserverTaskId, START_SYNC_TIMEOUT_EVT, sync.syncTimeout*16);
                 }
             }
             PRINT("GAP_EXT_ADV_DEVICE_INFO_EVENT...\n");
@@ -264,6 +272,7 @@ static void ObserverEventCB(gapRoleEvent_t *pEvent)
             if(pEvent->syncEstEvt.status == SUCCESS)
             {
                 GAPRole_ObserverCancelDiscovery();
+                syncStatus = 2;
                 tmos_stop_task(ObserverTaskId, START_SYNC_TIMEOUT_EVT);
                 PRINT("GAP_SYNC_ESTABLISHED...\n");
                 PRINT("sync handle: %#x\n", pEvent->syncEstEvt.syncHandle);
@@ -284,6 +293,7 @@ static void ObserverEventCB(gapRoleEvent_t *pEvent)
 
         case GAP_SYNC_LOST_EVENT:
         {
+            syncStatus = 0;
             GAPRole_ObserverStartDiscovery(DEFAULT_DISCOVERY_MODE,
                                            DEFAULT_DISCOVERY_ACTIVE_SCAN,
                                            DEFAULT_DISCOVERY_WHITE_LIST);
