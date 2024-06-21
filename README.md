@@ -6,7 +6,7 @@ CH592 is a RISC-V MCU microcontroller with integrated BLE wireless communication
 
 ### System Block Diagram
 
-<img src="image\CH592.jpg" alt="CH592" style="zoom:70%;" />
+![CH592](./image/CH592.jpg "CH592")
 
 ### Features
 
@@ -44,4 +44,8 @@ CH592 is a RISC-V MCU microcontroller with integrated BLE wireless communication
 
  - Built-in AES-128 encryption and decryption, unique chip ID
 
- - Package: QFN32, QFN28
+ - Package: QFN32, QFN28, QFN20, TSSOP16
+
+ ### Product Selection Guide
+
+![SelectionGuide](./image/SelectionGuide.jpg "SelectionGuide")
