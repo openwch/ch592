@@ -393,7 +393,9 @@ void myDevEP2_OUT_Deal(uint8_t l)
         break;
     case CMD_IAP_END:
         /*结束升级，复位USB，跳转到app*/
-        R32_USB_CONTROL = 0;
+        R8_USB_CTRL = RB_UC_RESET_SIE;
+        R16_PIN_ANALOG_IE &= ~(RB_PIN_USB_DP_PU | RB_PIN_USB_IE);
+        DelayMs(10);
         jumpApp();
         break;
     default:

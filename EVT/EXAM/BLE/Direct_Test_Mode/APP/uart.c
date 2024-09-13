@@ -130,13 +130,14 @@ int uart_send(struct simple_buf *buf)
         UART0_SendString(send_data, send_len);
         atomic_set(&uart_flag, UART_STATUS_IDLE);
 
-        PRINT("uart0 send %d bytes [", send_len);
-        for(int i = 0; i < send_len; i++)
-        {
-            if(i) PRINT(" ");
-            PRINT("%#x", send_data[i]);
-        }
-        PRINT("]\n");
+        PRINT("uart0 send %d bytes\n", send_len);
+//        PRINT("[\n");
+//        for(int i = 0; i < send_len; i++)
+//        {
+//            if(i) PRINT(" ");
+//            PRINT("%#x", send_data[i]);
+//        }
+//        PRINT("]\n");
     }
 #elif DEBUG == 0
     atomic_set(&uart_flag, UART_STATUS_SENDING);
@@ -150,13 +151,14 @@ int uart_send(struct simple_buf *buf)
     UART1_SendString(send_data, send_len);
     atomic_set(&uart_flag, UART_STATUS_IDLE);
 
-    PRINT("uart1 send %d bytes [", send_len);
-    for(int i = 0; i < send_len; i++)
-    {
-        if(i) PRINT(" ");
-        PRINT("%#x", send_data[i]);
-    }
-    PRINT("]\n");
+    PRINT("uart1 send %d bytes\n", send_len);
+//    PRINT("[\n");
+//    for(int i = 0; i < send_len; i++)
+//    {
+//        if(i) PRINT(" ");
+//        PRINT("%#x", send_data[i]);
+//    }
+//    PRINT("]\n");
 
 #endif
 
@@ -185,13 +187,14 @@ int usb_send(struct simple_buf *buf)
     USBSendData(send_data, send_len);          //ÐÞ¸ÄÎªUSBSend
     atomic_set(&uart_flag, UART_STATUS_IDLE);
 
-    PRINT("usb send %d bytes [", send_len);
-    for(int i = 0; i < send_len; i++)
-    {
-        if(i) PRINT(" ");
-        PRINT("%#x", send_data[i]);
-    }
-    PRINT("]\n");
+    PRINT("usb send %d bytes\n", send_len);
+//    PRINT("[\n");
+//    for(int i = 0; i < send_len; i++)
+//    {
+//        if(i) PRINT(" ");
+//        PRINT("%#x", send_data[i]);
+//    }
+//    PRINT("]\n");
 
     return 0;
 }
@@ -226,14 +229,15 @@ tmosEvents uart_processevent(tmosTaskID task_id, tmosEvents events)
     {
         if(atomic_get(&uart_flag) == UART_STATUS_RCV_END)
         {
-            PRINT("uart recevied %d bytes [", uart_buf->len);
-            for(int i = 0; i < uart_buf->len; i++)
-            {
-                if(i)
-                   PRINT(" ");
-                   PRINT("%#x", uart_buf->data[i]);
-            }
-            PRINT("]\n");
+            PRINT("uart recevied %d byte\n", uart_buf->len);
+//            PRINT("[\n");
+//            for(int i = 0; i < uart_buf->len; i++)
+//            {
+//                if(i)
+//                   PRINT(" ");
+//                   PRINT("%#x", uart_buf->data[i]);
+//            }
+//            PRINT("]\n");
 
             struct uart_process_msg *uart_msg;
 
@@ -257,14 +261,15 @@ tmosEvents uart_processevent(tmosTaskID task_id, tmosEvents events)
 //        PRINT("usb_flag:%d\n",usb_flag);
         if(atomic_get(&usb_flag) == USB_STATUS_RCV_END)
         {
-            PRINT("usb recevied %d bytes [", usb_buf->len);
-            for(int i = 0; i < usb_buf->len; i++)
-            {
-                if(i)
-                   PRINT(" ");
-                   PRINT("%#x", usb_buf->data[i]);
-            }
-            PRINT("]\n");
+            PRINT("usb recevied %d bytes\n", usb_buf->len);
+//            PRINT("[\n");
+//            for(int i = 0; i < usb_buf->len; i++)
+//            {
+//                if(i)
+//                   PRINT(" ");
+//                   PRINT("%#x", usb_buf->data[i]);
+//            }
+//            PRINT("]\n");
 
             struct usb_process_msg *usb_msg;
 

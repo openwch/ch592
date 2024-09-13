@@ -122,7 +122,7 @@ uint8_t UserOptionByteClose_SWD(void)
 
     FLASH_ROM_READ(0x14, &s, 4);
 
-    if(s == 0xF5F9BDA9)
+    if(s == 0xF3F9BDA9)
     {
         FLASH_EEPROM_CMD(CMD_GET_ROM_INFO, 0x7EFFC, &s, 4);
 

@@ -868,7 +868,7 @@ static uint16_t App_ProcessEvent(uint8_t task_id, uint16_t events)
         {
             case CMD_IMAGE_INFO:
             {
-                app_mesh_manage.image_info_ack.cmd = CMD_DELETE_NODE_ACK;
+                app_mesh_manage.image_info_ack.cmd = CMD_IMAGE_INFO_ACK;
                 app_mesh_manage.image_info_ack.addr[0] = ota_update_node_address&0xFF;
                 app_mesh_manage.image_info_ack.addr[1] = (ota_update_node_address>>8)&0xFF;
                 app_mesh_manage.image_info_ack.status = STATUS_TIMEOUT;

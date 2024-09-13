@@ -103,6 +103,7 @@ void app_usb_init()
  *
  * @return  none
  */
+__HIGH_CODE
 uint8_t USBSendData(uint8_t *buf, uint16_t len)
 {
     uint8_t i;

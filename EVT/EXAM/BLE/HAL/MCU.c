@@ -47,6 +47,25 @@ uint32_t Lib_Read_Flash(uint32_t addr, uint32_t num, uint32_t *pBuf)
     EEPROM_READ(addr, pBuf, num * 4);
     return 0;
 }
+/*******************************************************************************
+ * @fn      Lib_Write_Flash_592A
+ *
+ * @brief   Callback function used for BLE lib.
+ *
+ * @param   addr - Write start address
+ * @param   num - Number of units to write (unit: 4 bytes)
+ * @param   pBuf - Buffer with data to be written
+ *
+ * @return  None.
+ */
+void Lib_Write_Flash_592A(uint32_t addr, uint32_t num, uint32_t *pBuf)
+{
+    __attribute__((aligned(4))) uint32_t FLASH_BUF[(BLE_SNV_BLOCK*BLE_SNV_NUM) / 4];
+    EEPROM_READ(addr&0xFFFFF000, FLASH_BUF, BLE_SNV_BLOCK*BLE_SNV_NUM);
+    tmos_memcpy(&FLASH_BUF[addr&0xFFF], pBuf, num * 4);
+    EEPROM_ERASE(addr&0xFFFFF000, ((BLE_SNV_BLOCK*BLE_SNV_NUM+EEPROM_BLOCK_SIZE-1)/EEPROM_BLOCK_SIZE)*EEPROM_BLOCK_SIZE);
+    EEPROM_WRITE(addr&0xFFFFF000, FLASH_BUF, BLE_SNV_BLOCK*BLE_SNV_NUM);
+}
 
 /*******************************************************************************
  * @fn      Lib_Write_Flash
@@ -61,8 +80,15 @@ uint32_t Lib_Read_Flash(uint32_t addr, uint32_t num, uint32_t *pBuf)
  */
 uint32_t Lib_Write_Flash(uint32_t addr, uint32_t num, uint32_t *pBuf)
 {
-    EEPROM_ERASE(addr, num * 4);
-    EEPROM_WRITE(addr, pBuf, num * 4);
+    if(((*(uint32_t*)ROM_CFG_VERISON)&0xFF) == DEF_CHIP_ID_CH592A)
+    {
+        Lib_Write_Flash_592A(addr, num, pBuf);
+    }
+    else
+    {
+        EEPROM_ERASE(addr, num * 4);
+        EEPROM_WRITE(addr, pBuf, num * 4);
+    }
     return 0;
 }
 #endif

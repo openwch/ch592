@@ -228,7 +228,14 @@ void HidEmu_Init()
         GAPBondMgr_SetParameter(GAPBOND_PERI_IO_CAPABILITIES, sizeof(uint8_t), &ioCap);
         GAPBondMgr_SetParameter(GAPBOND_PERI_BONDING_ENABLED, sizeof(uint8_t), &bonding);
     }
-
+    {
+        gapPeriConnectParams_t ConnectParams;
+        ConnectParams.intervalMin = 6;
+        ConnectParams.intervalMax = 9;
+        ConnectParams.latency = 20;
+        ConnectParams.timeout = 0x012C;
+        GGS_SetParameter(GGS_PERI_CONN_PARAM_ATT, sizeof(gapPeriConnectParams_t), &ConnectParams);
+    }
     // Setup Battery Characteristic Values
     {
         uint8_t critical = DEFAULT_BATT_CRITICAL_LEVEL;

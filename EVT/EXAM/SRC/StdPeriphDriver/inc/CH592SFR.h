@@ -473,7 +473,7 @@ extern "C" {
 #define  RB_ADC_DATA        0x0FFF                    // RO, ADC conversion data
 #define R8_ADC_INT_FLAG     (*((PUINT8V)0x4000105E))  // RO, ADC interrupt flag register
 #define  RB_ADC_IF_EOC      0x80                      // RO, ADC conversion interrupt flag: 0=free or converting, 1=end of conversion, interrupt action, auto ADC or write R8_ADC_CONVERT or write R8_TKEY_CONVERT to clear flag
-#define R32_TKEY_CTRL       (*((PUINT8V)0x40001054))  // RW, Touchkey control
+#define R32_TKEY_CTRL       (*((PUINT32V)0x40001054)) // RW, Touchkey control
 #define R8_TKEY_COUNT       (*((PUINT8V)0x40001054))  // RW, Touchkey charge and discharge count
 #define  RB_TKEY_CHARG_CNT  0x1F                      // RW, Touchkey charge count
 #define  RB_TKEY_DISCH_CNT  0xE0                      // RW, Touchkey discharge count
@@ -506,7 +506,22 @@ extern "C" {
 #define R32_ADC_DMA_END     (*((PUINT32V)0x4000106C)) // RW, ADC DMA end address
 #define R16_ADC_DMA_END     (*((PUINT16V)0x4000106C)) // RW, ADC DMA end address
 #define R32_ADC_SCAN_CFG1   (*((PUINT32V)0x40001070)) // RW, ADC scan config 1
+#define  RB_ADC_SCAN_CH1    0x0000000F                // RW, ADC Channel 1 analog input channel selection bit
+#define  RB_ADC_SCAN_CH2    0x000000F0                // RW, ADC Channel 2 analog input channel selection bit
+#define  RB_ADC_SCAN_CH3    0x00000F00                // RW, ADC Channel 3 analog input channel selection bit
+#define  RB_ADC_SCAN_CH4    0x0000F000                // RW, ADC Channel 4 analog input channel selection bit
+#define  RB_ADC_SCAN_CH5    0x000F0000                // RW, ADC Channel 5 analog input channel selection bit
+#define  RB_ADC_SCAN_CH6    0x00F00000                // RW, ADC Channel 6 analog input channel selection bit
+#define  RB_ADC_SCAN_CH7    0x0F000000                // RW, ADC Channel 7 analog input channel selection bit
+#define  RB_ADC_SCAN_CH8    0xF0000000                // RW, ADC Channel 8 analog input channel selection bit
 #define R32_ADC_SCAN_CFG2   (*((PUINT32V)0x40001074)) // RW, ADC scan config 2
+#define  RB_ADC_SCAN_CH9    0x0000000F                // RW, ADC Channel 9 analog input channel selection bit
+#define  RB_ADC_SCAN_CH10   0x000000F0                // RW, ADC Channel 10 analog input channel selection bit
+#define  RB_ADC_SCAN_CH11   0x00000F00                // RW, ADC Channel 11 analog input channel selection bit
+#define  RB_ADC_SCAN_QUAN   0x000F0000                // RW, Number of ADC scanning channels
+#define  RB_ADC_SCAN_SEL    0x00100000                // RW, ADC scan function selection: 0=TKEY, 1=ADC
+#define  RB_ADC_IE_SCAN_END 0x00200000                // RW, ADC scan end interrupt enable: 0=disable, 1=enable
+#define  RB_ADC_IF_SCAN_END 0x01000000                // RW, ADC scan end flag, write 1 to clear
 
 /* System: Flash ROM control register */
 #define R32_FLASH_DATA      (*((PUINT32V)0x40001800)) // RO/WO, flash ROM data

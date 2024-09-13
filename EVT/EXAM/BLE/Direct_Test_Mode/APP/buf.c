@@ -30,6 +30,7 @@
  *
  * @return  none
  */
+__HIGH_CODE
 struct simple_buf *simple_buf_create(struct simple_buf *buf, 
             uint8_t *buf_pool, uint16_t pool_size)
 {
@@ -51,6 +52,7 @@ struct simple_buf *simple_buf_create(struct simple_buf *buf,
  *
  * @return  none
  */
+__HIGH_CODE
 void *simple_buf_add(struct simple_buf *buf, size_t len)
 {
     uint8_t *tail = buf->data + buf->len;
@@ -78,6 +80,7 @@ void *simple_buf_add(struct simple_buf *buf, size_t len)
  *
  * @return  none
  */
+__HIGH_CODE
 void *simple_buf_pull(struct simple_buf *buf, size_t len)
 {
     void *data = buf->data;
@@ -107,6 +110,7 @@ void *simple_buf_pull(struct simple_buf *buf, size_t len)
  *
  * @return  The function returns a pointer to the starting position of the added data.
  */
+__HIGH_CODE
 void *simple_buf_add_mem(struct simple_buf *buf, const void *mem,
                  size_t len)
 {
@@ -125,6 +129,7 @@ void *simple_buf_add_mem(struct simple_buf *buf, const void *mem,
  *
  * @return  The function returns a pointer to the starting position of the added data.
  */
+__HIGH_CODE
 uint8_t *simple_buf_add_u8(struct simple_buf *buf, uint8_t val)
 {
     uint8_t *u8;

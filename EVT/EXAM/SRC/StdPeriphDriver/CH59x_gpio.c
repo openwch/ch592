@@ -232,21 +232,8 @@ void GPIOPinRemap(FunctionalState s, uint16_t perph)
  *
  * @param   s       -   ENABLE  - 打开模拟外设功能，关闭数字功能
  *                      DISABLE - 启用数字功能，关闭模拟外设功能
- * @param   perph   -   RB_PIN_ADC8_9_IE  - ADC/TKEY 9/8通道
- *                      RB_PIN_ADC6_7_IE  - ADC/TKEY 7/6通道
- *                      RB_PIN_ADC10_IE   - ADC/TKEY 10通道
- *                      RB_PIN_ADC11_IE   - ADC/TKEY 11 通道
- *                      RB_PIN_USB2_DP_PU - USB2 U2D+引脚内部上拉电阻
- *                      RB_PIN_USB2_IE    - USB2引脚
- *                      RB_PIN_USB_DP_PU  - USB UD+引脚内部上拉电阻
+ * @param   perph   -   RB_PIN_USB_DP_PU  - USB UD+引脚内部上拉电阻
  *                      RB_PIN_USB_IE     - USB 引脚
- *                      RB_PIN_ADC0_IE    - ADC/TKEY 0 通道
- *                      RB_PIN_ADC1_IE    - ADC/TKEY 1 通道
- *                      RB_PIN_ADC12_IE   - ADC/TKEY 12 通道
- *                      RB_PIN_ADC13_IE   - ADC/TKEY 13 通道
- *                      RB_PIN_XT32K_IE   - 32KHz晶振LSE引脚
- *                      RB_PIN_ADC2_3_IE  - ADC/TKEY 2/3 通道
- *                      RB_PIN_ADC4_5_IE  - ADC/TKEY 4/5 通道
  *
  * @return  none
  */

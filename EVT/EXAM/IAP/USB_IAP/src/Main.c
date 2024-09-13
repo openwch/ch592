@@ -74,6 +74,9 @@ void Main_Circulation()
         if (g_tcnt > 3000000)
         {
             //1分钟没有操作，进入app
+            R8_USB_CTRL = RB_UC_RESET_SIE;
+            R16_PIN_ANALOG_IE &= ~(RB_PIN_USB_DP_PU | RB_PIN_USB_IE);         // 防止USB端口浮空及上拉电阻
+            DelayMs(10);
             jumpApp();
         }
     }
