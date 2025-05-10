@@ -24,6 +24,11 @@
 __HIGH_CODE
 void SetSysClock(SYS_CLKTypeDef sc)
 {
+    uint8_t chip_type=0;
+    if(((*(uint32_t*)ROM_CFG_VERISON)&0xFF) == DEF_CHIP_ID_CH592A)
+    {
+        chip_type = 1;
+    }
     sys_safe_access_enable();
     R8_PLL_CONFIG &= ~(1 << 5); //
     sys_safe_access_disable();
@@ -52,7 +57,14 @@ void SetSysClock(SYS_CLKTypeDef sc)
         __nop();
         sys_safe_access_disable();
         sys_safe_access_enable();
-        R8_FLASH_CFG = 0X52;
+        if(chip_type)
+        {
+            R8_FLASH_CFG = 0X53;
+        }
+        else
+        {
+            R8_FLASH_CFG = 0X52;
+        }
         sys_safe_access_disable();
     }
     else
@@ -148,6 +160,7 @@ void SYS_DisableAllIrq(uint32_t *pirqv)
     *pirqv = (PFIC->ISR[0] >> 8) | (PFIC->ISR[1] << 24);
     PFIC->IRER[0] = 0xffffffff;
     PFIC->IRER[1] = 0xffffffff;
+    asm volatile("fence.i");
 }
 
 /*********************************************************************

@@ -96,8 +96,8 @@ typedef struct
     else                                                            \
       __asm__ volatile ("csrw  " #reg ", %0" :: "r"(val)); })
 
-#define PFIC_EnableAllIRQ()     {write_csr(0x800, 0x88);__nop();__nop();}
-#define PFIC_DisableAllIRQ()    {write_csr(0x800, 0x80);__nop();__nop();}
+#define PFIC_EnableAllIRQ()     {write_csr(0x800, 0x88);}
+#define PFIC_DisableAllIRQ()    {write_csr(0x800, 0x80);asm volatile("fence.i");}
 /* ##########################   PFIC functions  #################################### */
 
 /*********************************************************************
@@ -154,8 +154,7 @@ __attribute__((always_inline)) RV_STATIC_INLINE void PFIC_EnableIRQ(IRQn_Type IR
 __attribute__((always_inline)) RV_STATIC_INLINE void PFIC_DisableIRQ(IRQn_Type IRQn)
 {
     PFIC->IRER[((uint32_t)(IRQn) >> 5)] = (1 << ((uint32_t)(IRQn)&0x1F));
-    __nop();
-    __nop();
+    asm volatile("fence.i");
 }
 
 /*******************************************************************************
@@ -233,8 +232,7 @@ __attribute__((always_inline)) RV_STATIC_INLINE uint32_t PFIC_GetActive(IRQn_Typ
  * @brief   Set Interrupt Priority
  *
  * @param   IRQn        - Interrupt Numbers
- * @param   priority    - bit7:         pre-emption priority
- *                        bit6-bit4:    subpriority
+ * @param   priority    - bit7-bit4:   priority
  */
 __attribute__((always_inline)) RV_STATIC_INLINE void PFIC_SetPriority(IRQn_Type IRQn, uint8_t priority)
 {

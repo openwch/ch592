@@ -1,8 +1,8 @@
 /********************************** (C) COPYRIGHT ******************************
  * File Name         : CH59xBLE_ROM.H
  * Author            : WCH
- * Version           : V1.30
- * Date              : 2023/02/13
+ * Version           : V1.40
+ * Date              : 2024/10/31
  * Description       : head file
  *                    Address Space
  *                       CODE:   00010000H - 0003FFFFH   192K
@@ -157,7 +157,7 @@ typedef struct
 /*********************************************************************
  * GLOBAL MACROS
  */
-#define VER_FILE  "CH59x_BLE_LIB_V1.3"
+#define VER_FILE  "CH59x_BLE_LIB_V1.4"
 extern const uint8_t VER_LIB[];  // LIB version
 #define SYSTEM_TIME_MICROSEN            625   // unit of process event timer is 625us
 #define MS1_TO_SYSTEM_TIME(x)  ((x)*1000/SYSTEM_TIME_MICROSEN)   // transform unit in ms to unit in 625us ( attentional bias )
@@ -1186,6 +1186,7 @@ typedef struct
     uint16_t stateFlags; //!< State flags: SM_AUTH_STATE_AUTHENTICATED & SM_AUTH_STATE_BONDING
     uint8_t bondsToDelete;
     uint8_t publicAddrType;  //!< Central's address type
+    uint32_t bondSeq;
 } gapBondRec_t;
 
 // Structure of NV data for the connected device's characteristic configuration
@@ -2212,6 +2213,13 @@ typedef struct
     pfnEcc_alg_f6_t alg_f6; //!< LE Secure  Connections check value generation function  f6
 } gapEccCBs_t;
 
+
+/* power management lists */
+typedef struct
+{
+    uint8_t powerVal[40];  //!< Number of lists
+} powerList_t;
+
 /**
  * gapRole_States_t defined
  */
@@ -2803,6 +2811,15 @@ typedef struct tag_rf_config
  * @return  Command Status.
  */
 #define    LL_SetTxPowerLevel  ((  bStatus_t  (*)  ( uint8_t power ))  BLE_LIB_JT(27))
+
+/**
+ * @brief   set tx power level
+ *
+ * @param   pList - tx power list(global variable)
+ *
+ * @return  Command Status.
+ */
+#define    LL_SetTxPowerList  ((  bStatus_t  (*)  ( powerList_t *pList ))  BLE_LIB_JT(139))
 
 /**
  * @brief   read rssi

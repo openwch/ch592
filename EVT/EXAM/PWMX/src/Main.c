@@ -61,7 +61,7 @@ int main()
     GPIOB_ModeCfg(GPIO_Pin_7, GPIO_ModeOut_PP_5mA);  // PB7 - PWM9
 
     PWMX_CLKCfg(4);                                   // cycle = 4/Fsys
-    PWMX_16bit_CycleCfg(60000);                       // 16 数据宽度时的PWM时钟周期
+    PWMX_16bit_CycleCfg(60000-1);                     // 16位数据宽度Ncyc=RB_PWM_CYC_VALUE+1
     PWMX_16bit_ACTOUT(CH_PWM4, 30000, Low_Level, ENABLE);  // 50%占空比
     PWMX_16bit_ACTOUT(CH_PWM5, 15000, Low_Level, ENABLE);  // 25%占空比
     PWMX_16bit_ACTOUT(CH_PWM6, 45000, Low_Level, ENABLE);  // 75%占空比

@@ -18,7 +18,7 @@ extern "C" {
 #endif
 
 /**
- * @brief  rtc interrupt event define
+ * @brief  reset state define
  */
 typedef enum
 {
@@ -34,7 +34,7 @@ typedef enum
 } SYS_ResetStaTypeDef;
 
 /**
- * @brief  rtc interrupt event define
+ * @brief  sys info state define
  */
 typedef enum
 {
