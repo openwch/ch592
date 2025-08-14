@@ -193,9 +193,9 @@ void blk_period(uint32_t timeUs)
 {
     if (!wakeupflag)
     {
-        PRINT("1\n");
+        dg_log("1\n");
         PeriodicDealData();
-        PRINT("2\n");
+        dg_log("2\n");
     }
 }
 /*********************************************************************

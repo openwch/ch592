@@ -26,6 +26,22 @@
 tmosTaskID TouchKey_TaskID = 0x00;
 uint16_t triggerTime = SLEEP_TRIGGER_TIME;
 
+static const uint8_t touch_key_ch[ TOUCH_KEY_ELEMENTS ] = {TOUCH_KEY_CHS};
+KEY_T s_tBtn[TOUCH_KEY_ELEMENTS] = {0};
+
+touch_button_cfg_t p_selfkey =
+{
+    .num_elements = TOUCH_KEY_ELEMENTS,
+    .p_elem_index = touch_key_ch,
+    .p_stbtn = s_tBtn
+};
+
+touch_cfg_t touch_cfg =
+{
+    .touch_button_cfg = &p_selfkey,
+    .touch_slider_cfg = NULL,
+    .touch_wheel_cfg = NULL
+};
 /**********************
  *  STATIC PROTOTYPES
  **********************/
@@ -96,7 +112,7 @@ void PeriodicDealData(void)
 
         if (scanData) //---如扫描有异常，则调用正式扫描函数模式3~4---
         {
-            TKY_SetSleepStatusValue(~scanData); //---设置休眠状态，把有异常状态的通道设置为非休眠态---
+            TKY_SetSleepStatusValue((uint16_t)((~scanData)& tkyPinAll.tkyQueueAll)); //---设置休眠状态，把有异常状态的通道设置为非休眠态---
             for (uint8_t i = 0; i < 40; i++) //---并非一定要扫码64次，20次以上皆可，并且下面代码中有当扫描有按键按下，则退出循环，启动唤醒扫描---
             {
                 keyData = TKY_PollForFilter();
@@ -114,14 +130,6 @@ void PeriodicDealData(void)
                     break;
                 }
             }
-            if (keyData == 0)
-            {
-                TKY_SaveAndStop(); //---对相关寄存器进行保存---
-            }
-        }
-        else
-        {
-            TKY_SaveAndStop(); //---对相关寄存器进行保存---
         }
     }
     TKY_SaveAndStop(); //---对相关寄存器进行保存---
@@ -166,7 +174,7 @@ tmosEvents Touch_Key_ProcessEvent(tmosTaskID task_id, tmosEvents events)
 
     if (events & WAKEUP_DATA_DEAL_EVT)
     {
-    	touch_KeyScan();
+        touch_Scan();
         tky_on_TMOS_dataProcess();
 #if TKY_SLEEP_EN
         if (wakeupflag)
@@ -195,6 +203,12 @@ tmosEvents Touch_Key_ProcessEvent(tmosTaskID task_id, tmosEvents events)
     }
 #endif
 
+    if(events & TKY_KEEPALIVE_EVENT)
+    {
+        return events;
+    }
+
+
     return 0;
 }
 
@@ -210,7 +224,7 @@ void touch_on_TMOS_init(void)
 {
     TouchKey_TaskID = TMOS_ProcessEventRegister(Touch_Key_ProcessEvent);
     TKY_PeripheralInit();       /* 初始外设，例如背光和蜂鸣器等 */
-    touch_InitKey();
+    touch_Init(&touch_cfg);             /* 初始化触摸库  */
 
     wakeUpCount = 50; //---唤醒时间---
     wakeupflag = 1;   // 置成唤醒状态
@@ -227,6 +241,7 @@ void touch_on_TMOS_init(void)
 #endif
 
     tmos_set_event(TouchKey_TaskID, WAKEUP_DATA_DEAL_EVT);
+    tmos_set_event(TouchKey_TaskID, TKY_KEEPALIVE_EVENT);
     dg_log("Touch Key init Finish!\n");
 }
 
@@ -258,6 +273,7 @@ static void TKY_PeripheralInit(void)
 static void peripherals_EnterSleep(void)
 {
     /*You code here*/
+    tmos_stop_task(TouchKey_TaskID, TKY_KEEPALIVE_EVENT);
 }
 
 
@@ -271,4 +287,5 @@ static void peripherals_EnterSleep(void)
 static void peripherals_WakeUp(void)
 {
     /*You code here*/
+    tmos_set_event(TouchKey_TaskID, TKY_KEEPALIVE_EVENT);
 }

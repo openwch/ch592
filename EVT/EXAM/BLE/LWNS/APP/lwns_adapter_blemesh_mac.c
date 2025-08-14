@@ -1,49 +1,48 @@
 /********************************** (C) COPYRIGHT *******************************
  * File Name          : lwns_adapter_blemesh_mac.c
  * Author             : WCH
- * Version            : V1.0
- * Date               : 2021/06/20
- * Description        : lwnsÊÊÅäÆ÷£¬Ä£Äâble sig meshµÄmacĞ­Òé
+ * Version            : V1.1
+ * Date               : 2025/04/27
+ * Description        : lwnsé€‚é…å™¨ï¼Œæ¨¡æ‹Ÿble sig meshçš„macåè®®
  *********************************************************************************
- * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
- * Attention: This software (modified or not) and binary are used for 
+ * Copyright (c) 2025 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Attention: This software (modified or not) and binary are used for
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 #include "lwns_adapter_blemesh_mac.h"
 #include "lwns_sec.h"
 
-//Ã¿¸öÎÄ¼şµ¥¶Àdebug´òÓ¡µÄ¿ª¹Ø£¬ÖÃ0¿ÉÒÔ½ûÖ¹±¾ÎÄ¼şÄÚ²¿´òÓ¡
+/* æ¯ä¸ªæ–‡ä»¶å•ç‹¬debugæ‰“å°çš„å¼€å…³ï¼Œç½®0å¯ä»¥ç¦æ­¢æœ¬æ–‡ä»¶å†…éƒ¨æ‰“å° */
 #define DEBUG_PRINT_IN_THIS_FILE    1
 #if DEBUG_PRINT_IN_THIS_FILE
-  #define PRINTF(...)    PRINT(__VA_ARGS__)
+#define PRINTF(...)       PRINT(__VA_ARGS__)
 #else
-  #define PRINTF(...) \
-    do                \
-    {                 \
-    } while(0)
+#define PRINTF(...)       do{} while(0)
 #endif
 
 /*
- *  ±¾ÎÄ¼şÖĞble_phy_channelmapÎªĞèÒª·¢ËÍºÍ½ÓÊÕµÄÍ¨µÀÁĞ±í£¬ÓÃ»§¸ù¾İ×Ô¼ºĞèÇóĞŞ¸ÄÎªÀ¶ÑÀÍ¨µÀÖĞµÄÈÎÒâÈı¸öÍ¨µÀ¡£
- *  À¶ÑÀmeshÊÇÔÚ37¡¢38¡¢39Èı¸ö¹ã²¥Í¨µÀµÄ¹ã²¥accessaddress:0x8E89BED6½øĞĞÖÜÆÚĞÔ·¢ËÍ¡£ÕıÈ··ûºÏÏàÓ¦¹æÔòµÄaccessaddress½ÓÈëµØÖ·Ô¼ÓĞ23ÒÚ¸ö
- *  ±¾ÎÄ¼ş²ÉÓÃµÄ·¢ËÍÍ¨µÀÊıÁ¿ºÍÍ¨µÀºÅ»¹ÓĞaccessaddress¿ÉÒÔ×Ô¶¨£¬accessaddressÇĞ»»Í¨µÀÊ±²»±ä£¬Í¨µÀ½¨Òé3¸ö£¬²»ÒªÌ«¶à¡£
+ *  æœ¬æ–‡ä»¶ä¸­ble_phy_channelmapä¸ºéœ€è¦å‘é€å’Œæ¥æ”¶çš„é€šé“åˆ—è¡¨ï¼Œç”¨æˆ·æ ¹æ®è‡ªå·±éœ€æ±‚ä¿®æ”¹ä¸ºè“ç‰™é€šé“ä¸­çš„ä»»æ„ä¸‰ä¸ªé€šé“ã€‚
+ *  è“ç‰™meshæ˜¯åœ¨37ã€38ã€39ä¸‰ä¸ªå¹¿æ’­é€šé“çš„å¹¿æ’­accessaddress:0x8E89BED6è¿›è¡Œå‘¨æœŸæ€§å‘é€ã€‚æ­£ç¡®ç¬¦åˆç›¸åº”è§„åˆ™çš„accessaddressæ¥å…¥åœ°å€çº¦æœ‰23äº¿ä¸ª
+ *  æœ¬æ–‡ä»¶é‡‡ç”¨çš„å‘é€é€šé“æ•°é‡å’Œé€šé“å·è¿˜æœ‰accessaddresså¯ä»¥è‡ªå®šï¼Œaccessaddressåˆ‡æ¢é€šé“æ—¶ä¸å˜ï¼Œé€šé“å»ºè®®3ä¸ªï¼Œä¸è¦å¤ªå¤šã€‚
  */
 
-#if LWNS_USE_BLEMESH_MAC //ÊÇ·ñÊ¹ÄÜÄ£·ÂblemeshµÄmacĞ­Òé£¬×¢ÒâÖ»ÄÜÊ¹ÄÜÒ»¸ömac²ãĞ­Òé¡£
+#if LWNS_USE_BLEMESH_MAC    /* æ˜¯å¦ä½¿èƒ½æ¨¡ä»¿blemeshçš„macåè®®ï¼Œæ³¨æ„åªèƒ½ä½¿èƒ½ä¸€ä¸ªmacå±‚åè®®ã€‚ */
 
-//for lwns_packet_buffer save
+#define TMOS_TASK_STOP_RELOAD_TIME      0xffffff    /* é˜²æ­¢å†…å­˜ç¢ç‰‡ï¼Œä½¿ç”¨reload taskä»£æ›¿æ™®é€štaskã€‚ä¼šä¸€ç›´å ç”¨å†…å­˜ï¼Œä¸é‡Šæ”¾ï¼Œä¿è¯ç¨‹åºç¨³å®šè¿è¡Œï¼Œæ—¶é—´ä¸ºTMOS_TASK_STOP_RELOAD_TIME * 0.625usã€‚ */
+
+/* for lwns_packet_buffer save */
 __attribute__((aligned(4))) static lwns_qbuf_list_t qbuf_memp[QBUF_MANUAL_NUM];
 
-    //for lwns_route_entry manage
-  #if ROUTE_ENTRY_MANUAL_NUM
+/* for lwns_route_entry manage */
+#if ROUTE_ENTRY_MANUAL_NUM
 __attribute__((aligned(4))) static lwns_route_entry_data_t route_entry_memp[ROUTE_ENTRY_MANUAL_NUM];
-  #endif
+#endif
 
-//for neighbor manage
+/* for neighbor manage */
 __attribute__((aligned(4))) static lwns_neighbor_list_t neighbor_memp[LWNS_NEIGHBOR_MAX_NUM];
 
-static void ble_new_neighbor_callback(lwns_addr_t *n);     //·¢ÏÖĞÂÁÚ¾Ó»Øµ÷º¯Êı
-static BOOL ble_phy_output(uint8_t *dataptr, uint8_t len); //·¢ËÍ½Ó¿Úº¯Êı
+static void ble_new_neighbor_callback(lwns_addr_t *n);     /* å‘ç°æ–°é‚»å±…å›è°ƒå‡½æ•° */
+static BOOL ble_phy_output(uint8_t *dataptr, uint8_t len); /* å‘é€æ¥å£å‡½æ•° */
 static void RF_2G4StatusCallBack(uint8_t sta, uint8_t crc, uint8_t *rxBuf);
 
 static uint8_t  lwns_adapter_taskid;
@@ -52,9 +51,10 @@ static uint8_t  lwns_phyoutput_taskid;
 static uint16_t lwns_phyoutput_ProcessEvent(uint8_t task_id, uint16_t events);
 
 /**
- * lwns±ØÓÃµÄº¯Êı½Ó¿Ú£¬½«Ö¸Õë´«µİ¸ølwns¿âÄÚ²¿Ê¹ÓÃ
+ * lwnså¿…ç”¨çš„å‡½æ•°æ¥å£ï¼Œå°†æŒ‡é’ˆä¼ é€’ç»™lwnsåº“å†…éƒ¨ä½¿ç”¨
  */
-static lwns_fuc_interface_t ble_lwns_fuc_interface = {
+static lwns_fuc_interface_t ble_lwns_fuc_interface =
+{
     .lwns_phy_output = ble_phy_output,
     .lwns_rand = tmos_rand,
     .lwns_memcpy = tmos_memcpy,
@@ -63,17 +63,17 @@ static lwns_fuc_interface_t ble_lwns_fuc_interface = {
     .new_neighbor_callback = ble_new_neighbor_callback,
 };
 
-static const uint8_t                         ble_phy_channelmap[] = {8, 18, 28};                                                        //ËùĞèÒªÓÃµ½µÄÍ¨µÀ¼¯ºÏ£¬ÓÃ»§×ÔĞĞ¸ü»»ÎªÏëÒª·¢ËÍµÄÍ¨µÀ¼¯ºÏ¡£
-static uint8_t                               ble_phy_channelmap_send_seq = 0, ble_phy_channelmap_receive_seq = 0, ble_phy_send_cnt = 0; //·¢ËÍ½ÓÊÕµ±Ç°Í¨µÀĞòºÅºÍ·¢ËÍ´ÎÊı¹ÜÀí
-static struct blemesh_mac_phy_manage_struct *blemesh_phy_manage_list_head = NULL;                                                       //mac¹ÜÀí·¢ËÍLISTÁĞ±íÖ¸Õë
-static struct blemesh_mac_phy_manage_struct  blemesh_phy_manage_list[LWNS_MAC_SEND_PACKET_MAX_NUM];                                     //mac¹ÜÀí·¢ËÍÁĞ±í¹ÜÀíÊı×é
+static const uint8_t                         ble_phy_channelmap[] = {8, 18, 28};                                                        /* æ‰€éœ€è¦ç”¨åˆ°çš„é€šé“é›†åˆï¼Œç”¨æˆ·è‡ªè¡Œæ›´æ¢ä¸ºæƒ³è¦å‘é€çš„é€šé“é›†åˆã€‚ */
+static uint8_t                               ble_phy_channelmap_send_seq = 0, ble_phy_channelmap_receive_seq = 0, ble_phy_send_cnt = 0; /* å‘é€æ¥æ”¶å½“å‰é€šé“åºå·å’Œå‘é€æ¬¡æ•°ç®¡ç† */
+static struct blemesh_mac_phy_manage_struct *blemesh_phy_manage_list_head = NULL;                                                       /* macç®¡ç†å‘é€LISTåˆ—è¡¨æŒ‡é’ˆ */
+static struct blemesh_mac_phy_manage_struct  blemesh_phy_manage_list[LWNS_MAC_SEND_PACKET_MAX_NUM];                                     /* macç®¡ç†å‘é€åˆ—è¡¨ç®¡ç†æ•°ç»„ */
 
-volatile uint8_t tx_end_flag=0;
+volatile uint8_t tx_end_flag = 0;
 
 /*********************************************************************
  * @fn      RF_Wait_Tx_End
  *
- * @brief   ÊÖ¶¯Ä£Ê½µÈ´ı·¢ËÍÍê³É£¬×Ô¶¯Ä£Ê½µÈ´ı·¢ËÍ-½ÓÊÕÍê³É£¬±ØĞëÔÚRAMÖĞµÈ´ı£¬µÈ´ıÊ±¿ÉÒÔÖ´ĞĞÓÃ»§´úÂë£¬µ«ĞèÒª×¢ÒâÖ´ĞĞµÄ´úÂë±ØĞëÔËĞĞÔÚRAMÖĞ£¬·ñÔòÓ°Ïì·¢ËÍ
+ * @brief   æ‰‹åŠ¨æ¨¡å¼ç­‰å¾…å‘é€å®Œæˆï¼Œè‡ªåŠ¨æ¨¡å¼ç­‰å¾…å‘é€-æ¥æ”¶å®Œæˆï¼Œå¿…é¡»åœ¨RAMä¸­ç­‰å¾…ï¼Œç­‰å¾…æ—¶å¯ä»¥æ‰§è¡Œç”¨æˆ·ä»£ç ï¼Œä½†éœ€è¦æ³¨æ„æ‰§è¡Œçš„ä»£ç å¿…é¡»è¿è¡Œåœ¨RAMä¸­ï¼Œå¦åˆ™å½±å“å‘é€
  *
  * @return  none
  */
@@ -81,14 +81,14 @@ __HIGH_CODE
 __attribute__((noinline))
 void RF_Wait_Tx_End()
 {
-    uint32_t i=0;
-    while(!tx_end_flag)
+    uint32_t i = 0;
+    while (!tx_end_flag)
     {
         i++;
         __nop();
         __nop();
-        // Ô¼5ms³¬Ê±
-        if(i>(FREQ_SYS/1000))
+        /* çº¦5msè¶…æ—¶ */
+        if (i > (FREQ_SYS / 1000))
         {
             tx_end_flag = TRUE;
         }
@@ -98,99 +98,105 @@ void RF_Wait_Tx_End()
 /*********************************************************************
  * @fn      RF_2G4StatusCallBack
  *
- * @brief   RF ×´Ì¬»Øµ÷£¬×¢Òâ£º²»¿ÉÔÚ´Ëº¯ÊıÖĞÖ±½Óµ÷ÓÃRF½ÓÊÕ»òÕß·¢ËÍAPI£¬ĞèÒªÊ¹ÓÃÊÂ¼şµÄ·½Ê½µ÷ÓÃ
+ * @brief   RF çŠ¶æ€å›è°ƒï¼Œæ³¨æ„ï¼šä¸å¯åœ¨æ­¤å‡½æ•°ä¸­ç›´æ¥è°ƒç”¨RFæ¥æ”¶æˆ–è€…å‘é€APIï¼Œéœ€è¦ä½¿ç”¨äº‹ä»¶çš„æ–¹å¼è°ƒç”¨
  *
- * @param   sta     -   ×´Ì¬ÀàĞÍ
- * @param   crc     -   crcĞ£Ñé½á¹û
- * @param   rxBuf   -   Êı¾İbufÖ¸Õë
+ * @param   sta     -   çŠ¶æ€ç±»å‹
+ * @param   crc     -   crcæ ¡éªŒç»“æœ
+ * @param   rxBuf   -   æ•°æ®bufæŒ‡é’ˆ
  *
  * @return  None.
  */
 static void RF_2G4StatusCallBack(uint8_t sta, uint8_t crc, uint8_t *rxBuf)
-{ //rxBuf[0]ÎªĞÅºÅÇ¿¶È£¬rxBuf[1]Îª±¾´ÎÊÕµ½Êı¾İµÄ³¤¶È
-    switch(sta)
+{
+    /*rxBuf[0]ä¸ºä¿¡å·å¼ºåº¦ï¼ŒrxBuf[1]ä¸ºæœ¬æ¬¡æ”¶åˆ°æ•°æ®çš„é•¿åº¦ */
+    switch (sta)
     {
-        case RX_MODE_RX_DATA:
+    case RX_MODE_RX_DATA:
+    {
+        if (crc == 0)
         {
-            if(crc == 1)
+            uint8_t *pMsg;
+#if LWNS_ENCRYPT_ENABLE /*æ˜¯å¦å¯ç”¨æ¶ˆæ¯åŠ å¯† */
+            if (((rxBuf[1] % 16) == 1) && (rxBuf[1] >= 17) && (rxBuf[1] > rxBuf[2]))
             {
-                PRINTF("crc error\n");
-            }
-            else if(crc == 2)
-            {
-                PRINTF("match type error\n");
-            }
-            else
-            {
-                uint8_t *pMsg;
-  #if LWNS_ENCRYPT_ENABLE //ÊÇ·ñÆôÓÃÏûÏ¢¼ÓÃÜ
-                if(((rxBuf[1] % 16) == 1) && (rxBuf[1] >= 17) && (rxBuf[1] > rxBuf[2]))
-                { //¶ÔÆëºóÊı¾İÇø×îÉÙ16¸ö×Ö½Ú£¬¼ÓÉÏÕæÊµÊı¾İ³¤¶ÈÒ»×Ö½Ú
-                    //³¤¶ÈĞ£ÑéÍ¨¹ı£¬ËùÒÔrxBuf[1] - 1±ØÎª16µÄ±¶Êı
-                    pMsg = tmos_msg_allocate(rxBuf[1]); //ÉêÇëÄÚ´æ¿Õ¼ä£¬ÕæÊµÊı¾İ³¤¶È²»ĞèÒª½âÃÜ
-                    if(pMsg != NULL)
-                    {
-                        lwns_msg_decrypt(rxBuf + 3, pMsg + 1, rxBuf[1] - 1); //½âÃÜÊı¾İ
-                        if((rxBuf[2] ^ pMsg[rxBuf[2]]) == pMsg[rxBuf[2] + 1])
-                        {
-                            pMsg[0] = rxBuf[2];      //Ğ£ÑéÍ¨¹ı£¬´æ´¢ÕæÊµÊı¾İ³¤¶È
-                            PRINTF("send rx msg\n"); //·¢ËÍ½ÓÊÕµ½µÄÊı¾İµ½½ÓÊÕ½ø³ÌÖĞ
-                            tmos_msg_send(lwns_adapter_taskid, pMsg);
-                        }
-                        else
-                        {
-                            PRINTF("verify rx msg err\n"); //Ğ£ÑéÊ§°Ü
-                            tmos_msg_deallocate(pMsg);
-                        }
-                    }
-                    else
-                    {
-                        PRINTF("send rx msg failed\n"); //ÉêÇëÄÚ´æÊ§°Ü£¬ÎŞ·¨·¢ËÍ½ÓÊÕµ½µÄÊı¾İ
-                    }
-                }
-                else
+                /* å¯¹é½åæ•°æ®åŒºæœ€å°‘16ä¸ªå­—èŠ‚ï¼ŒåŠ ä¸ŠçœŸå®æ•°æ®é•¿åº¦ä¸€å­—èŠ‚ */
+                /* é•¿åº¦æ ¡éªŒé€šè¿‡ï¼Œæ‰€ä»¥rxBuf[1] - 1å¿…ä¸º16çš„å€æ•° */
+                pMsg = tmos_msg_allocate(rxBuf[1]); /* ç”³è¯·å†…å­˜ç©ºé—´ï¼ŒçœŸå®æ•°æ®é•¿åº¦ä¸éœ€è¦è§£å¯† */
+                if (pMsg != NULL)
                 {
-                    PRINTF("bad len\n"); //°ü³¤¶È²»¶Ô
-                }
-  #else
-                if(rxBuf[1] >= LWNS_PHY_OUTPUT_MIN_SIZE)
-                { //Êı¾İ³¤¶È·ûºÏ£¬²Å»á·¢ËÍÖÁĞ­ÒéÕ»ÄÚ²¿´¦Àí
-                    pMsg = tmos_msg_allocate(rxBuf[1] + 1);
-                    if(pMsg != NULL)
+                    lwns_msg_decrypt(rxBuf + 3, pMsg + 1, rxBuf[1] - 1); /* è§£å¯†æ•°æ® */
+                    if ((rxBuf[2] ^ pMsg[rxBuf[2]]) == pMsg[rxBuf[2] + 1])
                     {
-                        PRINTF("send rx msg\n"); //·¢ËÍ½ÓÊÕµ½µÄÊı¾İµ½½ÓÊÕ½ø³ÌÖĞ
-                        tmos_memcpy(pMsg, rxBuf + 1, rxBuf[1] + 1);
+                        pMsg[0] = rxBuf[2];      /* æ ¡éªŒé€šè¿‡ï¼Œå­˜å‚¨çœŸå®æ•°æ®é•¿åº¦ */
+                        PRINTF("send rx msg\n"); /* å‘é€æ¥æ”¶åˆ°çš„æ•°æ®åˆ°æ¥æ”¶è¿›ç¨‹ä¸­ */
                         tmos_msg_send(lwns_adapter_taskid, pMsg);
                     }
                     else
                     {
-                        PRINTF("send rx msg failed\n"); //ÉêÇëÄÚ´æÊ§°Ü£¬ÎŞ·¨·¢ËÍ½ÓÊÕµ½µÄÊı¾İ
+                        PRINTF("verify rx msg err\n");  /* æ ¡éªŒå¤±è´¥ */
+                        tmos_msg_deallocate(pMsg);
                     }
                 }
                 else
                 {
-                    PRINTF("bad len\n"); //°ü³¤¶È²»¶Ô
+                    PRINTF("send rx msg failed\n"); /* ç”³è¯·å†…å­˜å¤±è´¥ï¼Œæ— æ³•å‘é€æ¥æ”¶åˆ°çš„æ•°æ® */
                 }
-  #endif
             }
-            tmos_set_event(lwns_adapter_taskid, LWNS_PHY_RX_OPEN_EVT); //ÖØĞÂ´ò¿ª½ÓÊÕ
-            break;
+            else
+            {
+                PRINTF("bad len\n");    /* åŒ…é•¿åº¦ä¸å¯¹ */
+            }
+#else
+            if (rxBuf[1] >= LWNS_PHY_OUTPUT_MIN_SIZE)   /* æ•°æ®é•¿åº¦ç¬¦åˆï¼Œæ‰ä¼šå‘é€è‡³åè®®æ ˆå†…éƒ¨å¤„ç† */
+            {
+                pMsg = tmos_msg_allocate(rxBuf[1] + 1);
+                if (pMsg != NULL)
+                {
+                    PRINTF("send rx msg\n");    /* å‘é€æ¥æ”¶åˆ°çš„æ•°æ®åˆ°æ¥æ”¶è¿›ç¨‹ä¸­ */
+                    tmos_memcpy(pMsg, rxBuf + 1, rxBuf[1] + 1);
+                    tmos_msg_send(lwns_adapter_taskid, pMsg);
+                }
+                else
+                {
+                    PRINTF("send rx msg failed\n"); /* ç”³è¯·å†…å­˜å¤±è´¥ï¼Œæ— æ³•å‘é€æ¥æ”¶åˆ°çš„æ•°æ® */
+                }
+            }
+            else
+            {
+                PRINTF("bad len\n"); /* åŒ…é•¿åº¦ä¸å¯¹ */
+            }
+#endif
         }
-        case TX_MODE_TX_FINISH:
-        case TX_MODE_TX_FAIL:
-            tx_end_flag = TRUE;
-            tmos_stop_task(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_FINISH_EVT); //Í£Ö¹³¬Ê±¼ÆÊı
-            tmos_set_event(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_FINISH_EVT); //½øÈë·¢ËÍÍê³É´¦Àí
-            break;
-        default:
-            break;
+        else
+        {
+            if (crc & (1 << 0))
+            {
+                PRINTF("crc error\n");
+            }
+
+            if (crc & (1 << 1))
+            {
+                PRINTF("match type error\n");
+            }
+        }
+        tmos_set_event(lwns_adapter_taskid, LWNS_PHY_RX_OPEN_EVT); /* é‡æ–°æ‰“å¼€æ¥æ”¶ */
+        break;
+    }
+    case TX_MODE_TX_FINISH:
+    case TX_MODE_TX_FAIL:
+        tx_end_flag = TRUE;
+        tmos_start_reload_task(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_FINISH_EVT, TMOS_TASK_STOP_RELOAD_TIME);      /* å˜ç›¸åœæ­¢ä»»åŠ¡ï¼Œå ç”¨å†…å­˜ä¸é‡Šæ”¾ */
+        tmos_set_event(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_FINISH_EVT);                      /* è¿›å…¥å‘é€å®Œæˆå¤„ç† */
+        break;
+    default:
+        break;
     }
 }
 
 /*********************************************************************
  * @fn      RF_Init
  *
- * @brief   RF ³õÊ¼»¯.
+ * @brief   RF åˆå§‹åŒ–.
  *
  * @param   None.
  *
@@ -201,11 +207,11 @@ void RF_Init(void)
     uint8_t    state;
     rfConfig_t rfConfig;
     tmos_memset(&rfConfig, 0, sizeof(rfConfig_t));
-    rfConfig.accessAddress = 0x17267162; // ½ûÖ¹Ê¹ÓÃ0x55555555ÒÔ¼°0xAAAAAAAA ( ½¨Òé²»³¬¹ı24´ÎÎ»·´×ª£¬ÇÒ²»³¬¹ıÁ¬ĞøµÄ6¸ö0»ò1 )£¬ÕıÈ··ûºÏÏàÓ¦¹æÔòµÄaccessaddress½ÓÈëµØÖ·Ô¼ÓĞ23ÒÚ¸ö
+    rfConfig.accessAddress = 0x17267162; /* ç¦æ­¢ä½¿ç”¨0x55555555ä»¥åŠ0xAAAAAAAA ( å»ºè®®ä¸è¶…è¿‡24æ¬¡ä½åè½¬ï¼Œä¸”ä¸è¶…è¿‡è¿ç»­çš„6ä¸ª0æˆ–1 )ï¼Œæ­£ç¡®ç¬¦åˆç›¸åº”è§„åˆ™çš„accessaddressæ¥å…¥åœ°å€çº¦æœ‰23äº¿ä¸ª */
     rfConfig.CRCInit = 0x555555;
     ble_phy_channelmap_receive_seq = 0;
     rfConfig.Channel = ble_phy_channelmap[0];
-    rfConfig.LLEMode = LLE_MODE_BASIC; //|LLE_MODE_EX_CHANNEL; // Ê¹ÄÜ LLE_MODE_EX_CHANNEL ±íÊ¾ Ñ¡Ôñ rfConfig.Frequency ×÷ÎªÍ¨ĞÅÆµµã
+    rfConfig.LLEMode = LLE_MODE_BASIC;  /* |LLE_MODE_EX_CHANNEL; ä½¿èƒ½ LLE_MODE_EX_CHANNEL è¡¨ç¤º é€‰æ‹© rfConfig.Frequency ä½œä¸ºé€šä¿¡é¢‘ç‚¹ */
     rfConfig.rfStatusCB = RF_2G4StatusCallBack;
     state = RF_Config(&rfConfig);
     PRINTF("rf 2.4g init: %x\n", state);
@@ -214,7 +220,7 @@ void RF_Init(void)
 /*********************************************************************
  * @fn      lwns_init
  *
- * @brief   lwns³õÊ¼»¯.
+ * @brief   lwnsåˆå§‹åŒ–.
  *
  * @param   None.
  *
@@ -225,27 +231,27 @@ void lwns_init(void)
     uint8_t       s;
     lwns_config_t cfg;
     tmos_memset(&cfg, 0, sizeof(lwns_config_t));
-    cfg.lwns_lib_name = (uint8_t *)VER_LWNS_FILE; //ÑéÖ¤º¯Êı¿âÃû³Æ£¬·ÀÖ¹°æ±¾³ö´í
-    cfg.qbuf_num = QBUF_MANUAL_NUM;               //±ØĞë·ÖÅä£¬ÖÁÉÙ1¸öÄÚ´æµ¥Î»£¬¸ù¾İÄã³ÌĞòÖĞÊ¹ÓÃµÄ¶Ë¿ÚÊı¶ÔÓ¦Ä£¿éÊ¹ÓÃµÄqbufµ¥Î»À´¶¨Òå¡£
-    cfg.qbuf_ptr = qbuf_memp;                     //mesh×î¶àÊ¹ÓÃ3¸öqbufµ¥Î»£¬(uni/multi)netflood×î¶àÊ¹ÓÃ2¸ö£¬ÆäËûÄ£¿é¶¼Ê¹ÓÃ1¸ö¡£
-    cfg.routetable_num = ROUTE_ENTRY_MANUAL_NUM;  //Èç¹ûĞèÒªÊ¹ÓÃmesh£¬±ØĞë·ÖÅäÂ·ÓÉ±íÄÚ´æ¿Õ¼ä¡£²»È»mesh³õÊ¼»¯²»»á³É¹¦¡£
-  #if ROUTE_ENTRY_MANUAL_NUM
+    cfg.lwns_lib_name = (uint8_t *)VER_LWNS_FILE; /* éªŒè¯å‡½æ•°åº“åç§°ï¼Œé˜²æ­¢ç‰ˆæœ¬å‡ºé”™ */
+    cfg.qbuf_num = QBUF_MANUAL_NUM;               /* å¿…é¡»åˆ†é…ï¼Œè‡³å°‘1ä¸ªå†…å­˜å•ä½ï¼Œæ ¹æ®ä½ ç¨‹åºä¸­ä½¿ç”¨çš„ç«¯å£æ•°å¯¹åº”æ¨¡å—ä½¿ç”¨çš„qbufå•ä½æ¥å®šä¹‰ã€‚ */
+    cfg.qbuf_ptr = qbuf_memp;                     /* meshæœ€å¤šä½¿ç”¨3ä¸ªqbufå•ä½ï¼Œ(uni/multi)netfloodæœ€å¤šä½¿ç”¨2ä¸ªï¼Œå…¶ä»–æ¨¡å—éƒ½ä½¿ç”¨1ä¸ªã€‚ */
+    cfg.routetable_num = ROUTE_ENTRY_MANUAL_NUM;  /* å¦‚æœéœ€è¦ä½¿ç”¨meshï¼Œå¿…é¡»åˆ†é…è·¯ç”±è¡¨å†…å­˜ç©ºé—´ã€‚ä¸ç„¶meshåˆå§‹åŒ–ä¸ä¼šæˆåŠŸã€‚ */
+#if ROUTE_ENTRY_MANUAL_NUM
     cfg.routetable_ptr = route_entry_memp;
-  #else
+#else
     cfg.routetable_ptr = NULL;
-  #endif
-    cfg.neighbor_num = LWNS_NEIGHBOR_MAX_NUM;                      //ÁÚ¾Ó±íÊıÁ¿£¬±ØĞë·ÖÅä
-    cfg.neighbor_list_ptr = neighbor_memp;                         //ÁÚ¾Ó±íÄÚ´æ¿Õ¼ä
-    cfg.neighbor_mod = LWNS_NEIGHBOR_AUTO_ADD_STATE_RECALL_ADDALL; //ÁÚ¾Ó±í³õÊ¼»¯Ä¬ÈÏ¹ÜÀíÄ£Ê½Îª½ÓÊÕËùÓĞ°ü£¬Ìí¼ÓËùÓĞÁÚ¾Ó²¢ÇÒ¹ıÂËÖØ¸´°üµÄÄ£Ê½
-  #if LWNS_ADDR_USE_BLE_MAC
-    GetMACAddress(cfg.addr.v8); //À¶ÑÀÓ²¼şµÄmacµØÖ·
-  #else
-    //×ÔĞĞ¶¨ÒåµÄµØÖ·
+#endif
+    cfg.neighbor_num = LWNS_NEIGHBOR_MAX_NUM;                      /* é‚»å±…è¡¨æ•°é‡ï¼Œå¿…é¡»åˆ†é… */
+    cfg.neighbor_list_ptr = neighbor_memp;                         /* é‚»å±…è¡¨å†…å­˜ç©ºé—´ */
+    cfg.neighbor_mod = LWNS_NEIGHBOR_AUTO_ADD_STATE_RECALL_ADDALL; /* é‚»å±…è¡¨åˆå§‹åŒ–é»˜è®¤ç®¡ç†æ¨¡å¼ä¸ºæ¥æ”¶æ‰€æœ‰åŒ…ï¼Œæ·»åŠ æ‰€æœ‰é‚»å±…å¹¶ä¸”è¿‡æ»¤é‡å¤åŒ…çš„æ¨¡å¼ */
+#if LWNS_ADDR_USE_BLE_MAC
+    GetMACAddress(cfg.addr.v8); /* è“ç‰™ç¡¬ä»¶çš„macåœ°å€ */
+#else
+    /* è‡ªè¡Œå®šä¹‰çš„åœ°å€ */
     uint8_t MacAddr[6] = {0, 0, 0, 0, 0, 1};
     tmos_memcpy(cfg.addr.v8, MacAddr, LWNS_ADDR_SIZE);
-  #endif
-    s = lwns_lib_init(&ble_lwns_fuc_interface, &cfg); //lwns¿âµ×²ã³õÊ¼»¯
-    if(s)
+#endif
+    s = lwns_lib_init(&ble_lwns_fuc_interface, &cfg); /* lwnsåº“åº•å±‚åˆå§‹åŒ– */
+    if (s)
     {
         PRINTF("%s init err:%d\n", VER_LWNS_FILE, s);
     }
@@ -256,19 +262,19 @@ void lwns_init(void)
     lwns_adapter_taskid = TMOS_ProcessEventRegister(lwns_adapter_ProcessEvent);
     lwns_phyoutput_taskid = TMOS_ProcessEventRegister(lwns_phyoutput_ProcessEvent);
     tmos_start_reload_task(lwns_phyoutput_taskid, LWNS_HTIMER_PERIOD_EVT, MS1_TO_SYSTEM_TIME(LWNS_HTIMER_PERIOD_MS));
-    tmos_memset(blemesh_phy_manage_list, 0, sizeof(blemesh_phy_manage_list)); //Çå³ı·¢ËÍ¹ÜÀí½á¹¹Ìå
-    ble_phy_send_cnt = 0;                                                     //Çå¿Õ·¢ËÍ´ÎÊı¼ÆÊı
+    tmos_memset(blemesh_phy_manage_list, 0, sizeof(blemesh_phy_manage_list)); /* æ¸…é™¤å‘é€ç®¡ç†ç»“æ„ä½“ */
+    ble_phy_send_cnt = 0;                                                     /* æ¸…ç©ºå‘é€æ¬¡æ•°è®¡æ•° */
     RF_Shut();
-    RF_Rx(NULL, 0, USER_RF_RX_TX_TYPE, USER_RF_RX_TX_TYPE); //´ò¿ªRF½ÓÊÕ£¬Èç¹ûĞèÒªµÍ¹¦ºÄ¹ÜÀí£¬ÔÚÆäËûµØ·½´ò¿ª¡£
-    tmos_start_task(lwns_adapter_taskid, LWNS_PHY_RX_CHANGE_CHANNEL_EVT, MS1_TO_SYSTEM_TIME(LWNS_MAC_PERIOD_MS));
+    RF_Rx(NULL, 0, USER_RF_RX_TX_TYPE, USER_RF_RX_TX_TYPE); /* æ‰“å¼€RFæ¥æ”¶ï¼Œå¦‚æœéœ€è¦ä½åŠŸè€—ç®¡ç†ï¼Œåœ¨å…¶ä»–åœ°æ–¹æ‰“å¼€ã€‚ */
+    tmos_start_reload_task(lwns_adapter_taskid, LWNS_PHY_RX_CHANGE_CHANNEL_EVT, MS1_TO_SYSTEM_TIME(LWNS_MAC_PERIOD_MS));
 }
 
 /*********************************************************************
  * @fn      ble_new_neighbor_callback
  *
- * @brief   µ±·¢ÏÖÒ»¸öĞÂÁÚ¾ÓÊ±µÄ»Øµ÷º¯Êı.
+ * @brief   å½“å‘ç°ä¸€ä¸ªæ–°é‚»å±…æ—¶çš„å›è°ƒå‡½æ•°.
  *
- * @param   n  - ĞÂÁÚ¾ÓµÄµØÖ·.
+ * @param   n  - æ–°é‚»å±…çš„åœ°å€.
  *
  * @return  None.
  */
@@ -281,10 +287,10 @@ static void ble_new_neighbor_callback(lwns_addr_t *n)
 /*********************************************************************
  * @fn      ble_phy_output
  *
- * @brief   lwns·¢ËÍº¯Êı½Ó¿Ú
+ * @brief   lwnså‘é€å‡½æ•°æ¥å£
  *
- * @param   dataptr     - ´ı·¢ËÍµÄÊı¾İ»º³åÍ·Ö¸Õë.
- * @param   len         - ´ı·¢ËÍµÄÊı¾İ»º³å³¤¶È.
+ * @param   dataptr     - å¾…å‘é€çš„æ•°æ®ç¼“å†²å¤´æŒ‡é’ˆ.
+ * @param   len         - å¾…å‘é€çš„æ•°æ®ç¼“å†²é•¿åº¦.
  *
  * @return  TRUE if success, FLASE is failed.
  */
@@ -292,61 +298,58 @@ static BOOL ble_phy_output(uint8_t *dataptr, uint8_t len)
 {
     uint8_t                              *pMsg, i;
     struct blemesh_mac_phy_manage_struct *p;
-    for(i = 0; i < LWNS_MAC_SEND_PACKET_MAX_NUM; i++)
+    for (i = 0; i < LWNS_MAC_SEND_PACKET_MAX_NUM; i++)
     {
-        if(blemesh_phy_manage_list[i].data == NULL)
+        if (blemesh_phy_manage_list[i].data == NULL)
         {
-            break; //Ñ°ÕÒµ½ÁËÒ»¸ö¿ÕµÄ½á¹¹Ìå¿ÉÒÔÊ¹ÓÃ¡£
-        }
-        else
-        {
-            if(i == (LWNS_MAC_SEND_PACKET_MAX_NUM - 1))
-            {
-                PRINTF("send failed!\n"); //ÁĞ±íÂúÁË£¬·¢ËÍÊ§°Ü£¬Ö±½Ó·µ»Ø¡£
-                return FALSE;
-            }
+            break; /* å¯»æ‰¾åˆ°äº†ä¸€ä¸ªç©ºçš„ç»“æ„ä½“å¯ä»¥ä½¿ç”¨ã€‚ */
         }
     }
-  #if LWNS_ENCRYPT_ENABLE
-    pMsg = tmos_msg_allocate((((len + 1 + 15) & 0xf0) + 1 + 1)); //Ğ£ÑéÎ»1Î»¼ÓÉÏºóÔÙ½øĞĞ16×Ö½Ú¶ÔÆë£¬´æ´¢·¢ËÍ³¤¶È+1£¬ÕæÊµÊı¾İ³¤¶È+1
-  #else
-    pMsg = tmos_msg_allocate(len + 1); //ÉêÇëÄÚ´æ¿Õ¼ä´æ´¢ÏûÏ¢£¬´æ´¢·¢ËÍ³¤¶È+1
-  #endif
-    if(pMsg != NULL)
-    { //³É¹¦ÉêÇë
+    if (i == (LWNS_MAC_SEND_PACKET_MAX_NUM))
+    {
+        PRINTF("send failed!\n"); /* åˆ—è¡¨æ»¡äº†ï¼Œå‘é€å¤±è´¥ï¼Œç›´æ¥è¿”å›ã€‚ */
+        return FALSE;
+    }
+#if LWNS_ENCRYPT_ENABLE
+    pMsg = tmos_msg_allocate((((len + 1 + 15) & 0xf0) + 1 + 1)); /* æ ¡éªŒä½1å­—èŠ‚åŠ ä¸Šåå†è¿›è¡Œ16å­—èŠ‚å¯¹é½ï¼Œå­˜å‚¨å‘é€é•¿åº¦+1ï¼ŒçœŸå®æ•°æ®é•¿åº¦+1 */
+#else
+    pMsg = tmos_msg_allocate(len + 1); /* ç”³è¯·å†…å­˜ç©ºé—´å­˜å‚¨æ¶ˆæ¯ï¼Œå­˜å‚¨å‘é€é•¿åº¦+1 */
+#endif
+    if (pMsg != NULL)   /* æˆåŠŸç”³è¯· */
+    {
         p = blemesh_phy_manage_list_head;
-        if(p != NULL)
+        if (p != NULL)
         {
-            while(p->next != NULL)
-            { //Ñ°ÕÒ·¢ËÍÁ´±íµÄÖÕµã
+            while (p->next != NULL) /* å¯»æ‰¾å‘é€é“¾è¡¨çš„ç»ˆç‚¹ */
+            {
                 p = p->next;
             }
         }
-  #if LWNS_ENCRYPT_ENABLE
-        //lwns bufferÄÚ²¿Ô¤ÁôÓĞÁ½×Ö½Ú£¬ÓÃ»§¿ÉÖ±½ÓÊ¹ÓÃdataptr[len]½øĞĞ¸³ÖµÁ½×Ö½ÚÄÚÈİ
-        dataptr[len] = dataptr[len - 1] ^ len;                      //Ğ£Ñé×Ö½Ú½öÈ¡×îºóÒ»¸ö×Ö½ÚºÍ³¤¶È½øĞĞÒì»òÔËËã£¬Ê××Ö½ÚÏàÍ¬portÊÇÒ»ÑùµÄ£¬¿ÉÄÜÓĞÓ°Ïì¡£ºÍĞ£Ñé±È½ÏÀË·ÑÊ±¼ä£¬ËùÒÔ²»²ÉÓÃ
-        pMsg[1] = len;                                              //ÕæÊµÊı¾İ³¤¶ÈÕ¼Ò»×Ö½Ú£¬²»¼ÓÃÜ£¬ÓÃÀ´½ÓÊÕ×öµÚÒ»²½Ğ£Ñé
-        pMsg[0] = lwns_msg_encrypt(dataptr, pMsg + 2, len + 1) + 1; //»ñÈ¡Êı¾İ¼ÓÃÜºóµÄ³¤¶È£¬Ò²¾ÍÊÇĞèÒª·¢ËÍ³öÈ¥µÄ×Ö½ÚÊı£¬ÕæÊµÊı¾İ³¤¶È²»¼ÓÃÜ
-  #else
+#if LWNS_ENCRYPT_ENABLE
+        /* lwns bufferå†…éƒ¨é¢„ç•™æœ‰ä¸¤å­—èŠ‚ï¼Œç”¨æˆ·å¯ç›´æ¥ä½¿ç”¨dataptr[len]è¿›è¡Œèµ‹å€¼ä¸¤å­—èŠ‚å†…å®¹ */
+        dataptr[len] = dataptr[len - 1] ^ len;                      /* æ ¡éªŒå­—èŠ‚ä»…å–æœ€åä¸€ä¸ªå­—èŠ‚å’Œé•¿åº¦è¿›è¡Œå¼‚æˆ–è¿ç®—ï¼Œé¦–å­—èŠ‚ç›¸åŒportæ˜¯ä¸€æ ·çš„ï¼Œå¯èƒ½æœ‰å½±å“ã€‚å’Œæ ¡éªŒæ¯”è¾ƒæµªè´¹æ—¶é—´ï¼Œæ‰€ä»¥ä¸é‡‡ç”¨ */
+        pMsg[1] = len;                                              /* çœŸå®æ•°æ®é•¿åº¦å ä¸€å­—èŠ‚ï¼Œä¸åŠ å¯†ï¼Œç”¨æ¥æ¥æ”¶åšç¬¬ä¸€æ­¥æ ¡éªŒ */
+        pMsg[0] = lwns_msg_encrypt(dataptr, pMsg + 2, len + 1) + 1; /* è·å–æ•°æ®åŠ å¯†åçš„é•¿åº¦ï¼Œä¹Ÿå°±æ˜¯éœ€è¦å‘é€å‡ºå»çš„å­—èŠ‚æ•°ï¼ŒçœŸå®æ•°æ®é•¿åº¦ä¸åŠ å¯† */
+#else
         pMsg[0] = len;
         tmos_memcpy(pMsg + 1, dataptr, len);
-  #endif
-        if(blemesh_phy_manage_list_head != NULL)
+#endif
+        if (blemesh_phy_manage_list_head != NULL)
         {
-            p->next = &blemesh_phy_manage_list[i]; //Á´±íÌí¼ÓÎ²½áµã
+            p->next = &blemesh_phy_manage_list[i]; /* é“¾è¡¨æ·»åŠ å°¾ç»“ç‚¹ */
         }
         else
         {
-            blemesh_phy_manage_list_head = &blemesh_phy_manage_list[i];         //Á´±íÎª¿Õ£¬Ôò½Úµã×÷ÎªÍ·½áµã
-            tmos_set_event(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_PREPARE_EVT); //Æô¶¯·¢ËÍ£¬²»ÊÇÍ·½áµã²»ĞèÒªÆô¶¯£¬ÒòÎªÔÚ·¢ËÍÁ÷³ÌÖĞ¡£
+            blemesh_phy_manage_list_head = &blemesh_phy_manage_list[i];         /* é“¾è¡¨ä¸ºç©ºï¼Œåˆ™èŠ‚ç‚¹ä½œä¸ºå¤´ç»“ç‚¹ */
+            tmos_set_event(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_PREPARE_EVT); /* å¯åŠ¨å‘é€ï¼Œä¸æ˜¯å¤´ç»“ç‚¹ä¸éœ€è¦å¯åŠ¨ï¼Œå› ä¸ºåœ¨å‘é€æµç¨‹ä¸­ã€‚ */
         }
-        blemesh_phy_manage_list[i].data = pMsg; //°ó¶¨ÏûÏ¢
+        blemesh_phy_manage_list[i].data = pMsg; /* ç»‘å®šæ¶ˆæ¯ */
         blemesh_phy_manage_list[i].next = NULL;
         return TRUE;
     }
     else
     {
-        PRINTF("send failed!\n"); //ÎŞ·¨ÉêÇëµ½ÄÚ´æ£¬ÔòÎŞ·¨·¢ËÍ
+        PRINTF("send failed!\n"); /* æ— æ³•ç”³è¯·åˆ°å†…å­˜ï¼Œåˆ™æ— æ³•å‘é€ */
     }
     return FALSE;
 }
@@ -366,39 +369,38 @@ static BOOL ble_phy_output(uint8_t *dataptr, uint8_t len)
  */
 static uint16_t lwns_adapter_ProcessEvent(uint8_t task_id, uint16_t events)
 {
-    if(events & LWNS_PHY_RX_CHANGE_CHANNEL_EVT) //´¦Àí¸ü»»½ÓÊÕÍ¨µÀÊÂ¼ş
+    if (events & LWNS_PHY_RX_CHANGE_CHANNEL_EVT) /* å¤„ç†æ›´æ¢æ¥æ”¶é€šé“äº‹ä»¶ */
     {
         ble_phy_channelmap_receive_seq++;
-        if(ble_phy_channelmap_receive_seq >= sizeof(ble_phy_channelmap))
+        if (ble_phy_channelmap_receive_seq >= sizeof(ble_phy_channelmap))
         {
             ble_phy_channelmap_receive_seq = 0;
         }
         RF_Shut();
-        RF_SetChannel(ble_phy_channelmap[ble_phy_channelmap_receive_seq]); //ÖÜÆÚĞÔ¸ü¸Ä·¢ËÍÍ¨µÀ
-        RF_Rx(NULL, 0, USER_RF_RX_TX_TYPE, USER_RF_RX_TX_TYPE);            //ÖØĞÂ´ò¿ª½ÓÊÕ
-        tmos_start_task(lwns_adapter_taskid, LWNS_PHY_RX_CHANGE_CHANNEL_EVT, MS1_TO_SYSTEM_TIME(LWNS_MAC_PERIOD_MS));
-        return (events & (~(LWNS_PHY_RX_CHANGE_CHANNEL_EVT | LWNS_PHY_RX_OPEN_EVT)));//Í£Ö¹¿ÉÄÜÒÑ¾­ÖÃÎ»µÄ¡¢¿ÉÄÜ»á´ò¿ª½ÓÊÕµÄÈÎÎñ
+        RF_SetChannel(ble_phy_channelmap[ble_phy_channelmap_receive_seq]); /* å‘¨æœŸæ€§æ›´æ”¹å‘é€é€šé“ */
+        RF_Rx(NULL, 0, USER_RF_RX_TX_TYPE, USER_RF_RX_TX_TYPE);            /* é‡æ–°æ‰“å¼€æ¥æ”¶ */
+        return (events & (~(LWNS_PHY_RX_CHANGE_CHANNEL_EVT | LWNS_PHY_RX_OPEN_EVT)));/* åœæ­¢å¯èƒ½å·²ç»ç½®ä½çš„ã€å¯èƒ½ä¼šæ‰“å¼€æ¥æ”¶çš„ä»»åŠ¡ */
     }
-    if(events & LWNS_PHY_RX_OPEN_EVT)
-    { //ÖØĞÂ´ò¿ª½ÓÊÕÊÂ¼ş
+    if (events & LWNS_PHY_RX_OPEN_EVT)  /* é‡æ–°æ‰“å¼€æ¥æ”¶äº‹ä»¶ */
+    {
         RF_Shut();
-        RF_Rx(NULL, 0, USER_RF_RX_TX_TYPE, USER_RF_RX_TX_TYPE); //ÖØĞÂ´ò¿ª½ÓÊÕ
+        RF_Rx(NULL, 0, USER_RF_RX_TX_TYPE, USER_RF_RX_TX_TYPE); /* é‡æ–°æ‰“å¼€æ¥æ”¶ */
         return (events ^ LWNS_PHY_RX_OPEN_EVT);
     }
-    if(events & SYS_EVENT_MSG)
-    { //´¦Àí´ò¿ª½ÓÊÕºó£¬ÔÙ´¦ÀíÊı¾İ
+    if (events & SYS_EVENT_MSG) /* å¤„ç†æ‰“å¼€æ¥æ”¶åï¼Œå†å¤„ç†æ•°æ® */
+    {
         uint8_t *pMsg;
-        if((pMsg = tmos_msg_receive(lwns_adapter_taskid)) != NULL)
+        if ((pMsg = tmos_msg_receive(lwns_adapter_taskid)) != NULL)
         {
-            // Release the TMOS message,tmos_msg_allocate
-            lwns_input(pMsg + 1, pMsg[0]); //½«Êı¾İ´æÈëĞ­ÒéÕ»»º³åÇø
-            tmos_msg_deallocate(pMsg);     //ÏÈÊÍ·ÅÄÚ´æ£¬ÔÚÊı¾İ´¦ÀíÇ°ÊÍ·Å£¬·ÀÖ¹Êı¾İ´¦ÀíÖĞĞèÒª·¢ËÍÊı¾İ£¬¶øÄÚ´æ²»¹»¡£
-            lwns_dataHandler();            //µ÷ÓÃĞ­ÒéÕ»´¦ÀíÊı¾İº¯Êı
+            /*  Release the TMOS message,tmos_msg_allocate */
+            lwns_input(pMsg + 1, pMsg[0]); /* å°†æ•°æ®å­˜å…¥åè®®æ ˆç¼“å†²åŒº */
+            tmos_msg_deallocate(pMsg);     /* å…ˆé‡Šæ”¾å†…å­˜ï¼Œåœ¨æ•°æ®å¤„ç†å‰é‡Šæ”¾ï¼Œé˜²æ­¢æ•°æ®å¤„ç†ä¸­éœ€è¦å‘é€æ•°æ®ï¼Œè€Œå†…å­˜ä¸å¤Ÿã€‚ */
+            lwns_dataHandler();            /* è°ƒç”¨åè®®æ ˆå¤„ç†æ•°æ®å‡½æ•° */
         }
-        // return unprocessed events
+        /*  return unprocessed events */
         return (events ^ SYS_EVENT_MSG);
     }
-    // Discard unknown events
+    /*  Discard unknown events */
     return 0;
 }
 
@@ -417,74 +419,79 @@ static uint16_t lwns_adapter_ProcessEvent(uint8_t task_id, uint16_t events)
  */
 static uint16_t lwns_phyoutput_ProcessEvent(uint8_t task_id, uint16_t events)
 {
-    if(events & LWNS_HTIMER_PERIOD_EVT)
+    if (events & LWNS_HTIMER_PERIOD_EVT)
     {
-        lwns_htimer_update();                                                                                      //htimer¸üĞÂ¡£
+        lwns_htimer_update();                                                                                      /* htimeræ›´æ–°ã€‚ */
         return (events ^ LWNS_HTIMER_PERIOD_EVT);
     }
-    if(events & LWNS_PHY_OUTPUT_PREPARE_EVT)
-    { //×¼±¸·¢ËÍ¹¤×÷
+    if (events & LWNS_PHY_OUTPUT_PREPARE_EVT)   /* å‡†å¤‡å‘é€å·¥ä½œ */
+    {
         uint8_t rand_delay;
-        rand_delay = tmos_rand() % MS1_TO_SYSTEM_TIME(LWNS_MAC_SEND_DELAY_MAX_MS) + BLE_PHY_ONE_PACKET_MAX_625US; //Ëæ»úÑÓ³Ù
-        ble_phy_channelmap_send_seq = 0;                                                                          //·¢ËÍÍ¨µÀĞòºÅ
+        rand_delay = tmos_rand() % MS1_TO_SYSTEM_TIME(LWNS_MAC_SEND_DELAY_MAX_MS) + BLE_PHY_ONE_PACKET_MAX_625US; /* éšæœºå»¶è¿Ÿ */
+        ble_phy_channelmap_send_seq = 0;                                                                          /* å‘é€é€šé“åºå· */
         PRINTF("rand send:%d\n", rand_delay);
-        tmos_start_task(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_FINISH_EVT, rand_delay); //Ëæ»úÑÓ³ÙºóÁ¢¿Ì·¢ËÍ
+        tmos_start_reload_task(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_FINISH_EVT, rand_delay);  /* éšæœºå»¶è¿Ÿåç«‹åˆ»å‘é€ */
         return (events ^ LWNS_PHY_OUTPUT_PREPARE_EVT);
     }
-    if(events & LWNS_PHY_OUTPUT_FINISH_EVT)
-    { //·¢ËÍÍê³ÉÈÎÎñ
-        if(ble_phy_channelmap_send_seq < sizeof(ble_phy_channelmap))
+    if (events & LWNS_PHY_OUTPUT_FINISH_EVT)    /* å‘é€å®Œæˆä»»åŠ¡ */
+    {
+        if (ble_phy_channelmap_send_seq < sizeof(ble_phy_channelmap))
         {
-            if(ble_phy_channelmap_send_seq == 0)
-            {                                                                          //Ö»ĞèÒªÔÚ¿ªÊ¼·¢ËÍµÄÊ±ºòÍ£ÈÎÎñ
-                tmos_stop_task(lwns_adapter_taskid, LWNS_PHY_RX_CHANGE_CHANNEL_EVT);   //·¢ËÍÆÚ¼ä£¬Í£Ö¹¼ÌĞøÇĞ»»½ÓÊÕÍ¨µÀ
-                tmos_clear_event(lwns_adapter_taskid, LWNS_PHY_RX_CHANGE_CHANNEL_EVT); //Í£Ö¹¿ÉÄÜÒÑ¾­ÖÃÎ»µÄ¡¢¿ÉÄÜ»á´ò¿ª½ÓÊÕµÄÈÎÎñ
-                tmos_clear_event(lwns_adapter_taskid, LWNS_PHY_RX_OPEN_EVT);           //Í£Ö¹¿ÉÄÜÒÑ¾­ÖÃÎ»µÄ¡¢¿ÉÄÜ»á´ò¿ª½ÓÊÕµÄÈÎÎñ
+            if (ble_phy_channelmap_send_seq == 0)
+            {
+                /* åªéœ€è¦åœ¨å¼€å§‹å‘é€çš„æ—¶å€™åœä»»åŠ¡ï¼Œå‘é€æœŸé—´ï¼Œåœæ­¢ç»§ç»­åˆ‡æ¢æ¥æ”¶é€šé“ï¼Œå˜ç›¸åœæ­¢ä»»åŠ¡ï¼Œå ç”¨å†…å­˜ä¸é‡Šæ”¾ */
+                tmos_start_reload_task(lwns_adapter_taskid, LWNS_PHY_RX_CHANGE_CHANNEL_EVT, TMOS_TASK_STOP_RELOAD_TIME);
+                tmos_clear_event(lwns_adapter_taskid, LWNS_PHY_RX_CHANGE_CHANNEL_EVT); /* åœæ­¢å¯èƒ½å·²ç»ç½®ä½çš„ã€å¯èƒ½ä¼šæ‰“å¼€æ¥æ”¶çš„ä»»åŠ¡ */
+                tmos_clear_event(lwns_adapter_taskid, LWNS_PHY_RX_OPEN_EVT);           /* åœæ­¢å¯èƒ½å·²ç»ç½®ä½çš„ã€å¯èƒ½ä¼šæ‰“å¼€æ¥æ”¶çš„ä»»åŠ¡ */
             }
+            ble_phy_channelmap_send_seq++;
+            tmos_start_reload_task(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_FINISH_EVT, MS1_TO_SYSTEM_TIME(LWNS_PHY_OUTPUT_TIMEOUT_MS)); /* å¼€å§‹å‘é€è¶…æ—¶è®¡æ•°ï¼Œé˜²æ­¢æœ‰æ„å¤–æ‰“æ–­å‘é€ï¼Œå¯¼è‡´æ— æ³•ç»§ç»­å‘é€ */
             RF_Shut();
-            RF_SetChannel(ble_phy_channelmap[ble_phy_channelmap_send_seq]); //ÖÜÆÚĞÔ¸ü¸Ä·¢ËÍÍ¨µÀ
-            if(!RF_Tx((uint8_t *)(blemesh_phy_manage_list_head->data + 1),
-                  blemesh_phy_manage_list_head->data[0], USER_RF_RX_TX_TYPE,
-                  USER_RF_RX_TX_TYPE))
+            RF_SetChannel(ble_phy_channelmap[ble_phy_channelmap_send_seq]); /* å‘¨æœŸæ€§æ›´æ”¹å‘é€é€šé“ */
+            tx_end_flag = 0;
+            if (!RF_Tx((uint8_t *)(blemesh_phy_manage_list_head->data + 1),
+                       blemesh_phy_manage_list_head->data[0], USER_RF_RX_TX_TYPE,
+                       USER_RF_RX_TX_TYPE))
             {
                 RF_Wait_Tx_End();
             }
-            tmos_start_task(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_FINISH_EVT, MS1_TO_SYSTEM_TIME(LWNS_PHY_OUTPUT_TIMEOUT_MS)); //¿ªÊ¼·¢ËÍ³¬Ê±¼ÆÊı£¬·ÀÖ¹ÓĞÒâÍâ´ò¶Ï·¢ËÍ£¬µ¼ÖÂÎŞ·¨¼ÌĞø·¢ËÍ
-            ble_phy_channelmap_send_seq++;
         }
         else
         {
-            //Èı¸öÍ¨µÀÒ»´Î·¢ËÍ½áÊøÍê
+            /* ä¸‰ä¸ªé€šé“ä¸€æ¬¡å‘é€ç»“æŸå®Œ */
             ble_phy_send_cnt++;
-            tmos_set_event(lwns_adapter_taskid, LWNS_PHY_RX_CHANGE_CHANNEL_EVT); //¼ä¸ôÆÚ¼ä¼ÌĞø½ÓÊÕ
-            if(ble_phy_send_cnt < LWNS_MAC_TRANSMIT_TIMES)
-            {                                                                       //·¢ËÍ´ÎÊı²»¹»
-                tmos_set_event(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_PREPARE_EVT); //Æô¶¯·¢ËÍ
+            tmos_set_event(lwns_adapter_taskid, LWNS_PHY_RX_CHANGE_CHANNEL_EVT); /* é—´éš”æœŸé—´ç»§ç»­æ¥æ”¶ */
+            tmos_start_reload_task(lwns_adapter_taskid, LWNS_PHY_RX_CHANGE_CHANNEL_EVT, MS1_TO_SYSTEM_TIME(LWNS_MAC_PERIOD_MS));
+            if (ble_phy_send_cnt < LWNS_MAC_TRANSMIT_TIMES)
+            {
+                /* å‘é€æ¬¡æ•°ä¸å¤Ÿ */
+                tmos_set_event(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_PREPARE_EVT); /* å¯åŠ¨å‘é€ */
             }
             else
             {
-                //Ö¸¶¨´ÎÊı·¢ËÍ½áÊø
-                ble_phy_send_cnt = 0;                                              //Çå¿Õ·¢ËÍ´ÎÊı¼ÆÊı
-                tmos_msg_deallocate(blemesh_phy_manage_list_head->data);           //ÊÍ·ÅÄÚ´æ
-                blemesh_phy_manage_list_head->data = NULL;                         //»Ö¸´Ä¬ÈÏ²ÎÊı
-                blemesh_phy_manage_list_head = blemesh_phy_manage_list_head->next; //Á´±ípop£¬È¥³ıµôÊ×ÔªËØ
-                if(blemesh_phy_manage_list_head != NULL)
+                /* æŒ‡å®šæ¬¡æ•°å‘é€ç»“æŸ */
+                ble_phy_send_cnt = 0;                                              /* æ¸…ç©ºå‘é€æ¬¡æ•°è®¡æ•° */
+                tmos_msg_deallocate(blemesh_phy_manage_list_head->data);           /* é‡Šæ”¾å†…å­˜ */
+                blemesh_phy_manage_list_head->data = NULL;                         /* æ¢å¤é»˜è®¤å‚æ•° */
+                blemesh_phy_manage_list_head = blemesh_phy_manage_list_head->next; /* é“¾è¡¨popï¼Œå»é™¤æ‰é¦–å…ƒç´  */
+                if (blemesh_phy_manage_list_head != NULL)
                 {
-                    tmos_set_event(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_PREPARE_EVT); //Æô¶¯·¢ËÍ
+                    tmos_set_event(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_PREPARE_EVT); /* å¯åŠ¨å‘é€ */
                 }
             }
+            tmos_start_reload_task(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_FINISH_EVT, TMOS_TASK_STOP_RELOAD_TIME);      /* å˜ç›¸åœæ­¢ä»»åŠ¡ï¼Œå ç”¨å†…å­˜ä¸é‡Šæ”¾ */
         }
         return (events ^ LWNS_PHY_OUTPUT_FINISH_EVT);
     }
-    if(events & SYS_EVENT_MSG)
+    if (events & SYS_EVENT_MSG)
     {
         uint8_t *pMsg;
-        if((pMsg = tmos_msg_receive(lwns_phyoutput_taskid)) != NULL)
+        if ((pMsg = tmos_msg_receive(lwns_phyoutput_taskid)) != NULL)
         {
-            // Release the TMOS message,tmos_msg_allocate
-            tmos_msg_deallocate(pMsg); //ÊÍ·ÅÄÚ´æ
+            /*  Release the TMOS message,tmos_msg_allocate */
+            tmos_msg_deallocate(pMsg); /* é‡Šæ”¾å†…å­˜ */
         }
-        // return unprocessed events
+        /*  return unprocessed events */
         return (events ^ SYS_EVENT_MSG);
     }
     return 0;
@@ -493,7 +500,7 @@ static uint16_t lwns_phyoutput_ProcessEvent(uint8_t task_id, uint16_t events)
 /*********************************************************************
  * @fn      lwns_shut
  *
- * @brief   Í£Ö¹lwns£¬²»¿ÉÒÔÔÚÕâlwns_phyoutput_taskidºÍlwns_adapter_taskidµÄprocessEventÖĞµ÷ÓÃ¡£
+ * @brief   åœæ­¢lwnsï¼Œä¸å¯ä»¥åœ¨è¿™lwns_phyoutput_taskidå’Œlwns_adapter_taskidçš„processEventä¸­è°ƒç”¨ã€‚
  *
  * @param   None.
  *
@@ -502,45 +509,45 @@ static uint16_t lwns_phyoutput_ProcessEvent(uint8_t task_id, uint16_t events)
 void lwns_shut()
 {
     uint8_t *pMsg;
-    RF_Shut(); //¹Ø±ÕRF½ÓÊÕ
-    while(blemesh_phy_manage_list_head != NULL)
+    RF_Shut(); /* å…³é—­RFæ¥æ”¶ */
+    while (blemesh_phy_manage_list_head != NULL)
     {
-        /* Çå³ıËùÓĞ»º´æÖĞ´ı·¢ËÍµÄÏûÏ¢ */
+        /* æ¸…é™¤æ‰€æœ‰ç¼“å­˜ä¸­å¾…å‘é€çš„æ¶ˆæ¯ */
         tmos_msg_deallocate(blemesh_phy_manage_list_head->data);
         blemesh_phy_manage_list_head->data = NULL;
         blemesh_phy_manage_list_head = blemesh_phy_manage_list_head->next;
     }
-    tmos_stop_task(lwns_phyoutput_taskid, LWNS_HTIMER_PERIOD_EVT); //Í£Ö¹HtimerĞÄÌøÊ±ÖÓ
+    tmos_stop_task(lwns_phyoutput_taskid, LWNS_HTIMER_PERIOD_EVT); /* åœæ­¢Htimerå¿ƒè·³æ—¶é’Ÿ */
     tmos_clear_event(lwns_phyoutput_taskid, LWNS_HTIMER_PERIOD_EVT);
-    /* ³¬Ê±ÖØ·¢È«²¿Çå³ı */
+    /* è¶…æ—¶é‡å‘å…¨éƒ¨æ¸…é™¤ */
     lwns_htimer_flush_all();
     tmos_stop_task(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_PREPARE_EVT);
     tmos_clear_event(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_PREPARE_EVT);
     tmos_stop_task(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_FINISH_EVT);
     tmos_clear_event(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_FINISH_EVT);
-    while((pMsg = tmos_msg_receive(lwns_adapter_taskid)) != NULL)
+    while ((pMsg = tmos_msg_receive(lwns_adapter_taskid)) != NULL)
     {
-        /* Çå³ıËùÓĞ»º´æµÄÏûÏ¢ */
+        /* æ¸…é™¤æ‰€æœ‰ç¼“å­˜çš„æ¶ˆæ¯ */
         tmos_msg_deallocate(pMsg);
     }
-    tmos_stop_task(lwns_adapter_taskid, LWNS_PHY_RX_CHANGE_CHANNEL_EVT); //Í£Ö¹HtimerĞÄÌøÊ±ÖÓ
+    tmos_stop_task(lwns_adapter_taskid, LWNS_PHY_RX_CHANGE_CHANNEL_EVT); /* åœæ­¢Htimerå¿ƒè·³æ—¶é’Ÿ */
     tmos_clear_event(lwns_adapter_taskid, LWNS_PHY_RX_CHANGE_CHANNEL_EVT);
     tmos_stop_task(lwns_adapter_taskid, LWNS_PHY_RX_OPEN_EVT);
     tmos_clear_event(lwns_adapter_taskid, LWNS_PHY_RX_OPEN_EVT);
     tmos_clear_event(lwns_adapter_taskid, SYS_EVENT_MSG);
 
-    /* Çå¿Õ·¢ËÍ´ÎÊı¼ÆÊı */
+    /* æ¸…ç©ºå‘é€æ¬¡æ•°è®¡æ•° */
     ble_phy_send_cnt = 0;
-    /* Çå¿Õ·¢ËÍĞòºÅ */
+    /* æ¸…ç©ºå‘é€åºå· */
     ble_phy_channelmap_send_seq = 0;
-    /* Çå¿Õ½ÓÊÕÍ¨µÀĞòºÅ */
+    /* æ¸…ç©ºæ¥æ”¶é€šé“åºå· */
     ble_phy_channelmap_receive_seq = 0;
 }
 
 /*********************************************************************
  * @fn      lwns_start
  *
- * @brief   lwns¿ªÊ¼ÔËĞĞ£¬ÔÚÊ¹ÓÃlwns_shutºó£¬ÖØĞÂ¿ªÊ¼Ê±Ê¹ÓÃ¡£
+ * @brief   lwnså¼€å§‹è¿è¡Œï¼Œåœ¨ä½¿ç”¨lwns_shutåï¼Œé‡æ–°å¼€å§‹æ—¶ä½¿ç”¨ã€‚
  *
  * @param   None.
  *
@@ -549,9 +556,9 @@ void lwns_shut()
 void lwns_start()
 {
     RF_Shut();
-    RF_SetChannel(ble_phy_channelmap[ble_phy_channelmap_receive_seq]); //ÖÜÆÚĞÔ¸ü¸Ä·¢ËÍÍ¨µÀ
-    RF_Rx(NULL, 0, USER_RF_RX_TX_TYPE, USER_RF_RX_TX_TYPE);            //´ò¿ªRF½ÓÊÕ£¬Èç¹ûĞèÒªµÍ¹¦ºÄ¹ÜÀí£¬ÔÚÆäËûµØ·½´ò¿ª¡£
-    tmos_start_task(lwns_adapter_taskid, LWNS_PHY_RX_CHANGE_CHANNEL_EVT, MS1_TO_SYSTEM_TIME(LWNS_MAC_PERIOD_MS));
+    RF_SetChannel(ble_phy_channelmap[ble_phy_channelmap_receive_seq]); /* å‘¨æœŸæ€§æ›´æ”¹å‘é€é€šé“ */
+    RF_Rx(NULL, 0, USER_RF_RX_TX_TYPE, USER_RF_RX_TX_TYPE);            /* æ‰“å¼€RFæ¥æ”¶ï¼Œå¦‚æœéœ€è¦ä½åŠŸè€—ç®¡ç†ï¼Œåœ¨å…¶ä»–åœ°æ–¹æ‰“å¼€ã€‚ */
+    tmos_start_reload_task(lwns_adapter_taskid, LWNS_PHY_RX_CHANGE_CHANNEL_EVT, MS1_TO_SYSTEM_TIME(LWNS_MAC_PERIOD_MS));
     tmos_start_reload_task(lwns_phyoutput_taskid, LWNS_HTIMER_PERIOD_EVT, MS1_TO_SYSTEM_TIME(LWNS_HTIMER_PERIOD_MS));
 }
 

@@ -1,11 +1,11 @@
 /********************************** (C) COPYRIGHT *******************************
  * File Name          : lwns_unicast_example.h
  * Author             : WCH
- * Version            : V1.0
- * Date               : 2021/06/19
- * Description        : lwnsµ•≤•¥´ ‰¿˝◊”
+ * Version            : V1.1
+ * Date               : 2025/04/27
+ * Description        : lwnsÂçïÊí≠‰º†Ëæì‰æãÂ≠ê
  *********************************************************************************
- * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Copyright (c) 2025 Nanjing Qinheng Microelectronics Co., Ltd.
  * Attention: This software (modified or not) and binary are used for 
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/

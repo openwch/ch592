@@ -16,10 +16,9 @@
 
 #include "CONFIG.h"
 #include "stdint.h"
-#include "buf.h"
-#include "uart.h"
+#include "RingMem.h"
+#include "RF_dtm.h"
 #include "app_usb.h"
-#include "atomic.h"
 
 /*********************************************************************
  * MACROS
@@ -35,7 +34,7 @@ const uint8_t *pDescr;
 
 #define DevEP0SIZE  0x40
 // 设备描述符
-const uint8_t MyDevDescr[] = { 0x12,0x01,0x10,0x01,0xFF,0x00,0x00,DevEP0SIZE,
+const uint8_t My_DevDescr[] = { 0x12,0x01,0x10,0x01,0xFF,0x00,0x00,DevEP0SIZE,
                              0x86,0x1A,0x23,0x75,0x63,0x02,0x00,0x02,
                              0x00,0x01 };
 // 配置描述符
@@ -84,6 +83,7 @@ __attribute__((aligned(4)))  uint8_t EP3_Databuf[64 + 64];    //ep3_out(64)+ep3_
  *
  * @return  none
  */
+__HIGH_CODE
 void app_usb_init()
 {
     pEP0_RAM_Addr = EP0_Databuf;
@@ -92,7 +92,6 @@ void app_usb_init()
     pEP3_RAM_Addr = EP3_Databuf;
 
     USB_DeviceInit();
-    USB_Task_Init();
     PFIC_EnableIRQ( USB_IRQn );
 }
 
@@ -130,6 +129,7 @@ uint8_t USBSendData(uint8_t *buf, uint16_t len)
  *
  * @return  none
  */
+__HIGH_CODE
 void DevEP1_OUT_Deal( uint8_t l )
 { /* 用户可自定义 */
 
@@ -142,15 +142,20 @@ void DevEP1_OUT_Deal( uint8_t l )
  *
  * @return  none
  */
+__HIGH_CODE
 void DevEP2_OUT_Deal( uint8_t l )
 { /* 用户可自定义 */
     uint8_t i;
 
-    for(i = 0; i < l; i++)
+    if( RingMemWrite( &usbRingParm, pEP2_OUT_DataBuf, l) )
     {
-        simple_buf_add_u8(usb_buf, pEP2_OUT_DataBuf[i]);
+        PRINT("RingMem err %d %d %d \n", l, usbRingParm.RemanentLen, usbRingParm.MaxLen);
     }
-    atomic_set(&usb_flag, USB_STATUS_RCV_END);
+//    for(i = 0; i < l; i++)
+//    {
+//        simple_buf_add_u8(usb_buf, pEP2_OUT_DataBuf[i]);
+//    }
+//    usb_flag = USB_STATUS_RCV_END;
 }
 
 /*********************************************************************
@@ -160,6 +165,7 @@ void DevEP2_OUT_Deal( uint8_t l )
  *
  * @return  none
  */
+__HIGH_CODE
 void DevEP3_OUT_Deal( uint8_t l )
 { /* 用户可自定义 */
 }
@@ -171,6 +177,7 @@ void DevEP3_OUT_Deal( uint8_t l )
  *
  * @return  none
  */
+__HIGH_CODE
 void DevEP4_OUT_Deal( uint8_t l )
 { /* 用户可自定义 */
 }
@@ -182,6 +189,7 @@ void DevEP4_OUT_Deal( uint8_t l )
  *
  * @return  none
  */
+__HIGH_CODE
 void USB_DevTransProcess( void )
 {
   uint8_t len, chtype;
@@ -341,8 +349,8 @@ void USB_DevTransProcess( void )
             {
               case USB_DESCR_TYP_DEVICE :
               {
-                pDescr = MyDevDescr;
-                len = sizeof(MyDevDescr);
+                pDescr = My_DevDescr;
+                len = sizeof(My_DevDescr);
               }
                 break;
 
@@ -523,8 +531,8 @@ void USB_DevTransProcess( void )
  *
  * @return  none
  */
-__attribute__((interrupt("WCH-Interrupt-fast")))
-__attribute__((section(".highcode")))
+__INTERRUPT
+__HIGH_CODE
 void USB_IRQHandler( void ) /* USB中断服务程序,使用寄存器组1 */
 {
    USB_DevTransProcess();

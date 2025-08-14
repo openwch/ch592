@@ -701,7 +701,7 @@ static void simpleProfileChangeCB(uint8_t paramID, uint8_t *pValue, uint16_t len
 #define IMAGE_OTA_FLAG       0x03
 
 /* 存放在DataFlash地址，不能占用蓝牙的位置 */
-#define OTA_DATAFLASH_ADD    0x00077000 - FLASH_ROM_MAX_SIZE
+#define OTA_DATAFLASH_ADD    0x00076000 - FLASH_ROM_MAX_SIZE
 
 /* flash的数据临时存储 */
 __attribute__((aligned(8))) uint8_t block_buf[16];

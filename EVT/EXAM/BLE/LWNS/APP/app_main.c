@@ -1,15 +1,18 @@
 /********************************** (C) COPYRIGHT *******************************
-* File Name          : main.c
-* Author             : WCH
-* Version            : V1.0
-* Date               : 2020/08/06
-* Description        :
-*******************************************************************************/
-
+ * File Name          : main.c
+ * Author             : WCH
+ * Version            : V1.1
+ * Date               : 2025/04/27
+ * Description        : lwnsä¸»ç¨‹åº
+ *********************************************************************************
+ * Copyright (c) 2025 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Attention: This software (modified or not) and binary are used for
+ * microcontroller manufactured by Nanjing Qinheng Microelectronics.
+ *******************************************************************************/
 
 
 /******************************************************************************/
-/* Í·ÎÄ¼ş°üº¬ */
+/* å¤´æ–‡ä»¶åŒ…å« */
 #include "CONFIG.h"
 #include "CH59x_common.h"
 #include "HAL.h"
@@ -27,78 +30,80 @@
 #include "lwns_multinetflood_example.h"
 #include "lwns_mesh_example.h"
 
-//Ã¿¸öÎÄ¼şµ¥¶Àdebug´òÓ¡µÄ¿ª¹Ø£¬ÖÃ0¿ÉÒÔ½ûÖ¹±¾ÎÄ¼şÄÚ²¿´òÓ¡
-#define DEBUG_PRINT_IN_THIS_FILE 1
+/* æ¯ä¸ªæ–‡ä»¶å•ç‹¬debugæ‰“å°çš„å¼€å…³ï¼Œç½®0å¯ä»¥ç¦æ­¢æœ¬æ–‡ä»¶å†…éƒ¨æ‰“å° */
+#define DEBUG_PRINT_IN_THIS_FILE    1
 #if DEBUG_PRINT_IN_THIS_FILE
-#define PRINTF(...) PRINT(__VA_ARGS__)
+#define PRINTF(...)       PRINT(__VA_ARGS__)
 #else
-#define PRINTF(...) do {} while (0)
+#define PRINTF(...)       do{} while(0)
 #endif
 
 /*********************************************************************
  * GLOBAL TYPEDEFS
  */
-__attribute__((aligned(4))) uint32_t MEM_BUF[BLE_MEMHEAP_SIZE/4];
+__attribute__((aligned(4))) uint32_t MEM_BUF[BLE_MEMHEAP_SIZE / 4];
 
 #if (defined (BLE_MAC)) && (BLE_MAC == TRUE)
-uint8_t const MacAddr[6] = {0x84,0xC2,0xE4,0x03,0x02,0x02};
+uint8_t const MacAddr[6] = {0x84, 0xC2, 0xE4, 0x03, 0x02, 0x02};
 #endif
 
-/*******************************************************************************
-* Function Name  : Main_Circulation
-* Description    : Ö÷Ñ­»·
-* Input          : None
-* Output         : None
-* Return         : None
-*******************************************************************************/
-__attribute__((section(".highcode")))
+/*********************************************************************
+ * @fn      Main_Circulation
+ *
+ * @brief   ä¸»å¾ªç¯
+ *
+ * @return  none
+ */
+__HIGH_CODE
+__attribute__((noinline))
 void Main_Circulation()
 {
-  while(1){
-    TMOS_SystemProcess( );
-  }
+    while (1)
+    {
+        TMOS_SystemProcess();
+    }
 }
 
-/*******************************************************************************
-* Function Name  : main
-* Description    : Ö÷º¯Êı
-* Input          : None
-* Output         : None
-* Return         : None
-*******************************************************************************/
-int main( void )
+/*********************************************************************
+ * @fn      main
+ *
+ * @brief   ä¸»å‡½æ•°
+ *
+ * @return  none
+ */
+int main(void)
 {
 #if (defined (DCDC_ENABLE)) && (DCDC_ENABLE == TRUE)
-  PWR_DCDCCfg( ENABLE );
+    PWR_DCDCCfg(ENABLE);
 #endif
-  SetSysClock( CLK_SOURCE_PLL_60MHz );
+    SetSysClock(CLK_SOURCE_PLL_60MHz);
 #if (defined (HAL_SLEEP)) && (HAL_SLEEP == TRUE)
-  GPIOA_ModeCfg( GPIO_Pin_All, GPIO_ModeIN_PU );
-  GPIOB_ModeCfg( GPIO_Pin_All, GPIO_ModeIN_PU );
+    GPIOA_ModeCfg(GPIO_Pin_All, GPIO_ModeIN_PU);
+    GPIOB_ModeCfg(GPIO_Pin_All, GPIO_ModeIN_PU);
 #endif
 #ifdef DEBUG
-  GPIOA_SetBits( bTXD1 );
-  GPIOA_ModeCfg( bTXD1, GPIO_ModeOut_PP_5mA );
-  UART1_DefInit( );
-#endif  
-  PRINTF("start.\n");
-  {
-    PRINTF("%s\n",VER_LIB);
-  }
-  CH59x_BLEInit( );
-  HAL_Init(  );
-  RF_RoleInit( );
-  RF_Init( );
-  lwns_init();//³õÊ¼lwnsĞ­ÒéÕ»
-  //lwns_broadcast_process_init();//¹ã²¥
-  //lwns_multicast_process_init();//×é²¥
-  //lwns_unicast_process_init();//µ¥²¥
-  //lwns_ruc_process_init();//¿É¿¿µ¥²¥
-  //lwns_rucft_process_init();//¿É¿¿µ¥²¥ÎÄ¼ş´«Êä
-  lwns_netflood_process_init();//ÍøÂç·ººé
-  //lwns_uninetflood_process_init();//µ¥²¥ÍøÂç·ººé
-  //lwns_multinetflood_process_init();//×é²¥ÍøÂç·ººé
-  //lwns_mesh_process_init();//mesh×éÍø
-  Main_Circulation();
+    GPIOA_SetBits( bTXD1 );
+    GPIOA_ModeCfg( bTXD1, GPIO_ModeOut_PP_5mA );
+    UART1_DefInit( );
+#endif
+    PRINTF("start.\n");
+    {
+        PRINTF("%s\n", VER_LIB);
+    }
+    CH59x_BLEInit();
+    HAL_Init();
+    RF_RoleInit();
+    RF_Init();
+    lwns_init();                          /* åˆå§‹lwnsåè®®æ ˆ */
+    //lwns_broadcast_process_init();      /* å¹¿æ’­ */
+    //lwns_multicast_process_init();      /* ç»„æ’­ */
+    //lwns_unicast_process_init();        /* å•æ’­ */
+    //lwns_ruc_process_init();            /* å¯é å•æ’­ */
+    //lwns_rucft_process_init();          /* å¯é å•æ’­æ–‡ä»¶ä¼ è¾“ */
+    lwns_netflood_process_init();         /* ç½‘ç»œæ³›æ´ª */
+    //lwns_uninetflood_process_init();    /* å•æ’­ç½‘ç»œæ³›æ´ª */
+    //lwns_multinetflood_process_init();  /* ç»„æ’­ç½‘ç»œæ³›æ´ª */
+    //lwns_mesh_process_init();           /* meshç»„ç½‘ */
+    Main_Circulation();
 }
 /******************************** endfile @ main ******************************/

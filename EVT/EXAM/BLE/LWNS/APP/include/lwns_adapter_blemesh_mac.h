@@ -1,12 +1,12 @@
 /********************************** (C) COPYRIGHT *******************************
  * File Name          : lwns_adapter_blemesh_mac.h
  * Author             : WCH
- * Version            : V1.0
- * Date               : 2021/06/20
- * Description        : lwnsÊÊÅäÆ÷£¬Ä£Äâble sig meshµÄmacĞ­Òé
+ * Version            : V1.1
+ * Date               : 2025/04/27
+ * Description        : lwnsé€‚é…å™¨ï¼Œæ¨¡æ‹Ÿble sig meshçš„macåè®®
  *********************************************************************************
- * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
- * Attention: This software (modified or not) and binary are used for 
+ * Copyright (c) 2025 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Attention: This software (modified or not) and binary are used for
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 #ifndef _LWNS_ADAPTER_BLEMESH_MAC_H_
@@ -18,7 +18,7 @@ extern "C" {
 
 #include "lwns_config.h"
 
-#define LWNS_USE_BLEMESH_MAC    1  //ÊÇ·ñÊ¹ÄÜÄ£·ÂblemeshµÄmacĞ­Òé£¬×¢ÒâÖ»ÄÜÊ¹ÄÜÒ»¸ömac²ãĞ­Òé¡£
+#define LWNS_USE_BLEMESH_MAC    1  /* æ˜¯å¦ä½¿èƒ½æ¨¡ä»¿blemeshçš„macåè®®ï¼Œæ³¨æ„åªèƒ½ä½¿èƒ½ä¸€ä¸ªmacå±‚åè®®ã€‚ */
 
 #if LWNS_USE_BLEMESH_MAC
 
@@ -26,34 +26,33 @@ struct blemesh_mac_phy_manage_struct
 {
     struct blemesh_mac_phy_manage_struct *next;
     uint8_t                              *data;
-}; //Ä£·Âblemesh mac²ã·¢ËÍ¹ÜÀí½á¹¹Ìå
+};  /* æ¨¡ä»¿blemesh macå±‚å‘é€ç®¡ç†ç»“æ„ä½“ */
 
-  #define LWNS_MAC_TRANSMIT_TIMES           2     //Ò»´Î·¢ËÍ£¬µ÷ÓÃÓ²¼ş·¢ËÍ¼¸´Î
+#define LWNS_MAC_TRANSMIT_TIMES           2         /* ä¸€æ¬¡å‘é€ï¼Œè°ƒç”¨ç¡¬ä»¶å‘é€å‡ æ¬¡ */
 
-  #define LWNS_MAC_PERIOD_MS                10    //mac½ÓÊÕÖÜÆÚ£¬ÂÖÁ÷ÇĞ»»
+#define LWNS_MAC_PERIOD_MS                10        /* macæ¥æ”¶å‘¨æœŸï¼Œè½®æµåˆ‡æ¢ */
 
-  #define LWNS_MAC_SEND_DELAY_MAX_MS        10    //À¶ÑÀmesh¾ÍÊÇ10msÒÔÄÚµÄËæ»úÊı¡£
+#define LWNS_MAC_SEND_DELAY_MAX_MS        10        /* è“ç‰™meshå°±æ˜¯10msä»¥å†…çš„éšæœºæ•°ã€‚ */
 
-  #define LWNS_MAC_SEND_PACKET_MAX_NUM      8     //·¢ËÍÁ´±í×î¶àÖ§³Ö¼¸¸öÊı¾İ°üµÈ´ı·¢ËÍ
+#define LWNS_MAC_SEND_PACKET_MAX_NUM      8         /* å‘é€é“¾è¡¨æœ€å¤šæ”¯æŒå‡ ä¸ªæ•°æ®åŒ…ç­‰å¾…å‘é€ */
 
-  #define BLE_PHY_ONE_PACKET_MAX_625US      5     //ble mac·¢ËÍÒ»¸ö°ü×î´ó¿ÉÄÜĞèÒªµÄÖÜÆÚ
+#define BLE_PHY_ONE_PACKET_MAX_625US      5         /* ble macå‘é€ä¸€ä¸ªåŒ…æœ€å¤§å¯èƒ½éœ€è¦çš„å‘¨æœŸ */
 
-  #define LLE_MODE_ORIGINAL_RX              (0x80) //Èç¹ûÅäÖÃLLEMODEÊ±¼ÓÉÏ´Ëºê£¬Ôò½ÓÊÕµÚÒ»×Ö½ÚÎªÔ­Ê¼Êı¾İ£¨Ô­À´ÎªRSSI£©
+#define LLE_MODE_ORIGINAL_RX              (0x80)    /* å¦‚æœé…ç½®LLEMODEæ—¶åŠ ä¸Šæ­¤å®ï¼Œåˆ™æ¥æ”¶ç¬¬ä¸€å­—èŠ‚ä¸ºåŸå§‹æ•°æ®ï¼ˆåŸæ¥ä¸ºRSSIï¼‰ */
 
-  #define LWNS_HTIMER_PERIOD_MS             20    //Îª(1000/HTIMER_SECOND_NUM)
+#define LWNS_HTIMER_PERIOD_MS             20        /* ä¸º(1000/HTIMER_SECOND_NUM) */
 
-    //RF_TXºÍRF_RXËùÓÃµÄÀàĞÍ£¬¿ÉÒÔĞŞ¸Ä£¬²»ÍÆ¼ö¸Ä
-  #define USER_RF_RX_TX_TYPE                0xff
+#define USER_RF_RX_TX_TYPE                0xff      /* RF_TXå’ŒRF_RXæ‰€ç”¨çš„ç±»å‹ï¼Œå¯ä»¥ä¿®æ”¹ï¼Œä¸æ¨èæ”¹ */
 
-  #define LWNS_PHY_OUTPUT_TIMEOUT_MS        5
+#define LWNS_PHY_OUTPUT_TIMEOUT_MS        5
 
-    //receive process evt
-  #define LWNS_PHY_RX_OPEN_EVT              1
-  #define LWNS_PHY_RX_CHANGE_CHANNEL_EVT    2
-    //send process evt
-  #define LWNS_HTIMER_PERIOD_EVT            1
-  #define LWNS_PHY_OUTPUT_PREPARE_EVT       2
-  #define LWNS_PHY_OUTPUT_FINISH_EVT        4
+/* receive process evt */
+#define LWNS_PHY_RX_OPEN_EVT              1
+#define LWNS_PHY_RX_CHANGE_CHANNEL_EVT    2
+/* send process evt */
+#define LWNS_HTIMER_PERIOD_EVT            1
+#define LWNS_PHY_OUTPUT_PREPARE_EVT       2
+#define LWNS_PHY_OUTPUT_FINISH_EVT        4
 
 extern void RF_Init(void);
 
@@ -63,9 +62,9 @@ extern void lwns_shut(void);
 
 extern void lwns_start(void);
 
-  #ifdef __cplusplus
+#ifdef __cplusplus
 }
-  #endif
+#endif
 
 #endif /* LWNS_USE_BLEMESH_MAC */
 

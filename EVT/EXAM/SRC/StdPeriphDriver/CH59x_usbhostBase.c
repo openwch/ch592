@@ -676,6 +676,7 @@ uint8_t CtrlSetUsbIntercace(uint8_t cfg)
 void USB_HostInit(void)
 {
     R8_USB_CTRL = RB_UC_HOST_MODE;
+    while(!(R8_USB_CTRL & RB_UC_HOST_MODE));
     R8_UHOST_CTRL = 0;
     R8_USB_DEV_AD = 0x00;
 

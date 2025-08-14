@@ -1,12 +1,12 @@
 /********************************** (C) COPYRIGHT *******************************
  * File Name          : lwns_adapter_no_mac.h
  * Author             : WCH
- * Version            : V1.0
- * Date               : 2021/06/20
- * Description        : lwnsÊÊÅäÆ÷£¬²»Ê¹ÓÃmacĞ­Òé£¬´¿Í¸´«
+ * Version            : V1.1
+ * Date               : 2025/04/27
+ * Description        : lwnsé€‚é…å™¨ï¼Œä¸ä½¿ç”¨macåè®®ï¼Œçº¯é€ä¼ 
  *********************************************************************************
- * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
- * Attention: This software (modified or not) and binary are used for 
+ * Copyright (c) 2025 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Attention: This software (modified or not) and binary are used for
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 #ifndef _LWNS_ADAPTER_NO_MAC_H_
@@ -18,7 +18,7 @@ extern "C" {
 
 #include "lwns_config.h"
 
-#define LWNS_USE_NO_MAC    0  //ÊÇ·ñÊ¹ÄÜ´¿Í¸´«macĞ­Òé£¬ÊÊºÏ²»´æÔÚ²¢·¢Çé¿öµÄĞÇĞÍÍøÂç£¬¼´Ö÷»úÎÊ´Ó»ú´ğµÄĞÇĞÍÍøÂç¡£
+#define LWNS_USE_NO_MAC    0    /* æ˜¯å¦ä½¿èƒ½çº¯é€ä¼ macåè®®ï¼Œé€‚åˆä¸å­˜åœ¨å¹¶å‘æƒ…å†µçš„æ˜Ÿå‹ç½‘ç»œï¼Œå³ä¸»æœºé—®ä»æœºç­”çš„æ˜Ÿå‹ç½‘ç»œã€‚ */
 
 #if LWNS_USE_NO_MAC
 
@@ -28,20 +28,19 @@ typedef enum
     BLE_PHY_MANAGE_STATE_SENDING,
 } BLE_PHY_MANAGE_STATE_t;
 
-  #define LLE_MODE_ORIGINAL_RX          (0x80) //Èç¹ûÅäÖÃLLEMODEÊ±¼ÓÉÏ´Ëºê£¬Ôò½ÓÊÕµÚÒ»×Ö½ÚÎªÔ­Ê¼Êı¾İ£¨Ô­À´ÎªRSSI£©
+#define LLE_MODE_ORIGINAL_RX          (0x80)    /* å¦‚æœé…ç½®LLEMODEæ—¶åŠ ä¸Šæ­¤å®ï¼Œåˆ™æ¥æ”¶ç¬¬ä¸€å­—èŠ‚ä¸ºåŸå§‹æ•°æ®ï¼ˆåŸæ¥ä¸ºRSSIï¼‰  */
 
-  #define LWNS_HTIMER_PERIOD_MS         20    //Îª(1000/HTIMER_SECOND_NUM)
+#define LWNS_HTIMER_PERIOD_MS         20        /* ä¸º(1000/HTIMER_SECOND_NUM) */
 
-    //RF_TXºÍRF_RXËùÓÃµÄÀàĞÍ£¬¿ÉÒÔĞŞ¸Ä£¬²»ÍÆ¼ö¸Ä
-  #define USER_RF_RX_TX_TYPE            0xff
+#define USER_RF_RX_TX_TYPE            0xff      /* RF_TXå’ŒRF_RXæ‰€ç”¨çš„ç±»å‹ï¼Œå¯ä»¥ä¿®æ”¹ï¼Œä¸æ¨èæ”¹ */
 
-  #define LWNS_PHY_OUTPUT_TIMEOUT_MS    5
+#define LWNS_PHY_OUTPUT_TIMEOUT_MS    5
 
-    //receive process evt
-  #define LWNS_PHY_RX_OPEN_EVT          1
-    //send process evt
-  #define LWNS_HTIMER_PERIOD_EVT        1
-  #define LWNS_PHY_OUTPUT_FINISH_EVT    2
+/* receive process evt */
+#define LWNS_PHY_RX_OPEN_EVT          1
+/* send process evt */
+#define LWNS_HTIMER_PERIOD_EVT        1
+#define LWNS_PHY_OUTPUT_FINISH_EVT    2
 
 extern void RF_Init(void);
 

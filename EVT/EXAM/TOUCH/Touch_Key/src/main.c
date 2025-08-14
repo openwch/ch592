@@ -66,10 +66,10 @@ int main(void)
 	SetSysClock(CLK_SOURCE_PLL_60MHz);
 	DebugInit();
 	PRINT("12 touch keys\n");
-    touch_init();
+    TKY_Init();
 	while(1)
 	{
-		touch_dataProcess();
+	    TKY_dataProcess();
 	}
 }
 

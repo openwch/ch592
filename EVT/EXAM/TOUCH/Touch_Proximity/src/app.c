@@ -20,6 +20,25 @@
  **********************/
 UINT8V timerFlag = 0;
 
+
+
+static const uint8_t touch_key_ch[ TOUCH_KEY_ELEMENTS ] = {TOUCH_KEY_CHS};
+KEY_T s_tBtn[TOUCH_KEY_ELEMENTS] = {0};
+
+touch_button_cfg_t p_selfkey =
+{
+    .num_elements = TOUCH_KEY_ELEMENTS,
+    .p_elem_index = touch_key_ch,
+    .p_stbtn = s_tBtn
+};
+
+touch_cfg_t touch_cfg =
+{
+    .touch_button_cfg = &p_selfkey,
+    .touch_slider_cfg = NULL,
+    .touch_wheel_cfg = NULL
+};
+
 /**********************
  *  STATIC PROTOTYPES
  **********************/
@@ -36,7 +55,7 @@ static void TKY_PeripheralInit(void);
  *
  * @return  none
  */
-void touch_dataProcess(void)
+void TKY_dataProcess(void)
 {
     uint8_t key_val = 0;
     static uint16_t print_time = 0;
@@ -44,7 +63,7 @@ void touch_dataProcess(void)
     if(timerFlag)
     {
         timerFlag = 0;
-        touch_KeyScan();
+        touch_Scan();
 #if PRINT_EN
         print_time++;
         if(print_time == 500)
@@ -72,11 +91,11 @@ void touch_dataProcess(void)
  *
  * @return  none
  */
-void touch_init(void)
+void TKY_Init(void)
 {
 	TKY_PeripheralInit();       /* 初始化外设，例如背光和蜂鸣器等 */
 
-	touch_InitKey();				/* 初始化触摸库  */
+    touch_Init(&touch_cfg);             /* 初始化触摸库  */
 
     TKY_SetSleepStatusValue( ~tkyPinAll.tkyQueueAll );
 

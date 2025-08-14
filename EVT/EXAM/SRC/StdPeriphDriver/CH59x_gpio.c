@@ -17,7 +17,7 @@
  *
  * @brief   GPIOA端口引脚模式配置
  *
- * @param   pin     - PA0-PA15
+ * @param   pin     - PA4-PA15,对应芯片12个GPIO引脚
  * @param   mode    - 输入输出类型
  *
  * @return  none
@@ -64,7 +64,7 @@ void GPIOA_ModeCfg(uint32_t pin, GPIOModeTypeDef mode)
  *
  * @brief   GPIOB端口引脚模式配置
  *
- * @param   pin     - PB0-PB23
+ * @param   pin     - PB0,PB4,PB6-PB7,PB10-PB15,PB22-PB23,对应芯片12个GPIO引脚
  * @param   mode    - 输入输出类型
  *
  * @return  none
@@ -111,7 +111,7 @@ void GPIOB_ModeCfg(uint32_t pin, GPIOModeTypeDef mode)
  *
  * @brief   GPIOA引脚中断模式配置
  *
- * @param   pin     - PA0-PA15
+ * @param   pin     - PA4-PA15,对应芯片12个GPIO引脚
  * @param   mode    - 触发类型
  *
  * @return  none
@@ -152,7 +152,7 @@ void GPIOA_ITModeCfg(uint32_t pin, GPIOITModeTpDef mode)
  *
  * @brief   GPIOB引脚中断模式配置
  *
- * @param   pin     - PB0-PB23
+ * @param   pin     - PB0,PB4,PB6-PB7,PB10-PB15,PB22-PB23,对应芯片12个GPIO引脚
  * @param   mode    - 触发类型
  *
  * @return  none
@@ -196,17 +196,12 @@ void GPIOB_ITModeCfg(uint32_t pin, GPIOITModeTpDef mode)
  *
  * @param   s       - 是否使能映射
  * @param   perph   - RB_RF_ANT_SW_EN -  RF antenna switch control output on PA4/PA5/PA12/PA13/PA14/PA15
- *                    RB_PIN_U0_INV -  RXD0/RXD0_/TXD0/TXD0_ invert input/output
- *                    RB_PIN_INTX   -  INTX: INT24/INT25 PB8/PB9 -> INT24_/INT25_ PB22/PB23
  *                    RB_PIN_MODEM  -  MODEM: PA6/PA7 -> PB12/PB13
- *                    RB_PIN_I2C    -  I2C: PB14/PB15 -> PB14/PB15
  *                    RB_PIN_PWMX   -  PWMX: PA12/PA13 -> PA6/PA7
  *                    RB_PIN_SPI0   -  SPI0:  PA12/PA13/PA14/PA15 -> PB12/PB13/PB14/PB15
- *                    RB_PIN_UART3  -  UART3: PA4/PA5 ->  PA4/PA5
  *                    RB_PIN_UART2  -  UART2: PB22/PB23 ->  PA6/PA7
  *                    RB_PIN_UART1  -  UART1: PA8/PA9 ->  PB12/PB13
  *                    RB_PIN_UART0  -  UART0: PB4/PB7 ->  PA15/PA14
- *                    RB_PIN_TMR3   -  TMR2:  PB22 ->  PB22
  *                    RB_PIN_TMR2   -  TMR2:  PA11 ->  PB11
  *                    RB_PIN_TMR1   -  TMR1:  PA10 ->  PB10
  *                    RB_PIN_TMR0   -  TMR0:  PA9 ->  PB23

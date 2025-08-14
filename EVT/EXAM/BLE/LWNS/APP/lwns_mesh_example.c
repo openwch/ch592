@@ -1,30 +1,27 @@
 /********************************** (C) COPYRIGHT *******************************
  * File Name          : lwns_mesh_example.c
  * Author             : WCH
- * Version            : V1.0
- * Date               : 2021/06/28
- * Description        : mesh´«Êä³ÌĞòÀı×Ó
+ * Version            : V1.1
+ * Date               : 2025/04/27
+ * Description        : meshä¼ è¾“ç¨‹åºä¾‹å­
  *********************************************************************************
- * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Copyright (c) 2025 Nanjing Qinheng Microelectronics Co., Ltd.
  * Attention: This software (modified or not) and binary are used for 
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 #include "lwns_mesh_example.h"
 
-//Ã¿¸öÎÄ¼şµ¥¶Àdebug´òÓ¡µÄ¿ª¹Ø£¬ÖÃ0¿ÉÒÔ½ûÖ¹±¾ÎÄ¼şÄÚ²¿´òÓ¡
+/* æ¯ä¸ªæ–‡ä»¶å•ç‹¬debugæ‰“å°çš„å¼€å…³ï¼Œç½®0å¯ä»¥ç¦æ­¢æœ¬æ–‡ä»¶å†…éƒ¨æ‰“å° */
 #define DEBUG_PRINT_IN_THIS_FILE    1
 #if DEBUG_PRINT_IN_THIS_FILE
-  #define PRINTF(...)    PRINT(__VA_ARGS__)
+  #define PRINTF(...)       PRINT(__VA_ARGS__)
 #else
-  #define PRINTF(...) \
-    do                \
-    {                 \
-    } while(0)
+  #define PRINTF(...)       do{} while(0)
 #endif
 
-#define MESH_TEST_ROUTE_AUTO       1  //ÉèÖÃÊÇ·ñ×Ô¶¯¹ÜÀíÂ·ÓÉ±í
-#define MESH_TEST_SELF_ADDR_IDX    2  //µ±Ç°²âÊÔÖĞ½ÚµãµØÖ·£¬ÔÚdevice_addrÊı×éÖĞ
-#define MESH_TEST_ADDR_MAX_IDX     2  //µ±Ç°²âÊÔÖĞ£¬ÓĞ¶àÉÙ¸ö½Úµã
+#define MESH_TEST_ROUTE_AUTO       1  /* è®¾ç½®æ˜¯å¦è‡ªåŠ¨ç®¡ç†è·¯ç”±è¡¨ */
+#define MESH_TEST_SELF_ADDR_IDX    2  /* å½“å‰æµ‹è¯•ä¸­èŠ‚ç‚¹åœ°å€ï¼Œåœ¨device_addræ•°ç»„ä¸­ */
+#define MESH_TEST_ADDR_MAX_IDX     2  /* å½“å‰æµ‹è¯•ä¸­ï¼Œæœ‰å¤šå°‘ä¸ªèŠ‚ç‚¹ */
 
 static uint8_t mesh_test_send_dst = 0;
 
@@ -35,19 +32,19 @@ static uint16_t          lwns_mesh_test_ProcessEvent(uint8_t task_id, uint16_t e
 static uint8_t           TX_DATA[10] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
                               0x38, 0x39};
 static const lwns_addr_t device_addr[] = {
-    {0x00, 0x00, 0x00, 0x00, 0x00, 0x01}, //¸ù½ÚµãµØÖ·
-    {0x00, 0x00, 0x00, 0x00, 0x01, 0x01}, //×é1Â·ÓÉ½Úµã1
-    {0x00, 0x00, 0x00, 0x00, 0x01, 0x02}, //×é1½Úµã2
-    {0x00, 0x00, 0x00, 0x00, 0x01, 0x03}, //×é1½Úµã3
-    {0x00, 0x00, 0x00, 0x00, 0x01, 0x04}, //×é1½Úµã4
-    {0x00, 0x00, 0x00, 0x00, 0x02, 0x01}, //×é2Â·ÓÉ½Úµã1
-    {0x00, 0x00, 0x00, 0x00, 0x02, 0x02}, //×é2½Úµã2
-    {0x00, 0x00, 0x00, 0x00, 0x02, 0x03}, //×é2½Úµã3
-    {0x00, 0x00, 0x00, 0x00, 0x02, 0x04}, //×é2½Úµã4
-    {0x00, 0x00, 0x00, 0x00, 0x03, 0x01}, //×é3Â·ÓÉ½Úµã1
-    {0x00, 0x00, 0x00, 0x00, 0x03, 0x02}, //×é3½Úµã2
-    {0x00, 0x00, 0x00, 0x00, 0x03, 0x03}, //×é3½Úµã3
-    {0x00, 0x00, 0x00, 0x00, 0x03, 0x04}, //×é3½Úµã4
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x01}, /* æ ¹èŠ‚ç‚¹åœ°å€ */
+    {0x00, 0x00, 0x00, 0x00, 0x01, 0x01}, /* ç»„1è·¯ç”±èŠ‚ç‚¹1 */
+    {0x00, 0x00, 0x00, 0x00, 0x01, 0x02}, /* ç»„1èŠ‚ç‚¹2 */
+    {0x00, 0x00, 0x00, 0x00, 0x01, 0x03}, /* ç»„1èŠ‚ç‚¹3 */
+    {0x00, 0x00, 0x00, 0x00, 0x01, 0x04}, /* ç»„1èŠ‚ç‚¹4 */
+    {0x00, 0x00, 0x00, 0x00, 0x02, 0x01}, /* ç»„2è·¯ç”±èŠ‚ç‚¹1 */
+    {0x00, 0x00, 0x00, 0x00, 0x02, 0x02}, /* ç»„2èŠ‚ç‚¹2 */
+    {0x00, 0x00, 0x00, 0x00, 0x02, 0x03}, /* ç»„2èŠ‚ç‚¹3 */
+    {0x00, 0x00, 0x00, 0x00, 0x02, 0x04}, /* ç»„2èŠ‚ç‚¹4 */
+    {0x00, 0x00, 0x00, 0x00, 0x03, 0x01}, /* ç»„3è·¯ç”±èŠ‚ç‚¹1 */
+    {0x00, 0x00, 0x00, 0x00, 0x03, 0x02}, /* ç»„3èŠ‚ç‚¹2 */
+    {0x00, 0x00, 0x00, 0x00, 0x03, 0x03}, /* ç»„3èŠ‚ç‚¹3 */
+    {0x00, 0x00, 0x00, 0x00, 0x03, 0x04}, /* ç»„3èŠ‚ç‚¹4 */
 };
 
 static void lwns_mesh_recv(lwns_controller_ptr ptr,
@@ -58,11 +55,11 @@ static void lwns_mesh_timedout(lwns_controller_ptr ptr);
 /*********************************************************************
  * @fn      lwns_mesh_recv
  *
- * @brief   lwns mesh½ÓÊÕ»Øµ÷º¯Êı
+ * @brief   lwns meshæ¥æ”¶å›è°ƒå‡½æ•°
  *
- * @param   ptr     -   ±¾´Î½ÓÊÕµ½µÄÊı¾İËùÊôµÄmesh¿ØÖÆ½á¹¹ÌåÖ¸Õë.
- * @param   sender  -   ±¾´Î½ÓÊÕµ½µÄÊı¾İµÄ·¢ËÍÕßµØÖ·Ö¸Õë.
- * @param   hops    -   ±¾´Î½ÓÊÕµ½µÄÊı¾İµÄ´Ó·¢ËÍ·½µ½±¾½Úµã¾­ÀúµÄÌøÊı.
+ * @param   ptr     -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®æ‰€å±çš„meshæ§åˆ¶ç»“æ„ä½“æŒ‡é’ˆ.
+ * @param   sender  -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®çš„å‘é€è€…åœ°å€æŒ‡é’ˆ.
+ * @param   hops    -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®çš„ä»å‘é€æ–¹åˆ°æœ¬èŠ‚ç‚¹ç»å†çš„è·³æ•°.
  *
  * @return  None.
  */
@@ -75,7 +72,7 @@ static void lwns_mesh_recv(lwns_controller_ptr ptr,
            (char *)lwns_buffer_dataptr(), lwns_buffer_datalen());
     if(MESH_TEST_SELF_ADDR_IDX != 0)
     {
-        //²»Îª0£¬Ö¤Ã÷ÊÇ´Ó»ú£¬ÊÕµ½ºó»Ø¸´Ö÷»ú
+        /* ä¸ä¸º0ï¼Œè¯æ˜æ˜¯ä»æœºï¼Œæ”¶åˆ°åå›å¤ä¸»æœº */
         lwns_buffer_save_data(TX_DATA);
         tmos_set_event(lwns_mesh_test_taskID, MESH_EXAMPLE_TX_NODE_EVT);
     }
@@ -84,9 +81,9 @@ static void lwns_mesh_recv(lwns_controller_ptr ptr,
 /*********************************************************************
  * @fn      lwns_mesh_sent
  *
- * @brief   lwns mesh·¢ËÍÍê³É»Øµ÷º¯Êı
+ * @brief   lwns meshå‘é€å®Œæˆå›è°ƒå‡½æ•°
  *
- * @param   ptr     -   ±¾´Î·¢ËÍÍê³ÉµÄmesh¿ØÖÆ½á¹¹ÌåÖ¸Õë.
+ * @param   ptr     -   æœ¬æ¬¡å‘é€å®Œæˆçš„meshæ§åˆ¶ç»“æ„ä½“æŒ‡é’ˆ.
  *
  * @return  None.
  */
@@ -98,34 +95,34 @@ static void lwns_mesh_sent(lwns_controller_ptr ptr)
 /*********************************************************************
  * @fn      lwns_mesh_timedout
  *
- * @brief   lwns mesh·¢ËÍ³¬Ê±»Øµ÷º¯Êı
+ * @brief   lwns meshå‘é€è¶…æ—¶å›è°ƒå‡½æ•°
  *
- * @param   ptr     -   ±¾´Î·¢ËÍÍê³ÉµÄmesh¿ØÖÆ½á¹¹ÌåÖ¸Õë.
+ * @param   ptr     -   æœ¬æ¬¡å‘é€å®Œæˆçš„meshæ§åˆ¶ç»“æ„ä½“æŒ‡é’ˆ.
  *
  * @return  None.
  */
 static void lwns_mesh_timedout(lwns_controller_ptr ptr)
 {
-    //Ñ°ÕÒÂ·ÓÉ³¬Ê±²Å»á½øÈë¸Ã»Øµ÷£¬Èç¹ûÒÑ¾­ÓĞÂ·ÓÉ£¬µ«ÊÇÏÂÒ»Ìø½ÚµãµôÏß£¬²»»á½øÈë¸Ã»Øµ÷¡£ÓÉlwns_route_init(TRUE, 60, HTIMER_SECOND_NUM);À´¹ÜÀíµôÏßÊ±¼ä¡£
+    /* å¯»æ‰¾è·¯ç”±è¶…æ—¶æ‰ä¼šè¿›å…¥è¯¥å›è°ƒï¼Œå¦‚æœå·²ç»æœ‰è·¯ç”±ï¼Œä½†æ˜¯ä¸‹ä¸€è·³èŠ‚ç‚¹æ‰çº¿ï¼Œä¸ä¼šè¿›å…¥è¯¥å›è°ƒã€‚ç”±lwns_route_init(TRUE, 60, HTIMER_SECOND_NUM);æ¥ç®¡ç†æ‰çº¿æ—¶é—´ã€‚ */
     PRINTF("mesh %d packet timedout\n", get_lwns_object_port(ptr));
 }
 
 /**
- * lwns mesh»Øµ÷º¯Êı½á¹¹Ìå£¬×¢²á»Øµ÷º¯Êı
+ * lwns meshå›è°ƒå‡½æ•°ç»“æ„ä½“ï¼Œæ³¨å†Œå›è°ƒå‡½æ•°
  */
 static const struct lwns_mesh_callbacks callbacks = {lwns_mesh_recv,
                                                      lwns_mesh_sent, lwns_mesh_timedout};
 
 /*
- * mesh²ÉÓÃnetfloodÄ£¿é½øĞĞÑ°ÕÒÂ·ÓÉ£¬ËùÒÔ³õÊ¼»¯²ÎÊıÖĞ°üÀ¨ÁËnetfloodËùĞèÒªµÄ²ÎÊı
- * meshÎªÀûÓÃÂ·ÓÉ½øĞĞ¶àÌø×ª·¢µÄ»ù´¡½á¹¹
- * meshÄ£¿éÊ¹ÓÃÇ°±ØĞë³õÊ¼»¯Â·ÓÉ£¬°üÀ¨¿â³õÊ¼»¯Ê±¸øÂ·ÓÉ±íÌá¹©µÄÄÚ´æ¿Õ¼ä¡£
+ * meshé‡‡ç”¨netfloodæ¨¡å—è¿›è¡Œå¯»æ‰¾è·¯ç”±ï¼Œæ‰€ä»¥åˆå§‹åŒ–å‚æ•°ä¸­åŒ…æ‹¬äº†netfloodæ‰€éœ€è¦çš„å‚æ•°
+ * meshä¸ºåˆ©ç”¨è·¯ç”±è¿›è¡Œå¤šè·³è½¬å‘çš„åŸºç¡€ç»“æ„
+ * meshæ¨¡å—ä½¿ç”¨å‰å¿…é¡»åˆå§‹åŒ–è·¯ç”±ï¼ŒåŒ…æ‹¬åº“åˆå§‹åŒ–æ—¶ç»™è·¯ç”±è¡¨æä¾›çš„å†…å­˜ç©ºé—´ã€‚
  */
 
 /*********************************************************************
  * @fn      lwns_mesh_process_init
  *
- * @brief   lwns meshÀı³Ì³õÊ¼»¯.
+ * @brief   lwns meshä¾‹ç¨‹åˆå§‹åŒ–.
  *
  * @param   None.
  *
@@ -135,33 +132,33 @@ void lwns_mesh_process_init(void)
 {
     uint8_t route_enable = FALSE;
     lwns_addr_set(
-        (lwns_addr_t *)(&device_addr[MESH_TEST_SELF_ADDR_IDX])); //¸Ä±älwnsÄÚ²¿addr
+        (lwns_addr_t *)(&device_addr[MESH_TEST_SELF_ADDR_IDX])); /* æ”¹å˜lwnså†…éƒ¨addr */
     if(device_addr[MESH_TEST_SELF_ADDR_IDX].v8[5] == 1)
     {
-        //Ã¿Ò»×éµÚÒ»¸ö½Úµã´ò¿ªÂ·ÓÉ¹¦ÄÜ£¬ÆäËû½Úµã²»´ò¿ªÂ·ÓÉ¹¦ÄÜ
+        /* æ¯ä¸€ç»„ç¬¬ä¸€ä¸ªèŠ‚ç‚¹æ‰“å¼€è·¯ç”±åŠŸèƒ½ï¼Œå…¶ä»–èŠ‚ç‚¹ä¸æ‰“å¼€è·¯ç”±åŠŸèƒ½ */
         route_enable = TRUE;
     }
     lwns_mesh_test_taskID = TMOS_ProcessEventRegister(lwns_mesh_test_ProcessEvent);
 #if MESH_TEST_ROUTE_AUTO
     lwns_route_init(TRUE, 60, HTIMER_SECOND_NUM);
 #else
-    lwns_route_init(TRUE, 0, HTIMER_SECOND_NUM); //disable auto clean route entry
-#endif                                    /*MESH_TEST_ROUTE_AUTO*/
-    lwns_mesh_init(&lwns_mesh_test, 132,  //´ò¿ªÒ»¸ö¶Ë¿ÚºÅ132µÄmeshÍøÂç£¬Í¬Ê±Õ¼ÓÃºóÆäËûµÄÁ½¸ö¶Ë¿ÚÓÃ×÷Ñ°ÕÒÂ·ÓÉ£¬¼´133£¬134Ò²Í¬Ê±´ò¿ªÁË¡£
-                   HTIMER_SECOND_NUM / 2, //netfloodµÄQUEUETIME¹¦ÄÜ
-                   1,                     //netfloodµÄdups¹¦ÄÜ
-                   2,                     //×î´óÌøÔ¾´ÎÊı²ã¼¶Îª5¼¶£¬¼´Êı¾İ°ü×î¶à¿ÉÒÔ¾­¹ı5´Î×ª·¢£¬³¬³ö¾Í¶ªÆúÊı¾İ°ü
-                   FALSE,                 //ÔÚÂ·ÓÉÇëÇóµÄ×ª·¢¹ı³ÌÖĞ£¬ÊÕµ½ÁËĞÂµÄĞèÒª×ª·¢µÄÊı¾İ°ü£¬¾ÉÊı¾İ°üÊÇÁ¢¿Ì·¢ËÍ³öÈ¥»¹ÊÇ¶ªÆú£¬FALSEÎªÁ¢¿Ì·¢ËÍ£¬TRUEÎª¶ªÆú¡£
-                   50,                    //ÍøÂç»Ö¸´²ÎÊı£¬¸ÃÖµ¶¨ÒåÁËÒ»¸ö²î¾à£¬Èç¹û°üĞòºÅ±ÈÄÚ´æÄÚ±£´æµÄÊı¾İ°üĞòºÅĞ¡µÄÖµ´óÓÚ´ËÖµ£¬Ôò»áÈÏÎªÍøÂç¹ÊÕÏ»Ö¸´£¬¼ÌĞø½ÓÊÕ¸ÃÊı¾İ°ü¡£
-                   //Í¬Ê±£¬¸ÃÖµÒ²¾ö¶¨ÁËÅĞ¶¨ÎªĞÂÊı¾İ°üµÄ²îÖµ£¬¼´À´×ÔÍ¬Ò»¸ö½ÚµãµÄĞÂÊı¾İ°üµÄĞòºÅ²»¿ÉÒÔ±ÈÄÚ´æÖĞµÄ´ó¹ı¶à£¬¼´±È´ËÖµ»¹´ó¡£
-                   //ÀıÈç£¬ÄÚ´æÖĞ±£´æµÄÎª10£¬ĞÂÊı¾İ°üĞòºÅÎª60£¬²îÖµÎª50£¬´óÓÚµÈÓÚ´ËÊ±ÉèÖÃµÄ50£¬ËùÒÔ½«²»»á±»ÈÏÎªÎªĞÂµÄÊı¾İ°ü£¬±»¶ªÆú¡£
-                   //Ö»ÓĞĞòºÅÎª59£¬²îÖµÎª49£¬Ğ¡ÓÚ¸ÃÖµ£¬²Å»á±»½ÓÊÕ¡£
-                   route_enable,          //ÊÇ·ñÊ¹ÄÜ±¾»úµÄÂ·ÓÉ¹¦ÄÜ£¬Èç¹ûÎªfalse£¬²»»áÏìÓ¦ÆäËû½ÚµãµÄÂ·ÓÉÇëÇó¡£
-                   TRUE,                  //¾ö¶¨ÊÇ·ñÌí¼ÓÂ·ÓÉ»ØÂ·£¬±ÈÈçÊÕµ½ÁËÒ»¸öÀ´×Ôa½ÚµãµÄmeshÊı¾İ°ü£¬±¾»úÊÇ·ñĞèÒª´æ´¢Ç°Íùa½ÚµãµÄÂ·ÓÉ±í¡£FALSE²»´æ£¬TRUE´æ¡£
-                   HTIMER_SECOND_NUM * 2, //Â·ÓÉ³¬Ê±Ê±¼ä£¬³¬¹ıÊ±¼ä£¬Í£Ö¹Ñ°ÕÒÂ·ÓÉ£¬½øÈëtimeout»Øµ÷£¬¸ÃÖµÓ¦´óÓÚ route_discovery_hoptime * (hops+1) * 2
-                   &callbacks);           //Ã»ÓĞ³õÊ¼»¯Â·ÓÉ±íµÄ»°£¬»á·µ»Ø0£¬´ú±í´ò¿ªÊ§°Ü¡£·µ»Ø1´ò¿ª³É¹¦¡£
-    if(MESH_TEST_SELF_ADDR_IDX == 0)
-    { //Èç¹ûÊÇÖ÷»ú£¬Ôò¿ªÊ¼ÖÜÆÚĞÔÂÖÑµÆäËû½Úµã¡£
+    lwns_route_init(TRUE, 0, HTIMER_SECOND_NUM); /* disable auto clean route entry */
+#endif /* MESH_TEST_ROUTE_AUTO */
+    lwns_mesh_init(&lwns_mesh_test, 132,  /* æ‰“å¼€ä¸€ä¸ªç«¯å£å·132çš„meshç½‘ç»œï¼ŒåŒæ—¶å ç”¨åå…¶ä»–çš„ä¸¤ä¸ªç«¯å£ç”¨ä½œå¯»æ‰¾è·¯ç”±ï¼Œå³133ï¼Œ134ä¹ŸåŒæ—¶æ‰“å¼€äº†ã€‚ */
+                   HTIMER_SECOND_NUM / 2, /* netfloodçš„QUEUETIMEåŠŸèƒ½ */
+                   1,                     /* netfloodçš„dupsåŠŸèƒ½ */
+                   2,                     /* æœ€å¤§è·³è·ƒæ¬¡æ•°å±‚çº§ä¸º5çº§ï¼Œå³æ•°æ®åŒ…æœ€å¤šå¯ä»¥ç»è¿‡5æ¬¡è½¬å‘ï¼Œè¶…å‡ºå°±ä¸¢å¼ƒæ•°æ®åŒ… */
+                   FALSE,                 /* åœ¨è·¯ç”±è¯·æ±‚çš„è½¬å‘è¿‡ç¨‹ä¸­ï¼Œæ”¶åˆ°äº†æ–°çš„éœ€è¦è½¬å‘çš„æ•°æ®åŒ…ï¼Œæ—§æ•°æ®åŒ…æ˜¯ç«‹åˆ»å‘é€å‡ºå»è¿˜æ˜¯ä¸¢å¼ƒï¼ŒFALSEä¸ºç«‹åˆ»å‘é€ï¼ŒTRUEä¸ºä¸¢å¼ƒã€‚ */
+                   50,                    /* ç½‘ç»œæ¢å¤å‚æ•°ï¼Œè¯¥å€¼å®šä¹‰äº†ä¸€ä¸ªå·®è·ï¼Œå¦‚æœåŒ…åºå·æ¯”å†…å­˜å†…ä¿å­˜çš„æ•°æ®åŒ…åºå·å°çš„å€¼å¤§äºæ­¤å€¼ï¼Œåˆ™ä¼šè®¤ä¸ºç½‘ç»œæ•…éšœæ¢å¤ï¼Œç»§ç»­æ¥æ”¶è¯¥æ•°æ®åŒ…ã€‚
+                                                                                                                        åŒæ—¶ï¼Œè¯¥å€¼ä¹Ÿå†³å®šäº†åˆ¤å®šä¸ºæ–°æ•°æ®åŒ…çš„å·®å€¼ï¼Œå³æ¥è‡ªåŒä¸€ä¸ªèŠ‚ç‚¹çš„æ–°æ•°æ®åŒ…çš„åºå·ä¸å¯ä»¥æ¯”å†…å­˜ä¸­çš„å¤§è¿‡å¤šï¼Œå³æ¯”æ­¤å€¼è¿˜å¤§ã€‚
+                                                                                                                        ä¾‹å¦‚ï¼Œå†…å­˜ä¸­ä¿å­˜çš„ä¸º10ï¼Œæ–°æ•°æ®åŒ…åºå·ä¸º60ï¼Œå·®å€¼ä¸º50ï¼Œå¤§äºç­‰äºæ­¤æ—¶è®¾ç½®çš„50ï¼Œæ‰€ä»¥å°†ä¸ä¼šè¢«è®¤ä¸ºä¸ºæ–°çš„æ•°æ®åŒ…ï¼Œè¢«ä¸¢å¼ƒã€‚
+                                                                                                                        åªæœ‰åºå·ä¸º59ï¼Œå·®å€¼ä¸º49ï¼Œå°äºè¯¥å€¼ï¼Œæ‰ä¼šè¢«æ¥æ”¶ã€‚ */
+                   route_enable,          /* æ˜¯å¦ä½¿èƒ½æœ¬æœºçš„è·¯ç”±åŠŸèƒ½ï¼Œå¦‚æœä¸ºfalseï¼Œä¸ä¼šå“åº”å…¶ä»–èŠ‚ç‚¹çš„è·¯ç”±è¯·æ±‚ã€‚ */
+                   TRUE,                  /* å†³å®šæ˜¯å¦æ·»åŠ è·¯ç”±å›è·¯ï¼Œæ¯”å¦‚æ”¶åˆ°äº†ä¸€ä¸ªæ¥è‡ªaèŠ‚ç‚¹çš„meshæ•°æ®åŒ…ï¼Œæœ¬æœºæ˜¯å¦éœ€è¦å­˜å‚¨å‰å¾€aèŠ‚ç‚¹çš„è·¯ç”±è¡¨ã€‚FALSEä¸å­˜ï¼ŒTRUEå­˜ã€‚ */
+                   HTIMER_SECOND_NUM * 2, /* è·¯ç”±è¶…æ—¶æ—¶é—´ï¼Œè¶…è¿‡æ—¶é—´ï¼Œåœæ­¢å¯»æ‰¾è·¯ç”±ï¼Œè¿›å…¥timeoutå›è°ƒï¼Œè¯¥å€¼åº”å¤§äº route_discovery_hoptime * (hops+1) * 2 */
+                   &callbacks);           /* æ²¡æœ‰åˆå§‹åŒ–è·¯ç”±è¡¨çš„è¯ï¼Œä¼šè¿”å›0ï¼Œä»£è¡¨æ‰“å¼€å¤±è´¥ã€‚è¿”å›1æ‰“å¼€æˆåŠŸã€‚ */
+    if(MESH_TEST_SELF_ADDR_IDX == 0) /* å¦‚æœæ˜¯ä¸»æœºï¼Œåˆ™å¼€å§‹å‘¨æœŸæ€§è½®è®­å…¶ä»–èŠ‚ç‚¹ã€‚ */
+    {
         mesh_test_send_dst = 1;
         tmos_start_task(lwns_mesh_test_taskID, MESH_EXAMPLE_TX_PERIOD_EVT,
                         MS1_TO_SYSTEM_TIME(200));
@@ -171,73 +168,73 @@ void lwns_mesh_process_init(void)
         uint8_t i;
         for(i = 1; i < 5; i++)
         {
-            lwns_route_add(&device_addr[i], &device_addr[1], 2); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
+            lwns_route_add(&device_addr[i], &device_addr[1], 2); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
         }
         for(i = 5; i < 9; i++)
         {
-            lwns_route_add(&device_addr[i], &device_addr[5], 2); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
+            lwns_route_add(&device_addr[i], &device_addr[5], 2); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
         }
         for(i = 9; i < 13; i++)
         {
-            lwns_route_add(&device_addr[i], &device_addr[9], 2); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
+            lwns_route_add(&device_addr[i], &device_addr[9], 2); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
         }
     }
     else if(MESH_TEST_SELF_ADDR_IDX == 1)
     {
-        lwns_route_add(&device_addr[4], &device_addr[4], 1); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
-        lwns_route_add(&device_addr[3], &device_addr[3], 1); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
-        lwns_route_add(&device_addr[2], &device_addr[2], 1); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
-        lwns_route_add(&device_addr[0], &device_addr[0], 1); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
+        lwns_route_add(&device_addr[4], &device_addr[4], 1); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
+        lwns_route_add(&device_addr[3], &device_addr[3], 1); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
+        lwns_route_add(&device_addr[2], &device_addr[2], 1); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
+        lwns_route_add(&device_addr[0], &device_addr[0], 1); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
     }
     else if(MESH_TEST_SELF_ADDR_IDX == 2)
     {
-        lwns_route_add(&device_addr[0], &device_addr[1], 2); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
+        lwns_route_add(&device_addr[0], &device_addr[1], 2); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
     }
     else if(MESH_TEST_SELF_ADDR_IDX == 3)
     {
-        lwns_route_add(&device_addr[0], &device_addr[1], 2); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
+        lwns_route_add(&device_addr[0], &device_addr[1], 2); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
     }
     else if(MESH_TEST_SELF_ADDR_IDX == 4)
     {
-        lwns_route_add(&device_addr[0], &device_addr[1], 2); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
+        lwns_route_add(&device_addr[0], &device_addr[1], 2); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
     }
     else if(MESH_TEST_SELF_ADDR_IDX == 5)
     {
-        lwns_route_add(&device_addr[6], &device_addr[6], 1); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
-        lwns_route_add(&device_addr[7], &device_addr[7], 1); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
-        lwns_route_add(&device_addr[8], &device_addr[8], 1); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
-        lwns_route_add(&device_addr[0], &device_addr[0], 1); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
+        lwns_route_add(&device_addr[6], &device_addr[6], 1); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
+        lwns_route_add(&device_addr[7], &device_addr[7], 1); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
+        lwns_route_add(&device_addr[8], &device_addr[8], 1); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
+        lwns_route_add(&device_addr[0], &device_addr[0], 1); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
     }
     else if(MESH_TEST_SELF_ADDR_IDX == 6)
     {
-        lwns_route_add(&device_addr[0], &device_addr[5], 2); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
+        lwns_route_add(&device_addr[0], &device_addr[5], 2); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
     }
     else if(MESH_TEST_SELF_ADDR_IDX == 7)
     {
-        lwns_route_add(&device_addr[0], &device_addr[5], 2); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
+        lwns_route_add(&device_addr[0], &device_addr[5], 2); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
     }
     else if(MESH_TEST_SELF_ADDR_IDX == 8)
     {
-        lwns_route_add(&device_addr[0], &device_addr[5], 2); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
+        lwns_route_add(&device_addr[0], &device_addr[5], 2); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
     }
     else if(MESH_TEST_SELF_ADDR_IDX == 9)
     {
-        lwns_route_add(&device_addr[10], &device_addr[10], 1); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
-        lwns_route_add(&device_addr[11], &device_addr[11], 1); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
-        lwns_route_add(&device_addr[12], &device_addr[12], 1); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
-        lwns_route_add(&device_addr[0], &device_addr[0], 1);   //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
+        lwns_route_add(&device_addr[10], &device_addr[10], 1); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
+        lwns_route_add(&device_addr[11], &device_addr[11], 1); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
+        lwns_route_add(&device_addr[12], &device_addr[12], 1); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
+        lwns_route_add(&device_addr[0], &device_addr[0], 1);   /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
     }
     else if(MESH_TEST_SELF_ADDR_IDX == 10)
     {
-        lwns_route_add(&device_addr[0], &device_addr[9], 2); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
+        lwns_route_add(&device_addr[0], &device_addr[9], 2); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
     }
     else if(MESH_TEST_SELF_ADDR_IDX == 11)
     {
-        lwns_route_add(&device_addr[0], &device_addr[9], 2); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
+        lwns_route_add(&device_addr[0], &device_addr[9], 2); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
     }
     else if(MESH_TEST_SELF_ADDR_IDX == 12)
     {
-        lwns_route_add(&device_addr[0], &device_addr[9], 2); //ÊÖ¶¯¹ÜÀí£¬Ìí¼ÓÂ·ÓÉÌõÄ¿
+        lwns_route_add(&device_addr[0], &device_addr[9], 2); /* æ‰‹åŠ¨ç®¡ç†ï¼Œæ·»åŠ è·¯ç”±æ¡ç›® */
 #endif /*MESH_TEST_ROUTE_AUTO*/
     }
 }
@@ -257,21 +254,21 @@ void lwns_mesh_process_init(void)
  */
 static uint16_t lwns_mesh_test_ProcessEvent(uint8_t task_id, uint16_t events)
 {
-    if(events & MESH_EXAMPLE_TX_PERIOD_EVT)
-    { //Ö÷»úÖÜÆÚĞÔÂÖÑ¯´Ó»úÈÎÎñ
+    if(events & MESH_EXAMPLE_TX_PERIOD_EVT) /* ä¸»æœºå‘¨æœŸæ€§è½®è¯¢ä»æœºä»»åŠ¡ */
+    {
         uint8_t                  temp;
         struct lwns_route_entry *rt;
         temp = TX_DATA[0];
         for(uint8_t i = 0; i < 9; i++)
         {
-            TX_DATA[i] = TX_DATA[i + 1]; //ÒÆÎ»·¢ËÍÊı¾İ£¬ÒÔ±ã¹Û²ìĞ§¹û
+            TX_DATA[i] = TX_DATA[i + 1]; /* ç§»ä½å‘é€æ•°æ®ï¼Œä»¥ä¾¿è§‚å¯Ÿæ•ˆæœ */
         }
         TX_DATA[9] = temp;
-        lwns_buffer_load_data(TX_DATA, sizeof(TX_DATA));          //ÔØÈëĞèÒª·¢ËÍµÄÊı¾İµ½»º³åÇø
-        rt = lwns_route_lookup(&device_addr[mesh_test_send_dst]); //ÔÚÂ·ÓÉ±íÖĞÑ°ÕÒÏÂÒ»ÌøÂ·ÓÉ
+        lwns_buffer_load_data(TX_DATA, sizeof(TX_DATA));          /* è½½å…¥éœ€è¦å‘é€çš„æ•°æ®åˆ°ç¼“å†²åŒº */
+        rt = lwns_route_lookup(&device_addr[mesh_test_send_dst]); /* åœ¨è·¯ç”±è¡¨ä¸­å¯»æ‰¾ä¸‹ä¸€è·³è·¯ç”± */
         if(rt != NULL)
         {
-            //´òÓ¡ÏÂÒ»ÌøÂ·ÓÉĞÅÏ¢
+            /* æ‰“å°ä¸‹ä¸€è·³è·¯ç”±ä¿¡æ¯ */
             PRINTF("dst:%d,forwarding to %02x.%02x.%02x.%02x.%02x.%02x\n",
                    mesh_test_send_dst, rt->nexthop.v8[0], rt->nexthop.v8[1],
                    rt->nexthop.v8[2], rt->nexthop.v8[3], rt->nexthop.v8[4],
@@ -281,30 +278,30 @@ static uint16_t lwns_mesh_test_ProcessEvent(uint8_t task_id, uint16_t events)
         {
             PRINTF("no route to dst:%d\n", mesh_test_send_dst);
         }
-        lwns_mesh_send(&lwns_mesh_test, &device_addr[mesh_test_send_dst]); //·¢ËÍmeshÏûÏ¢
-        mesh_test_send_dst++;                                              //ÂÖÑ¯Ä¿±ê½Úµã¸ÄÎªÏÂÒ»¸ö
-        if(mesh_test_send_dst > MESH_TEST_ADDR_MAX_IDX)
-        { //Ñ­»·Íù¸´ÂÖÑ¯
+        lwns_mesh_send(&lwns_mesh_test, &device_addr[mesh_test_send_dst]); /* å‘é€meshæ¶ˆæ¯ */
+        mesh_test_send_dst++;                                              /* è½®è¯¢ç›®æ ‡èŠ‚ç‚¹æ”¹ä¸ºä¸‹ä¸€ä¸ª */
+        if(mesh_test_send_dst > MESH_TEST_ADDR_MAX_IDX) /* å¾ªç¯å¾€å¤è½®è¯¢ */
+        {
             mesh_test_send_dst = 1;
         }
         tmos_start_task(lwns_mesh_test_taskID, MESH_EXAMPLE_TX_PERIOD_EVT,
-                        MS1_TO_SYSTEM_TIME(2500)); //ÖÜÆÚĞÔÂÖÑ¯
+                        MS1_TO_SYSTEM_TIME(2500)); /* å‘¨æœŸæ€§è½®è¯¢ */
         return (events ^ MESH_EXAMPLE_TX_PERIOD_EVT);
     }
-    if(events & MESH_EXAMPLE_TX_NODE_EVT)
-    { //½Úµã¸øÖ÷»ú·¢ËÍÊı¾İµÄÈÎÎñ
+    if(events & MESH_EXAMPLE_TX_NODE_EVT)   /* èŠ‚ç‚¹ç»™ä¸»æœºå‘é€æ•°æ®çš„ä»»åŠ¡ */
+    {
         struct lwns_route_entry *rt;
-        lwns_buffer_load_data(TX_DATA, sizeof(TX_DATA)); //ÔØÈëĞèÒª·¢ËÍµÄÊı¾İµ½»º³åÇø
-        rt = lwns_route_lookup(&device_addr[0]);         //ÔÚÂ·ÓÉ±íÖĞÑ°ÕÒÏÂÒ»ÌøÂ·ÓÉ
+        lwns_buffer_load_data(TX_DATA, sizeof(TX_DATA)); /* è½½å…¥éœ€è¦å‘é€çš„æ•°æ®åˆ°ç¼“å†²åŒº */
+        rt = lwns_route_lookup(&device_addr[0]);         /* åœ¨è·¯ç”±è¡¨ä¸­å¯»æ‰¾ä¸‹ä¸€è·³è·¯ç”± */
         if(rt != NULL)
         {
-            //´òÓ¡³öÏÂÒ»ÌøÂ·ÓÉĞÅÏ¢
+            /* æ‰“å°å‡ºä¸‹ä¸€è·³è·¯ç”±ä¿¡æ¯ */
             PRINTF("src:%d,forwarding to %02x.%02x.%02x.%02x.%02x.%02x\n",
                    MESH_TEST_SELF_ADDR_IDX, rt->nexthop.v8[0],
                    rt->nexthop.v8[1], rt->nexthop.v8[2], rt->nexthop.v8[3],
                    rt->nexthop.v8[4], rt->nexthop.v8[5]);
         }
-        lwns_mesh_send(&lwns_mesh_test, &device_addr[0]); //µ÷ÓÃmesh·¢ËÍº¯Êı£¬½øĞĞÊı¾İµÄ·¢ËÍ
+        lwns_mesh_send(&lwns_mesh_test, &device_addr[0]); /* è°ƒç”¨meshå‘é€å‡½æ•°ï¼Œè¿›è¡Œæ•°æ®çš„å‘é€ */
         return (events ^ MESH_EXAMPLE_TX_NODE_EVT);
     }
     if(events & SYS_EVENT_MSG)
@@ -312,10 +309,10 @@ static uint16_t lwns_mesh_test_ProcessEvent(uint8_t task_id, uint16_t events)
         uint8_t *pMsg;
         if((pMsg = tmos_msg_receive(task_id)) != NULL)
         {
-            // Release the TMOS message
-            tmos_msg_deallocate(pMsg);
+            /*  Release the TMOS message,tmos_msg_allocate */
+            tmos_msg_deallocate(pMsg); /* é‡Šæ”¾å†…å­˜ */
         }
-        // return unprocessed events
+        /*  return unprocessed events */
         return (events ^ SYS_EVENT_MSG);
     }
     return 0;

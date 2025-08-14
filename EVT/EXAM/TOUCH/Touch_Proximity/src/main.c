@@ -67,11 +67,10 @@ int main(void)
 
 	DebugInit();
 	PRINT("touch proximity\n");
-    touch_init();
-
+    TKY_Init();
 	while(1)
 	{
-		touch_dataProcess();
+	    TKY_dataProcess();
 	}
 }
 

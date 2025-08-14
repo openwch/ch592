@@ -1,11 +1,11 @@
 /********************************** (C) COPYRIGHT *******************************
  * File Name          : lwns_uninetflood_example.h
  * Author             : WCH
- * Version            : V1.0
- * Date               : 2021/10/25
- * Description        : lwns单播网络泛洪传输例子，将数据网络泛洪发送至指定节点
+ * Version            : V1.1
+ * Date               : 2025/04/27
+ * Description        : lwns鍗曟挱缃戠粶娉涙椽浼犺緭渚嬪瓙锛屽皢鏁版嵁缃戠粶娉涙椽鍙戦�佽嚦鎸囧畾鑺傜偣
  *********************************************************************************
- * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Copyright (c) 2025 Nanjing Qinheng Microelectronics Co., Ltd.
  * Attention: This software (modified or not) and binary are used for 
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/

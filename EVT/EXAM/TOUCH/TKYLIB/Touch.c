@@ -19,11 +19,18 @@
 /**********************
  *      VARIABLES
  **********************/
-uint8_t TKY_MEMBUF[ TKY_MEMHEAP_SIZE ];
-uint8_t wakeUpCount = 0, wakeupflag = 0;
+__attribute__ ((aligned (4))) uint32_t TKY_MEMBUF[ (TKY_MEMHEAP_SIZE - 1) / 4 + 1 ] = {0};
 uint16_t keyData = 0, scanData = 0;
-volatile TOUCH_S tkyPinAll = {0};
+static uint16_t WheelData = TOUCH_OFF_VALUE; //触摸滑轮转换结果
+static uint16_t SilderData = TOUCH_OFF_VALUE; //触摸滑条转换结果
 
+static touch_cfg_t *p_touch_cfg = NULL;
+
+uint8_t wakeUpCount = 0, wakeupflag = 0;
+
+
+volatile TOUCH_S tkyPinAll = {0};
+uint16_t tkyQueueAll = 0;
 static const TKY_ChannelInitTypeDef my_tky_ch_init[TKY_QUEUE_END] = {TKY_CHS_INIT};
 
 static const uint32_t TKY_Pin[14][2] = {
@@ -47,56 +54,31 @@ static const uint32_t TKY_Pin[14][2] = {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static KEY_T s_tBtn[KEY_COUNT];
 static KEY_FIFO_T s_tKey;       /* 按键FIFO变量,结构体 */
 static void touch_InitKeyHard(void);
-static void touch_InitKeyVar(void);
-static void touch_DetectKey(uint8_t i);
+static void touch_InitVar(touch_cfg_t *p);
+static void touch_DetectKey(touch_button_cfg_t * p);
+static void touch_Regcfg (void);
 static void touch_Baseinit(void);
 static void touch_Channelinit(void);
-static uint8_t IsKeyDown1(void);
-static uint8_t IsKeyDown2(void);
-static uint8_t IsKeyDown3(void);
-static uint8_t IsKeyDown4(void);
-static uint8_t IsKeyDown5(void);
-static uint8_t IsKeyDown6(void);
-static uint8_t IsKeyDown7(void);
-static uint8_t IsKeyDown8(void);
-static uint8_t IsKeyDown9(void);
-static uint8_t IsKeyDown10(void);
-static uint8_t IsKeyDown11(void);
-static uint8_t IsKeyDown12(void);
+static uint16_t touch_DetecLineSlider(touch_slider_cfg_t * p_slider);
+static uint16_t touch_DetectWheelSlider (touch_wheel_cfg_t * p_wheel);
 
-pIsKeyDownFunc KeyDownFunc[14] =
-{
-        IsKeyDown1,
-        IsKeyDown2,
-        IsKeyDown3,
-        IsKeyDown4,
-        IsKeyDown5,
-        IsKeyDown6,
-        IsKeyDown7,
-        IsKeyDown8,
-        IsKeyDown9,
-        IsKeyDown10,
-        IsKeyDown11,
-        IsKeyDown12
-};
 /**********************
  *   GLOBAL FUNCTIONS
  **********************/
 
 /********************************************************************************************************
- * @fn      touch_InitKey
+ * @fn      touch_Init
  * 
- * @brief   初始化按键. 该函数被 tky_Init() 调用。
+ * @brief   初始化按键. 该函数被 TKY_Init() 调用。
  *
  * @return  none
  */
-void touch_InitKey(void)
+void touch_Init(touch_cfg_t *p)
 {
     touch_InitKeyHard();          /* 初始化按键硬件 */
-    touch_InitKeyVar();           /* 初始化按键变量 */
+    touch_InitVar(p);               /* 初始化按键变量 */
 }
 
 /********************************************************************************************************
@@ -151,7 +133,7 @@ uint8_t touch_GetKey(void)
 */
 uint8_t touch_GetKeyState(KEY_ID_E _ucKeyID)
 {
-    return s_tBtn[_ucKeyID].State;
+    return p_touch_cfg->touch_button_cfg->p_stbtn[_ucKeyID].State;
 }
 
 /********************************************************************************************************
@@ -164,9 +146,9 @@ uint8_t touch_GetKeyState(KEY_ID_E _ucKeyID)
  */
 void touch_SetKeyParam(uint8_t _ucKeyID, uint16_t _LongTime, uint8_t  _RepeatSpeed)
 {
-    s_tBtn[_ucKeyID].LongTime = _LongTime;          /* 长按时间 0 表示不检测长按键事件 */
-    s_tBtn[_ucKeyID].RepeatSpeed = _RepeatSpeed;            /* 按键连发的速度，0表示不支持连发 */
-    s_tBtn[_ucKeyID].RepeatCount = 0;                       /* 连发计数器 */
+    p_touch_cfg->touch_button_cfg->p_stbtn[_ucKeyID].LongTime = _LongTime;          /* 长按时间 0 表示不检测长按键事件 */
+    p_touch_cfg->touch_button_cfg->p_stbtn[_ucKeyID].RepeatSpeed = _RepeatSpeed;            /* 按键连发的速度，0表示不支持连发 */
+    p_touch_cfg->touch_button_cfg->p_stbtn[_ucKeyID].RepeatCount = 0;                       /* 连发计数器 */
 }
 
 
@@ -192,9 +174,8 @@ void touch_ScanWakeUp(void)
     wakeUpCount = WAKEUPTIME; //---唤醒时间---
     wakeupflag = 1;           //置成唤醒状态
 
-    TKY_SetSleepStatusValue( ~tkyPinAll.tkyQueueAll ); //---设置0~11通道为非休眠状态,为接下来数秒时间内连续扫描做准备---
+    TKY_SetSleepStatusValue( 0x0000 ); //---设置0~11通道为非休眠状态,为接下来数秒时间内连续扫描做准备---
     dg_log("wake up for a while\n");
-    TKY_SaveAndStop();    //---对相关寄存器进行保存---
     touch_GPIOSleep();
 }
 
@@ -206,7 +187,6 @@ void touch_ScanWakeUp(void)
  */
 void touch_ScanEnterSleep(void)
 {
-    TKY_SaveAndStop();    //---对相关寄存器进行保存---
     touch_GPIOSleep();
     wakeupflag = 0;       //置成睡眠状态:0,唤醒态:1
     TKY_SetSleepStatusValue( tkyPinAll.tkyQueueAll );
@@ -214,17 +194,18 @@ void touch_ScanEnterSleep(void)
 }
 
 /********************************************************************************************************
- * @fn      touch_KeyScan
+ * @fn      touch_Scan
  * @brief   扫描所有按键。非阻塞，被systick中断周期性的调用
  * @param   无
  * @return  无
  */
-void touch_KeyScan(void)
+void touch_Scan(void)
 {
     uint8_t i;
-    TKY_LoadAndRun( );                     //---载入休眠前保存的部分设置---
 
+    TKY_LoadAndRun( );                     //---载入休眠前保存的部分设置---
     keyData = TKY_PollForFilter( );
+    TKY_SaveAndStop();    //---对相关寄存器进行保存---
 
 #if TKY_SLEEP_EN
     if (keyData)
@@ -233,11 +214,12 @@ void touch_KeyScan(void)
     }
 #endif
 
-    for (i = 0; i < KEY_COUNT; i++)
-    {
-        touch_DetectKey(i);
-    }
-    TKY_SaveAndStop();    //---对相关寄存器进行保存---
+    touch_DetectKey(p_touch_cfg->touch_button_cfg);
+
+    WheelData = touch_DetectWheelSlider(p_touch_cfg->touch_wheel_cfg);
+
+    SilderData = touch_DetecLineSlider(p_touch_cfg->touch_slider_cfg);
+
 }
 
 /********************************************************************************************************
@@ -320,34 +302,36 @@ void touch_GPIOSleep(void)
  */
 static void touch_InitKeyHard(void)
 {
+    touch_Regcfg();
     touch_Baseinit( );
     touch_Channelinit( );
 }
 
 
 /********************************************************************************************************
- * @fn      touch_InitKeyVar
+ * @fn      touch_InitVar
  * @brief   初始化触摸按键变量
  * @param   无
  * @return  无
  */
-static void touch_InitKeyVar(void)
+static void touch_InitVar(touch_cfg_t *p)
 {
     uint8_t i;
+
+    p_touch_cfg = p;
 
     /* 对按键FIFO读写指针清零 */
     s_tKey.Read = 0;
     s_tKey.Write = 0;
 
     /* 给每个按键结构体成员变量赋一组缺省值 */
-    for (i = 0; i < KEY_COUNT; i++)
+    for (i = 0; i < p_touch_cfg->touch_button_cfg->num_elements; i++)
     {
-        s_tBtn[i].LongTime = KEY_LONG_TIME;             /* 长按时间 0 表示不检测长按键事件 */
-        s_tBtn[i].Count = KEY_FILTER_TIME / 2;          /* 计数器设置为滤波时间的一半 */
-        s_tBtn[i].State = 0;                            /* 按键缺省状态，0为未按下 */
-        s_tBtn[i].RepeatSpeed = 0;                      /* 按键连发的速度，0表示不支持连发 */
-        s_tBtn[i].RepeatCount = 0;                      /* 连发计数器 */
-        s_tBtn[i].IsKeyDownFunc = KeyDownFunc[i];       /* 判断按键按下的函数 */
+        p_touch_cfg->touch_button_cfg->p_stbtn[i].LongTime = KEY_LONG_TIME;             /* 长按时间 0 表示不检测长按键事件 */
+        p_touch_cfg->touch_button_cfg->p_stbtn[i].Count = KEY_FILTER_TIME / 2;          /* 计数器设置为滤波时间的一半 */
+        p_touch_cfg->touch_button_cfg->p_stbtn[i].State = 0;                            /* 按键缺省状态，0为未按下 */
+        p_touch_cfg->touch_button_cfg->p_stbtn[i].RepeatSpeed = KEY_REPEAT_TIME;                      /* 按键连发的速度，0表示不支持连发 */
+        p_touch_cfg->touch_button_cfg->p_stbtn[i].RepeatCount = 0;                      /* 连发计数器 */
     }
 
     /* 如果需要单独更改某个按键的参数，可以在此单独重新赋值 */
@@ -357,85 +341,6 @@ static void touch_InitKeyVar(void)
 
 }
 
-/********************************************************************************************************
- * @fn      IsKeyDownX
- * @brief   判断按键是否按下,用户可自行重新实现该函数功能
- * @param   无
- * @return  1 - 按下
- *          0 - 未按下
- */
-static uint8_t IsKeyDown1(void)
-{
-    if (keyData & 0x0001)   return 1;
-    else                    return 0;
-}
-
-static uint8_t IsKeyDown2(void)
-{
-    if (keyData & 0x0002)   return 1;
-    else                    return 0;
-}
-
-static uint8_t IsKeyDown3(void)
-{
-    if (keyData & 0x0004)   return 1;
-    else                    return 0;
-}
-
-static uint8_t IsKeyDown4(void)
-{
-    if (keyData & 0x0008)   return 1;
-    else                    return 0;
-}
-
-
-static uint8_t IsKeyDown5(void)
-{
-    if (keyData & 0x0010)   return 1;
-    else                    return 0;
-}
-
-static uint8_t IsKeyDown6(void)
-{
-    if (keyData & 0x0020)   return 1;
-    else                    return 0;
-}
-
-static uint8_t IsKeyDown7(void)
-{
-    if (keyData & 0x0040)   return 1;
-    else                    return 0;
-}
-
-static uint8_t IsKeyDown8(void)
-{
-    if (keyData & 0x0080)   return 1;
-    else                    return 0;
-}
-
-static uint8_t IsKeyDown9(void)
-{
-    if (keyData & 0x0100)   return 1;
-    else                    return 0;
-}
-
-static uint8_t IsKeyDown10(void)
-{
-    if (keyData & 0x0200)   return 1;
-    else                    return 0;
-}
-
-static uint8_t IsKeyDown11(void)
-{
-    if (keyData & 0x0400)   return 1;
-    else                    return 0;
-}
-
-static uint8_t IsKeyDown12(void)
-{
-    if (keyData & 0x0800)   return 1;
-    else                    return 0;
-}
 
 
 /********************************************************************************************************
@@ -511,14 +416,22 @@ void touch_InfoDebug(void)
  * @param   i - 按键结构变量指针
  * @return  无
  */
-static void touch_DetectKey(uint8_t i)
+static void touch_DetectKey(touch_button_cfg_t * p)
 {
     KEY_T *pBtn;
 
-/*按键按下*/
-    pBtn = &s_tBtn[i];
-    if (pBtn->IsKeyDownFunc()==1)
+    if (p == NULL)
     {
+        return ;
+    }
+
+    for (uint8_t i = 0; i < p->num_elements; i++)
+    {
+        /*按键按下*/
+        pBtn = NULL;
+        pBtn = &p_touch_cfg->touch_button_cfg->p_stbtn[ i ];
+        if (keyData & (1 << p->p_elem_index[i] ))          // pBtn->IsKeyDownFunc()==1
+        {
             if (pBtn->State == 0)
             {
                 pBtn->State = 1;
@@ -577,9 +490,24 @@ static void touch_DetectKey(uint8_t i)
 #endif
             }
 
-        pBtn->LongCount = 0;
-        pBtn->RepeatCount = 0;
+            pBtn->LongCount = 0;
+            pBtn->RepeatCount = 0;
+        }
     }
+}
+
+static void touch_Regcfg (void)
+{
+    R8_ADC_CFG = RB_ADC_POWER_ON | RB_ADC_BUF_EN | (ADC_PGA_0 << 4) | (SampleFreq_8 << 6);
+    R8_ADC_CONVERT &= ~(RB_ADC_PGA_GAIN2);// | RB_ADC_SAMPLE_TIME);
+//    R8_ADC_CONVERT |= RB_ADC_SAMPLE_TIME;
+    R8_TKEY_CFG = RB_TKEY_PWR_ON | RB_TKEY_CURRENT;
+
+#if TKY_SHIELD_EN
+    R8_TKEY_CFG |= RB_TKEY_DRV_EN;
+#endif
+
+    TKY_SaveCfgReg();
 }
 
 /********************************************************************************************************
@@ -605,23 +533,20 @@ static void touch_Baseinit(void)
     }
     dg_log("tP : %08x,%08x; tQ : %04x\n",tkyPinAll.PaBit,tkyPinAll.PbBit,tkyPinAll.tkyQueueAll);
     R8_TKEY_CFG|=RB_TKEY_CURRENT;
-#if (TKY_SHIELD_EN)&&((TKY_FILTER_MODE != FILTER_MODE_9))
+#if (TKY_SHIELD_EN)
     tkyPinAll.PaBit |= TKY_SHIELD_PIN;
 #endif
 
     touch_GPIOSleep();  //拉低所有触摸pin脚
 
-#if (TKY_SHIELD_EN)&&((TKY_FILTER_MODE != FILTER_MODE_9))
+#if (TKY_SHIELD_EN)
     tkyPinAll.PaBit &= ~TKY_SHIELD_PIN;
     GPIOA_ModeCfg(TKY_SHIELD_PIN, GPIO_ModeIN_Floating);//Shield Pin， only for CH58x series
 #endif
+
     //----------触摸按键基础设置初始化--------
     TKY_BaseInitStructure.filterMode = TKY_FILTER_MODE;
-#if (TKY_FILTER_MODE != FILTER_MODE_9)
     TKY_BaseInitStructure.shieldEn = TKY_SHIELD_EN;
-#else
-    TKY_BaseInitStructure.shieldEn = 0;
-#endif
     TKY_BaseInitStructure.singlePressMod = TKY_SINGLE_PRESS_MODE;
     TKY_BaseInitStructure.filterGrade = TKY_FILTER_GRADE;
     TKY_BaseInitStructure.maxQueueNum = TKY_MAX_QUEUE_NUM;
@@ -642,7 +567,6 @@ static void touch_Baseinit(void)
  */
 static void touch_Channelinit(void)
 {
-
     uint8_t error_flag = 0;
     uint16_t chx_mean = 0;
 
@@ -651,7 +575,6 @@ static void touch_Channelinit(void)
     	TKY_CHInit(my_tky_ch_init[i]);
     }
 
-#if (TKY_FILTER_MODE != FILTER_MODE_9)
     for(uint8_t i = 0; i < TKY_MAX_QUEUE_NUM; i++)
     {
 
@@ -714,135 +637,311 @@ static void touch_Channelinit(void)
 //          GPIOA_ModeCfg(TKY_Pin[my_tky_ch_init[i].channelNum],GPIO_ModeIN_Floating);
         }
     }
-#endif
-#if (TKY_FILTER_MODE == FILTER_MODE_9) ||(TKY_FILTER_MODE == FILTER_MODE_7)
-#if TKY_SHIELD_EN
-    TKY_ChannelInitTypeDef TKY_ChannelInitStructure = {0};
-	//--------对触摸通道0进行初始化，并列为检测队列中第13位----------
-	TKY_ChannelInitStructure.queueNum = 12;
-	TKY_ChannelInitStructure.channelNum = 0;
-	TKY_ChannelInitStructure.threshold = 40; //---门槛阈值和PCB板相关，请根据实际情况调整---
-	TKY_ChannelInitStructure.threshold2 = 30;
-	TKY_ChannelInitStructure.sleepStatus = 1;
-	TKY_ChannelInitStructure.baseLine = 600;
-	TKY_CHInit( TKY_ChannelInitStructure );
-#endif
-    //滤波器9模式下需要使用单独函数校准基线值
-    TKY_CaliCrowedModBaseLine(0, 1000);
-    for (uint8_t i = 0; i < TKY_MAX_QUEUE_NUM; i++)
-    {
-#if(TKY_FILTER_MODE == FILTER_MODE_7)
-    	TKY_SetCurQueueThreshold2(i, my_tky_ch_init[i].threshold, my_tky_ch_init[i].threshold2);
-#elif(TKY_FILTER_MODE == FILTER_MODE_9)
-    	TKY_SetCurQueueThreshold(i, my_tky_ch_init[i].threshold, my_tky_ch_init[i].threshold2);
-#endif
-		dg_log("%u  key:%u -> thresholdUp:%u;  thresholdDown:%u;\r\n",TKY_GetCurQueueBaseLine(i),i,
-			   my_tky_ch_init[i].threshold, my_tky_ch_init[i].threshold2);
-    }
-#endif
     TKY_SaveAndStop();
 }
-
 /********************************************************************************************************
  * @fn      touch_DetectWheelSlider
  * @brief   触摸滑轮数据处理
  * @param   无
  * @return  无
  */
-uint16_t touch_DetectWheelSlider(void)
+static  uint16_t touch_DetectWheelSlider (touch_wheel_cfg_t * p_wheel)
 {
-	uint8_t  loop;
-	uint8_t  max_data_num;
-	uint16_t d1;
-	uint16_t d2;
-	uint16_t d3;
-	uint16_t wheel_rpos;
-	uint16_t dsum;
-	int16_t dval;
-	uint16_t unit;
-	uint16_t wheel_data[TOUCH_WHEEL_ELEMENTS] = {0};
-	uint8_t num_elements=TOUCH_WHEEL_ELEMENTS;
-	uint16_t p_threshold = 60;
+    uint8_t loop;
+    uint8_t max_data_idx;
+    uint16_t d1;
+    uint16_t d2;
+    uint16_t d3;
+    uint16_t wheel_rpos;
+    uint16_t dsum;
+    uint16_t unit;
+    uint8_t num_elements;
+    uint16_t p_threshold;
+    uint16_t * wheel_data;
 
-	if (num_elements < 3)
-	{
-		return 0;
-	}
+    if (p_wheel == NULL)
+    {
+        return TOUCH_OFF_VALUE;
+    }
 
-	for (loop = 0; loop < num_elements; loop++)
-	{
-		dval = TKY_GetCurQueueValue( loop );
-		if(dval>0)
-		{
-			wheel_data[ loop ] = (uint16_t)dval;
-		}
-		else {
-			wheel_data[ loop ] = 0;
-		}
-	}
-	/* Search max data in slider */
-	max_data_num = 0;
-	for (loop = 0; loop < (num_elements - 1); loop++)
-	{
-		if (wheel_data[max_data_num] < wheel_data[loop + 1])
-		{
-			max_data_num = (uint8_t) (loop + 1);
-		}
-	}
-	/* Array making for wheel operation          */
-	/*    Maximum change CH_No -----> Array"0"    */
-	/*    Maximum change CH_No + 1 -> Array"2"    */
-	/*    Maximum change CH_No - 1 -> Array"1"    */
-	if (0 == max_data_num)
-	{
-		d1 = (uint16_t) (wheel_data[0] - wheel_data[num_elements - 1]);
-		d2 = (uint16_t) (wheel_data[0] - wheel_data[1]);
-		dsum = (uint16_t) (wheel_data[0] + wheel_data[1] + wheel_data[num_elements - 1]);
-	}
-	else if ((num_elements - 1) == max_data_num)
-	{
-		d1 = (uint16_t) (wheel_data[num_elements - 1] - wheel_data[num_elements - 2]);
-		d2 = (uint16_t) (wheel_data[num_elements - 1] - wheel_data[0]);
-		dsum = (uint16_t) (wheel_data[0] + wheel_data[num_elements - 2] + wheel_data[num_elements - 1]);
-	}
-	else
-	{
-		d1 = (uint16_t) (wheel_data[max_data_num] - wheel_data[max_data_num - 1]);
-		d2 = (uint16_t) (wheel_data[max_data_num] - wheel_data[max_data_num + 1]);
-		dsum = (uint16_t) (wheel_data[max_data_num + 1] + wheel_data[max_data_num] + wheel_data[max_data_num - 1]);
-	}
+    num_elements = p_wheel->num_elements;
+    p_threshold = p_wheel->threshold;
+    wheel_data = p_wheel->pdata;
 
-	if (0 == d1)
-	    {
-	        d1 = 1;
-	    }
-	    /* Constant decision for operation of angle of wheel    */
-	    if (dsum > p_threshold)
-	    {
-	        d3 = (uint16_t) (TOUCH_DECIMAL_POINT_PRECISION + ((d2 * TOUCH_DECIMAL_POINT_PRECISION) / d1));
+    if (num_elements < 3)
+    {
+        return TOUCH_OFF_VALUE;
+    }
 
-	        unit       = (uint16_t) (TOUCH_WHEEL_RESOLUTION / num_elements);
-	        wheel_rpos = (uint16_t) (((unit * TOUCH_DECIMAL_POINT_PRECISION) / d3) + (unit * max_data_num));
+    for (loop = 0; loop < p_wheel->num_elements; loop++)
+    {
+        wheel_data[ loop ] = TKY_GetCurQueueValue (p_wheel->p_elem_index[ loop ]);
+    }
 
-	        /* Angle division output */
-	        /* diff_angle_ch = 0 -> 359 ------ diff_angle_ch output 1 to 360 */
-	        if (0 == wheel_rpos)
-	        {
-	            wheel_rpos = TOUCH_WHEEL_RESOLUTION;
-	        }
-	        else if ((TOUCH_WHEEL_RESOLUTION + 1) < wheel_rpos)
-	        {
-	            wheel_rpos = 1;
-	        }
-	        else
-	        {
-	            /* Do Nothing */
-	        }
-	    }
-	    else
-	    {
-	        wheel_rpos = TOUCH_OFF_VALUE;
-	    }
+    /* Search max data in slider */
+    max_data_idx = 0;
+    for (loop = 0; loop < (num_elements - 1); loop++)
+    {
+        if (wheel_data[ max_data_idx ] < wheel_data[ loop + 1 ])
+        {
+            max_data_idx = (uint8_t) (loop + 1);
+        }
+    }
+    /* Array making for wheel operation          */
+    /*    Maximum change CH_No -----> Array"0"    */
+    /*    Maximum change CH_No + 1 -> Array"2"    */
+    /*    Maximum change CH_No - 1 -> Array"1"    */
+    if (0 == max_data_idx)
+    {
+        d1 = (uint16_t) (wheel_data[ 0 ] - wheel_data[ num_elements - 1 ]);
+        d2 = (uint16_t) (wheel_data[ 0 ] - wheel_data[ 1 ]);
+        dsum = (uint16_t) (wheel_data[ 0 ] + wheel_data[ 1 ] + wheel_data[ num_elements - 1 ]);
+    }
+    else if ((num_elements - 1) == max_data_idx)
+    {
+        d1 = (uint16_t) (wheel_data[ num_elements - 1 ] - wheel_data[ num_elements - 2 ]);
+        d2 = (uint16_t) (wheel_data[ num_elements - 1 ] - wheel_data[ 0 ]);
+        dsum = (uint16_t) (wheel_data[ 0 ] + wheel_data[ num_elements - 2 ] + wheel_data[ num_elements - 1 ]);
+    }
+    else
+    {
+        d1 = (uint16_t) (wheel_data[ max_data_idx ] - wheel_data[ max_data_idx - 1 ]);
+        d2 = (uint16_t) (wheel_data[ max_data_idx ] - wheel_data[ max_data_idx + 1 ]);
+        dsum = (uint16_t) (wheel_data[ max_data_idx + 1 ] + wheel_data[ max_data_idx ] + wheel_data[ max_data_idx - 1 ]);
+    }
 
-	return wheel_rpos;
+    if (0 == d1)
+    {
+        d1 = 1;
+    }
+    /* Constant decision for operation of angle of wheel */
+    if (dsum > p_threshold)
+    {
+        d3 = (uint16_t) (p_wheel->decimal_point_percision + ((d2 * p_wheel->decimal_point_percision) / d1));
+
+        unit = (uint16_t) (p_wheel->wheel_resolution / num_elements);
+        wheel_rpos = (uint16_t) (((unit * p_wheel->decimal_point_percision) / d3) + (unit * max_data_idx));
+
+        /* Angle division output */
+        /* diff_angle_ch = 0 -> 359 ------ diff_angle_ch output 1 to 360 */
+        if (0 == wheel_rpos)
+        {
+            wheel_rpos = p_wheel->wheel_resolution ;
+        }
+        else if ((p_wheel->wheel_resolution + 1) < wheel_rpos)
+        {
+            wheel_rpos = 1;
+        }
+        else
+        {
+            /* Do Nothing */
+        }
+    }
+    else
+    {
+        wheel_rpos = TOUCH_OFF_VALUE;
+    }
+
+    return wheel_rpos;
+}
+
+/********************************************************************************************************
+ * @fn      touch_DetectWheelSlider
+ * @brief   触摸滑条数据处理
+ * @param   无
+ * @return  滑条坐标
+ */
+static uint16_t touch_DetecLineSlider(touch_slider_cfg_t * p_slider)
+{
+
+    uint8_t loop;
+    uint8_t max_data_idx;
+    uint16_t d1;
+    uint16_t d2;
+    uint16_t d3;
+    uint16_t slider_rpos;
+    uint16_t resol_plus;
+    uint16_t dsum;
+    uint8_t num_elements = 0;
+    uint16_t p_threshold = 0;
+    uint16_t * slider_data = 0;
+
+    if (p_slider == NULL)
+    {
+        return TOUCH_OFF_VALUE;
+    }
+
+    num_elements = p_slider->num_elements;
+    p_threshold = p_slider->threshold;
+    slider_data = p_slider->pdata;
+
+    if (num_elements < 3)
+    {
+        return TOUCH_OFF_VALUE;
+    }
+
+    for (uint8_t loop = 0; loop < num_elements; loop++)
+    {
+        slider_data[ loop ] = TKY_GetCurQueueValue (p_slider->p_elem_index[ loop ]);
+    }
+    /* Search max data in slider */
+    max_data_idx = 0;
+    for (loop = 0; loop < (num_elements - 1); loop++)
+    {
+        if (slider_data[max_data_idx] < slider_data[loop + 1])
+        {
+            max_data_idx = (uint8_t)(loop + 1);
+        }
+    }
+
+    /* Array making for slider operation-------------*/
+    /*     |    Maximum change CH_No -----> Array"0"    */
+    /*     |    Maximum change CH_No + 1 -> Array"2"    */
+    /*     |    Maximum change CH_No - 1 -> Array"1"    */
+#if 0
+    if (0 == max_data_idx)
+    {
+        d1 = (uint16_t)(slider_data[0] - slider_data[2]);
+        d2 = (uint16_t)(slider_data[0] - slider_data[1]);
+    }
+    else if ((num_elements - 1) == max_data_idx)
+    {
+        d1 = (uint16_t)(slider_data[num_elements - 1] - slider_data[num_elements - 2]);
+        d2 = (uint16_t)(slider_data[num_elements - 1] - slider_data[num_elements - 3]);
+    }
+    else
+    {
+        d1 = (uint16_t)(slider_data[max_data_idx] - slider_data[max_data_idx - 1]);
+        d2 = (uint16_t)(slider_data[max_data_idx] - slider_data[max_data_idx + 1]);
+    }
+
+    dsum = (uint16_t)(d1 + d2);
+
+    /* Constant decision for operation of angle of slider */
+    /* Scale results to be 0-TOUCH_SLIDER_RESOLUTION */
+    if (dsum > p_threshold)
+    {
+        if (0 == d1)
+        {
+            d1 = 1;
+        }
+
+        /* x : y = d1 : d2 */
+        d3 = (uint16_t)(p_slider->decimal_point_percision + ((d2 * p_slider->decimal_point_percision) / d1));
+
+        slider_rpos = (uint16_t)(((p_slider->decimal_point_percision * p_slider->slider_resolution) / d3) + (p_slider->slider_resolution * max_data_idx));
+
+        resol_plus = (uint16_t)(p_slider->slider_resolution * (num_elements - 1));
+
+        if (0 == slider_rpos)
+        {
+            slider_rpos = 1;
+        }
+        else if (slider_rpos >= resol_plus)
+        {
+            slider_rpos = (uint16_t)(((slider_rpos - resol_plus) * 2) + resol_plus);
+            if (slider_rpos > (p_slider->slider_resolution * num_elements))
+            {
+                slider_rpos = p_slider->slider_resolution;
+            }
+            else
+            {
+                slider_rpos = (uint16_t)(slider_rpos / num_elements);
+            }
+        }
+        else if (slider_rpos <= p_slider->slider_resolution)
+        {
+            if (slider_rpos < (p_slider->slider_resolution / 2))
+            {
+                slider_rpos = 1;
+            }
+            else
+            {
+                slider_rpos = (uint16_t)(slider_rpos - (p_slider->slider_resolution / 2));
+                if (0 == slider_rpos)
+                {
+                    slider_rpos = 1;
+                }
+                else
+                {
+                    slider_rpos = (uint16_t)((slider_rpos * 2) / num_elements);
+                }
+            }
+        }
+        else
+        {
+            slider_rpos = (uint16_t)(slider_rpos / num_elements);
+        }
+    }
+    else
+    {
+        slider_rpos = TOUCH_OFF_VALUE;
+    }
+
+    #else
+    // int16_t dval;
+    uint16_t unit;
+
+    if (0 == max_data_idx)
+    {
+        d1 = (uint16_t) (slider_data[ 0 ] - slider_data[ num_elements - 1 ]);
+        d2 = (uint16_t) (slider_data[ 0 ] - slider_data[ 1 ]);
+        dsum = (uint16_t) (slider_data[ 0 ] + slider_data[ 1 ] + slider_data[ num_elements - 1 ]);
+    }
+    else if ((num_elements - 1) == max_data_idx)
+    {
+        d1 = (uint16_t) (slider_data[ num_elements - 1 ] - slider_data[ num_elements - 2 ]);
+        d2 = (uint16_t) (slider_data[ num_elements - 1 ] - slider_data[ 0 ]);
+        dsum = (uint16_t) (slider_data[ 0 ] + slider_data[ num_elements - 2 ] + slider_data[ num_elements - 1 ]);
+    }
+    else
+    {
+        d1 = (uint16_t) (slider_data[ max_data_idx ] - slider_data[ max_data_idx - 1 ]);
+        d2 = (uint16_t) (slider_data[ max_data_idx ] - slider_data[ max_data_idx + 1 ]);
+        dsum = (uint16_t) (slider_data[ max_data_idx + 1 ] + slider_data[ max_data_idx ] + slider_data[ max_data_idx - 1 ]);
+    }
+
+    if (0 == d1)
+    {
+        d1 = 1;
+    }
+    /* Constant decision for operation of angle of wheel    */
+    if (dsum > p_threshold)
+    {
+        d3 = (uint16_t) (p_slider->decimal_point_percision + ((d2 * p_slider->decimal_point_percision) / d1));
+
+        unit = (uint16_t) (p_slider->slider_resolution / num_elements);
+        slider_rpos = (uint16_t) (((unit * p_slider->decimal_point_percision) / d3) + (unit * max_data_idx));
+
+        /* Angle division output */
+        /* diff_angle_ch = 0 -> 359 ------ diff_angle_ch output 1 to 360 */
+        if (0 == slider_rpos)
+        {
+            slider_rpos = p_slider->slider_resolution;
+        }
+        else if ((p_slider->slider_resolution + 1) < slider_rpos)
+        {
+            slider_rpos = 1;
+        }
+        else
+        {
+            /* Do Nothing */
+        }
+    }
+    else
+    {
+        slider_rpos = TOUCH_OFF_VALUE;
+    }
+#endif
+    return slider_rpos;
+}
+
+uint16_t touch_GetLineSliderData(void)
+{
+    return SilderData;
+}
+
+uint16_t touch_GetWheelSliderData(void)
+{
+    return WheelData;
 }

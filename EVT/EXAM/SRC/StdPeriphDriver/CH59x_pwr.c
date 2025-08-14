@@ -393,6 +393,7 @@ void LowPower_Shutdown(uint16_t rm)
     __nop();
     FLASH_ROM_SW_RESET();
     sys_safe_access_enable();
+    R16_INT32K_TUNE = 0xFFFF;
     R8_RST_WDOG_CTRL |= RB_SOFTWARE_RESET;
     sys_safe_access_disable();
 }

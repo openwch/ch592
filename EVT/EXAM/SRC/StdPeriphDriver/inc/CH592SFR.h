@@ -203,7 +203,7 @@ extern "C" {
 /* ********************************************************************************************************************* */
 
 /* Independent watch-dog register */
-#define R32_IWDG_KR         (*((PUINT32V)0x40001000)) // WO, watch-dog key register
+#define R32_IWDG_KR         (*((PUINT32V)0x40001000)) // WO, watch-dog key register, must enable LSI
 #define R32_IWDG_CFG        (*((PUINT32V)0x40001004)) // RW, watch-dog configuration
 #define  RB_RLR             0x0FFF                    // RW, watch-dog counter reload (write protect)
 #define  RB_PR              0x7000                    // PR, prescale (write protect)
@@ -331,7 +331,7 @@ extern "C" {
 #define  RB_PIN_UART2       0x40                      // RW, RXD2/TXD2 alternate pin enable: 0=RXD2/TXD2 on PA[6]/PA[7], 1=RXD2_/TXD2_ on PB[22]/PB[23]
 #define  RB_PIN_UART3       0x80                      // RW, RXD3/TXD3 alternate pin enable: 0=RXD3/TXD3 on PA[4]/PA[5], 1=RXD3_/TXD3_ on PB[20]/PB[21]
 #define  RB_PIN_SPI0        0x100                     // RW, SCS/SCK0/MOSI/MISO alternate pin enable: 0=SCS/SCK0/MOSI/MISO on PA[12]/PA[13]/PA[14]/PA[15], 1=SCS_/SCK0_/MOSI_/MISO_ on PB[12]/PB[13]/PB[14]/PB[15]
-#define  RB_PIN_PWMX        0x400                     // RW, PWM4/PWM5/PWM7/PWM8/PWM9 alternate pin enable: 0=PWM4/5/7/8/9 on PA[12]/PA[13]/PB[4]/PB[6]/PB[7], 1=PWM4/5/7/8/9 on PA[6]/PA[7]/PB[1]/PB[2]/P[3]
+#define  RB_PIN_PWMX        0x400                     // RW, PWM4/PWM5 alternate pin enable: 0=PWM4/5 on PA[12]/PA[13], 1=PWM4/5 on PA[6]/PA[7]
 #define  RB_PIN_I2C         0x800                     // RW, SCL/SDA alternate pin enable: 0=SCL/SDA on PB[13]/PB[12], 1=SCL_/SDA_ on PB[21]/PB[20]
 #define  RB_PIN_MODEM       0x1000                    // RW, DSR/DTR alternate pin enable: 0=DSR/DTR on PB[1]/PB[5], 1=DSR_/DTR_ on PB[14]/PB[15]
 #define  RB_DEBUG_EN        0x2000                    // RW, Debug interface disable control bit: 0=enable debug, 1=disable debug
@@ -361,13 +361,13 @@ extern "C" {
 #define  RB_PWR_DCDC_EN     0x0200                    // RWA, DC/DC converter enable: 0=DC/DC disable and bypass, 1=DC/DC enable
 #define  RB_PWR_DCDC_PRE    0x0400                    // RWA, DC/DC converter pre-enable
 #define  RB_XT_PRE_CFG      0x1800                    // RWA, extern 32MHz HSE early wake up time configuration
-#define  RB_PWR_MUST_0      0x2000                    // RWA, must write 0
+#define  RB_PWR_MUST_1      0x2000                    // RWA, must write 1
+#define  RB_PWR_MUST_0      0x2000                    // RWA, must write 1 (reserved)
 #define  RB_XT_PRE_EN       0x4000                    // RWA, extern 32MHz HSE early wake up enable, must be used with LSI/LSE
 #define  RB_PWR_PLAN_EN     0x8000                    // RWA/WZ, power plan enable, auto clear after sleep executed
 #define R16_AUX_POWER_ADJ   (*((PUINT16V)0x40001022))  // RWA, aux power adjust control, SAM
 #define  RB_ULPLDO_ADJ      0x0007                    // RWA, Ultra-Low-Power LDO voltage adjust
 #define  RB_DCDC_CHARGE     0x0080                    // RWA, DC/DC aux charge enable
-#define  RB_IPU_TKEY_SEL    0xC000                    // RWA, TouchKey wakeup
 
 /* System: battery detector register */
 #define R32_BATTERY_CTRL    (*((PUINT32V)0x40001024)) // RWA, battery voltage detector, SAM

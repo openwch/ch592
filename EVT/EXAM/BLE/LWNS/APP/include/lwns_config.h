@@ -1,29 +1,28 @@
 /********************************** (C) COPYRIGHT *******************************
  * File Name          : lwns_config.h
  * Author             : WCH
- * Version            : V1.0
- * Date               : 2021/11/17
- * Description        : lwnsÅäÖÃÑ¡Ïî
+ * Version            : V1.1
+ * Date               : 2025/04/27
+ * Description        : lwnsé…ç½®é€‰é¡¹
  *********************************************************************************
- * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
- * Attention: This software (modified or not) and binary are used for 
+ * Copyright (c) 2025 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Attention: This software (modified or not) and binary are used for
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 #ifndef _LWNS_CONFIG_H_
 #define _LWNS_CONFIG_H_
 
 #include "config.h"
-#include "CH59x_common.h"
 #include "WCH_LWNS_LIB.h"
 
-#define LWNS_ADDR_USE_BLE_MAC     1   //ÊÇ·ñÊ¹ÓÃÀ¶ÑÀÓ²¼şµÄmacµØÖ·×÷ÎªÄ¬ÈÏlwnsµØÖ·
+#define LWNS_ADDR_USE_BLE_MAC     1   /* æ˜¯å¦ä½¿ç”¨è“ç‰™ç¡¬ä»¶çš„macåœ°å€ä½œä¸ºé»˜è®¤lwnsåœ°å€ */
 
-#define LWNS_ENCRYPT_ENABLE       1   //ÊÇ·ñÊ¹ÄÜ¼ÓÃÜ
+#define LWNS_ENCRYPT_ENABLE       1   /* æ˜¯å¦ä½¿èƒ½åŠ å¯† */
 
-#define QBUF_MANUAL_NUM           4   //qbuf»º´æÊıÁ¿ÅäÖÃ
+#define QBUF_MANUAL_NUM           4   /* qbufç¼“å­˜æ•°é‡é…ç½® */
 
-#define ROUTE_ENTRY_MANUAL_NUM    32  //Â·ÓÉÌõÄ¿ÊıÁ¿ÅäÖÃ
+#define ROUTE_ENTRY_MANUAL_NUM    32  /* è·¯ç”±æ¡ç›®æ•°é‡é…ç½® */
 
-#define LWNS_NEIGHBOR_MAX_NUM     8   //×î´óÁÚ¾ÓÊıÁ¿
+#define LWNS_NEIGHBOR_MAX_NUM     8   /* æœ€å¤§é‚»å±…æ•°é‡ */
 
 #endif /* _LWNS_CONFIG_H_ */

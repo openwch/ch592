@@ -3,9 +3,14 @@
 
 #include "CH59x_common.h"
 
-extern UINT8V timerFlag;
+/************************TOUCH_KEY_DEFINE****************************/
+#define TOUCH_KEY_ELEMENTS                  (TKY_MAX_QUEUE_NUM)
+#define TOUCH_KEY_CHS                       0,1,2,3,4,5,6
 
-void touch_init(void);
-void touch_dataProcess(void);
+extern volatile uint8_t timerFlag;
+
+
+void TKY_Init(void);
+void TKY_dataProcess(void);
 
 #endif

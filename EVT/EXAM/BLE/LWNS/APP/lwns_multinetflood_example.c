@@ -1,69 +1,66 @@
 /********************************** (C) COPYRIGHT *******************************
  * File Name          : lwns_multinetflood_example.c
  * Author             : WCH
- * Version            : V1.0
- * Date               : 2021/11/10
- * Description        : multinetflood£¬×é²¥ÍøÂç·ººé´«ÊäÀı×Ó
+ * Version            : V1.1
+ * Date               : 2025/04/27
+ * Description        : multinetfloodï¼Œç»„æ’­ç½‘ç»œæ³›æ´ªä¼ è¾“ä¾‹å­
  *********************************************************************************
- * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Copyright (c) 2025 Nanjing Qinheng Microelectronics Co., Ltd.
  * Attention: This software (modified or not) and binary are used for 
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 #include "lwns_multinetflood_example.h"
 
-//Ã¿¸öÎÄ¼şµ¥¶Àdebug´òÓ¡µÄ¿ª¹Ø£¬ÖÃ0¿ÉÒÔ½ûÖ¹±¾ÎÄ¼şÄÚ²¿´òÓ¡
+/* æ¯ä¸ªæ–‡ä»¶å•ç‹¬debugæ‰“å°çš„å¼€å…³ï¼Œç½®0å¯ä»¥ç¦æ­¢æœ¬æ–‡ä»¶å†…éƒ¨æ‰“å° */
 #define DEBUG_PRINT_IN_THIS_FILE    1
 #if DEBUG_PRINT_IN_THIS_FILE
-  #define PRINTF(...)    PRINT(__VA_ARGS__)
+  #define PRINTF(...)       PRINT(__VA_ARGS__)
 #else
-  #define PRINTF(...) \
-    do                \
-    {                 \
-    } while(0)
+  #define PRINTF(...)       do{} while(0)
 #endif
 
 /*
- * ¶©ÔÄµÄµØÖ·Îª2×Ö½Úu16ÀàĞÍ¡£
+ * è®¢é˜…çš„åœ°å€ä¸º2å­—èŠ‚u16ç±»å‹ã€‚
  */
-static uint8_t subaddrs_index = 0;                 //·¢ËÍ¶©ÔÄµØÖ·ĞòºÅ
-#define SUBADDR_NUM    3                           //¶©ÔÄµØÖ·ÊıÁ¿
-static uint16_t subaddrs[SUBADDR_NUM] = {1, 2, 3}; //¶©ÔÄµØÖ·Êı×é
+static uint8_t subaddrs_index = 0;                 /* å‘é€è®¢é˜…åœ°å€åºå· */
+#define SUBADDR_NUM    3                           /* è®¢é˜…åœ°å€æ•°é‡ */
+static uint16_t subaddrs[SUBADDR_NUM] = {1, 2, 3}; /* è®¢é˜…åœ°å€æ•°ç»„ */
 
-static uint8_t  TX_DATA[LWNS_DATA_SIZE] = {0}; //×î´ó³¤¶ÈÊı¾İÊÕ·¢²âÊÔ
-static uint8_t  RX_DATA[LWNS_DATA_SIZE] = {0}; //×î´ó³¤¶ÈÊı¾İÊÕ·¢²âÊÔ
+static uint8_t  TX_DATA[LWNS_DATA_SIZE] = {0}; /* æœ€å¤§é•¿åº¦æ•°æ®æ”¶å‘æµ‹è¯• */
+static uint8_t  RX_DATA[LWNS_DATA_SIZE] = {0}; /* æœ€å¤§é•¿åº¦æ•°æ®æ”¶å‘æµ‹è¯• */
 static uint16_t lwns_multinetflood_ProcessEvent(uint8_t task_id, uint16_t events);
-static void     multinetflood_recv(lwns_controller_ptr ptr, uint16_t subaddr, const lwns_addr_t *sender, uint8_t hops); //×é²¥ÍøÂç·ººé½ÓÊÕ»Øµ÷º¯Êı
-static void     multinetflood_sent(lwns_controller_ptr ptr);                                                            //×é²¥ÍøÂç·ººé·¢ËÍÍê³É»Øµ÷º¯Êı
+static void     multinetflood_recv(lwns_controller_ptr ptr, uint16_t subaddr, const lwns_addr_t *sender, uint8_t hops); /* ç»„æ’­ç½‘ç»œæ³›æ´ªæ¥æ”¶å›è°ƒå‡½æ•° */
+static void     multinetflood_sent(lwns_controller_ptr ptr);                                                            /* ç»„æ’­ç½‘ç»œæ³›æ´ªå‘é€å®Œæˆå›è°ƒå‡½æ•° */
 
-static lwns_multinetflood_controller multinetflood; //ÉùÃ÷×é²¥ÍøÂç·ººé¿ØÖÆ½á¹¹Ìå
+static lwns_multinetflood_controller multinetflood; /* å£°æ˜ç»„æ’­ç½‘ç»œæ³›æ´ªæ§åˆ¶ç»“æ„ä½“ */
 
-static uint8_t multinetflood_taskID; //×é²¥ÍøÂç·ººé¿ØÖÆÈÎÎñid
+static uint8_t multinetflood_taskID; /* ç»„æ’­ç½‘ç»œæ³›æ´ªæ§åˆ¶ä»»åŠ¡id */
 
 /*********************************************************************
  * @fn      multinetflood_recv
  *
- * @brief   lwns multinetflood½ÓÊÕ»Øµ÷º¯Êı
+ * @brief   lwns multinetfloodæ¥æ”¶å›è°ƒå‡½æ•°
  *
- * @param   ptr     -   ±¾´Î½ÓÊÕµ½µÄÊı¾İËùÊôµÄmultinetflood¿ØÖÆ½á¹¹ÌåÖ¸Õë.
- * @param   subaddr -   ±¾´Î½ÓÊÕµ½µÄÊı¾İµÄ¶©ÔÄµØÖ·.
- * @param   sender  -   ±¾´Î½ÓÊÕµ½µÄÊı¾İµÄ·¢ËÍÕßµØÖ·Ö¸Õë.
- * @param   hops    -   ±¾´Î½ÓÊÕµ½µÄÊı¾İµÄ´Ó·¢ËÍ·½µ½±¾½Úµã¾­ÀúµÄÌøÊı.
+ * @param   ptr     -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®æ‰€å±çš„multinetfloodæ§åˆ¶ç»“æ„ä½“æŒ‡é’ˆ.
+ * @param   subaddr -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®çš„è®¢é˜…åœ°å€.
+ * @param   sender  -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®çš„å‘é€è€…åœ°å€æŒ‡é’ˆ.
+ * @param   hops    -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®çš„ä»å‘é€æ–¹åˆ°æœ¬èŠ‚ç‚¹ç»å†çš„è·³æ•°.
  *
  * @return  None.
  */
 static void multinetflood_recv(lwns_controller_ptr ptr, uint16_t subaddr, const lwns_addr_t *sender, uint8_t hops)
 {
     uint8_t len;
-    len = lwns_buffer_datalen();    //»ñÈ¡µ±Ç°»º³åÇø½ÓÊÕµ½µÄÊı¾İ³¤¶È
-    lwns_buffer_save_data(RX_DATA); //½ÓÊÕÊı¾İµ½ÓÃ»§Êı¾İÇøÓò
+    len = lwns_buffer_datalen();    /* è·å–å½“å‰ç¼“å†²åŒºæ¥æ”¶åˆ°çš„æ•°æ®é•¿åº¦ */
+    lwns_buffer_save_data(RX_DATA); /* æ¥æ”¶æ•°æ®åˆ°ç”¨æˆ·æ•°æ®åŒºåŸŸ */
     PRINTF("multinetflood %d rec from %02x %02x %02x %02x %02x %02x\n",
            get_lwns_object_port(ptr),
            sender->v8[0], sender->v8[1], sender->v8[2], sender->v8[3],
-           sender->v8[4], sender->v8[5]); //fromÎª½ÓÊÕµ½µÄÊı¾İµÄ·¢ËÍ·½µØÖ·
+           sender->v8[4], sender->v8[5]); /* fromä¸ºæ¥æ”¶åˆ°çš„æ•°æ®çš„å‘é€æ–¹åœ°å€ */
     PRINTF("subaddr:%d,data:", subaddr);
     for(uint8_t i = 0; i < len; i++)
     {
-        PRINTF("%02x ", RX_DATA[i]); //´òÓ¡³öÊı¾İ
+        PRINTF("%02x ", RX_DATA[i]); /* æ‰“å°å‡ºæ•°æ® */
     }
     PRINTF("\n");
 }
@@ -71,9 +68,9 @@ static void multinetflood_recv(lwns_controller_ptr ptr, uint16_t subaddr, const 
 /*********************************************************************
  * @fn      multinetflood_sent
  *
- * @brief   lwns multinetflood·¢ËÍÍê³É»Øµ÷º¯Êı
+ * @brief   lwns multinetfloodå‘é€å®Œæˆå›è°ƒå‡½æ•°
  *
- * @param   ptr     -   ±¾´Î·¢ËÍÍê³ÉµÄ×é²¥ÍøÂç·ººé¿ØÖÆ½á¹¹ÌåÖ¸Õë.
+ * @param   ptr     -   æœ¬æ¬¡å‘é€å®Œæˆçš„ç»„æ’­ç½‘ç»œæ³›æ´ªæ§åˆ¶ç»“æ„ä½“æŒ‡é’ˆ.
  *
  * @return  None.
  */
@@ -83,7 +80,7 @@ static void multinetflood_sent(lwns_controller_ptr ptr)
 }
 
 /**
- * lwns ×é²¥ÍøÂç·ººé»Øµ÷º¯Êı½á¹¹Ìå£¬×¢²á»Øµ÷º¯Êı
+ * lwns ç»„æ’­ç½‘ç»œæ³›æ´ªå›è°ƒå‡½æ•°ç»“æ„ä½“ï¼Œæ³¨å†Œå›è°ƒå‡½æ•°
  */
 static const struct lwns_multinetflood_callbacks multinetflood_callbacks =
     {multinetflood_recv, multinetflood_sent};
@@ -91,7 +88,7 @@ static const struct lwns_multinetflood_callbacks multinetflood_callbacks =
 /*********************************************************************
  * @fn      lwns_multinetflood_process_init
  *
- * @brief   lwns multinetfloodÀı³Ì³õÊ¼»¯.
+ * @brief   lwns multinetfloodä¾‹ç¨‹åˆå§‹åŒ–.
  *
  * @param   None.
  *
@@ -105,19 +102,19 @@ void lwns_multinetflood_process_init(void)
         TX_DATA[i] = i;
     }
     lwns_multinetflood_init(&multinetflood,
-                            137,               //´ò¿ªÒ»¸ö¶Ë¿ÚºÅÎª137µÄ×é²¥ÍøÂç·ººé½á¹¹Ìå
-                            HTIMER_SECOND_NUM, //×î´óµÈ´ı×ª·¢Ê±¼ä
-                            1,                 //ÔÚµÈ´ıÆÚ¼ä£¬½ÓÊÕµ½¼¸´ÎÍ¬ÑùµÄÊı¾İ°ü¾ÍÈ¡Ïû±¾Êı¾İ°üµÄ·¢ËÍ
-                            3,                 //×î´ó×ª·¢²ã¼¶
-                            FALSE,             //ÔÚµÈ´ı×ª·¢¹ı³ÌÖĞ£¬ÊÕµ½ÁËĞÂµÄĞèÒª×ª·¢µÄÊı¾İ°ü£¬¾ÉÊı¾İ°üÊÇÁ¢¿Ì·¢ËÍ³öÈ¥»¹ÊÇ¶ªÆú£¬FALSEÎªÁ¢¿Ì·¢ËÍ£¬TRUEÎª¶ªÆú¡£
-                            50,                //ÍøÂç»Ö¸´²ÎÊı£¬¸ÃÖµ¶¨ÒåÁËÒ»¸ö²î¾à£¬Èç¹û°üĞòºÅ±ÈÄÚ´æÄÚ±£´æµÄÊı¾İ°üĞòºÅĞ¡µÄÖµ´óÓÚ´ËÖµ£¬Ôò»áÈÏÎªÍøÂç¹ÊÕÏ»Ö¸´£¬¼ÌĞø½ÓÊÕ¸ÃÊı¾İ°ü¡£
-                            //Í¬Ê±£¬¸ÃÖµÒ²¾ö¶¨ÁËÅĞ¶¨ÎªĞÂÊı¾İ°üµÄ²îÖµ£¬¼´À´×ÔÍ¬Ò»¸ö½ÚµãµÄĞÂÊı¾İ°üµÄĞòºÅ²»¿ÉÒÔ±ÈÄÚ´æÖĞµÄ´ó¹ı¶à£¬¼´±È´ËÖµ»¹´ó¡£
-                            //ÀıÈç£¬ÄÚ´æÖĞ±£´æµÄÎª10£¬ĞÂÊı¾İ°üĞòºÅÎª60£¬²îÖµÎª50£¬´óÓÚµÈÓÚ´ËÊ±ÉèÖÃµÄ50£¬ËùÒÔ½«²»»á±»ÈÏÎªÎªĞÂµÄÊı¾İ°ü£¬±»¶ªÆú¡£
-                            //Ö»ÓĞĞòºÅÎª59£¬²îÖµÎª49£¬Ğ¡ÓÚ¸ÃÖµ£¬²Å»á±»½ÓÊÕ¡£
-                            TRUE,                      //±¾»úÊÇ·ñ×ª·¢Ä¿±ê·Ç±¾»úµÄÊı¾İ°ü£¬ÀàËÆÓÚÀ¶ÑÀmeshÊÇ·ñÆôÓÃrelay¹¦ÄÜ¡£
-                            subaddrs,                  //¶©ÔÄµÄµØÖ·Êı×éÖ¸Õë
-                            SUBADDR_NUM,               //¶©ÔÄµØÖ·ÊıÁ¿
-                            &multinetflood_callbacks); //·µ»Ø0´ú±í´ò¿ªÊ§°Ü¡£·µ»Ø1´ò¿ª³É¹¦¡£
+                            137,               /* æ‰“å¼€ä¸€ä¸ªç«¯å£å·ä¸º137çš„ç»„æ’­ç½‘ç»œæ³›æ´ªç»“æ„ä½“ */
+                            HTIMER_SECOND_NUM, /* æœ€å¤§ç­‰å¾…è½¬å‘æ—¶é—´ */
+                            1,                 /* åœ¨ç­‰å¾…æœŸé—´ï¼Œæ¥æ”¶åˆ°å‡ æ¬¡åŒæ ·çš„æ•°æ®åŒ…å°±å–æ¶ˆæœ¬æ•°æ®åŒ…çš„å‘é€ */
+                            3,                 /* æœ€å¤§è½¬å‘å±‚çº§ */
+                            FALSE,             /* åœ¨ç­‰å¾…è½¬å‘è¿‡ç¨‹ä¸­ï¼Œæ”¶åˆ°äº†æ–°çš„éœ€è¦è½¬å‘çš„æ•°æ®åŒ…ï¼Œæ—§æ•°æ®åŒ…æ˜¯ç«‹åˆ»å‘é€å‡ºå»è¿˜æ˜¯ä¸¢å¼ƒï¼ŒFALSEä¸ºç«‹åˆ»å‘é€ï¼ŒTRUEä¸ºä¸¢å¼ƒã€‚ */
+                            50,                 /*  ç½‘ç»œæ¢å¤å‚æ•°ï¼Œè¯¥å€¼å®šä¹‰äº†ä¸€ä¸ªå·®è·ï¼Œå¦‚æœåŒ…åºå·æ¯”å†…å­˜å†…ä¿å­˜çš„æ•°æ®åŒ…åºå·å°çš„å€¼å¤§äºæ­¤å€¼ï¼Œåˆ™ä¼šè®¤ä¸ºç½‘ç»œæ•…éšœæ¢å¤ï¼Œç»§ç»­æ¥æ”¶è¯¥æ•°æ®åŒ…ã€‚
+                                                                                                                                          åŒæ—¶ï¼Œè¯¥å€¼ä¹Ÿå†³å®šäº†åˆ¤å®šä¸ºæ–°æ•°æ®åŒ…çš„å·®å€¼ï¼Œå³æ¥è‡ªåŒä¸€ä¸ªèŠ‚ç‚¹çš„æ–°æ•°æ®åŒ…çš„åºå·ä¸å¯ä»¥æ¯”å†…å­˜ä¸­çš„å¤§è¿‡å¤šï¼Œå³æ¯”æ­¤å€¼è¿˜å¤§ã€‚
+                                                                                                                                          ä¾‹å¦‚ï¼Œå†…å­˜ä¸­ä¿å­˜çš„ä¸º10ï¼Œæ–°æ•°æ®åŒ…åºå·ä¸º60ï¼Œå·®å€¼ä¸º50ï¼Œå¤§äºç­‰äºæ­¤æ—¶è®¾ç½®çš„50ï¼Œæ‰€ä»¥å°†ä¸ä¼šè¢«è®¤ä¸ºä¸ºæ–°çš„æ•°æ®åŒ…ï¼Œè¢«ä¸¢å¼ƒã€‚
+                                                                                                                                          åªæœ‰åºå·ä¸º59ï¼Œå·®å€¼ä¸º49ï¼Œå°äºè¯¥å€¼ï¼Œæ‰ä¼šè¢«æ¥æ”¶ã€‚ */
+                            TRUE,                      /* æœ¬æœºæ˜¯å¦è½¬å‘ç›®æ ‡éæœ¬æœºçš„æ•°æ®åŒ…ï¼Œç±»ä¼¼äºè“ç‰™meshæ˜¯å¦å¯ç”¨relayåŠŸèƒ½ã€‚ */
+                            subaddrs,                  /* è®¢é˜…çš„åœ°å€æ•°ç»„æŒ‡é’ˆ */
+                            SUBADDR_NUM,               /* è®¢é˜…åœ°å€æ•°é‡ */
+                            &multinetflood_callbacks); /* è¿”å›0ä»£è¡¨æ‰“å¼€å¤±è´¥ã€‚è¿”å›1æ‰“å¼€æˆåŠŸã€‚ */
 #if 1
     tmos_start_task(multinetflood_taskID, MULTINETFLOOD_EXAMPLE_TX_PERIOD_EVT,
                     MS1_TO_SYSTEM_TIME(1000));
@@ -145,33 +142,31 @@ uint16_t lwns_multinetflood_ProcessEvent(uint8_t task_id, uint16_t events)
         temp = TX_DATA[0];
         for(uint8_t i = 0; i < 9; i++)
         {
-            TX_DATA[i] = TX_DATA[i + 1]; //ÒÆÎ»·¢ËÍÊı¾İ£¬ÒÔ±ã¹Û²ìĞ§¹û
+            TX_DATA[i] = TX_DATA[i + 1]; /* ç§»ä½å‘é€æ•°æ®ï¼Œä»¥ä¾¿è§‚å¯Ÿæ•ˆæœ */
         }
         TX_DATA[9] = temp;
-        lwns_buffer_load_data(TX_DATA, sizeof(TX_DATA)); //ÔØÈëĞèÒª·¢ËÍµÄÊı¾İµ½»º³åÇø
+        lwns_buffer_load_data(TX_DATA, sizeof(TX_DATA)); /* è½½å…¥éœ€è¦å‘é€çš„æ•°æ®åˆ°ç¼“å†²åŒº */
         if(subaddrs_index >= SUBADDR_NUM)
         {
             subaddrs_index = 0;
         }
-        lwns_multinetflood_send(&multinetflood, subaddrs[subaddrs_index]); //×é²¥ÍøÂç·ººé·¢ËÍÊı¾İµ½¶©ÔÄµØÖ·
+        lwns_multinetflood_send(&multinetflood, subaddrs[subaddrs_index]); /* ç»„æ’­ç½‘ç»œæ³›æ´ªå‘é€æ•°æ®åˆ°è®¢é˜…åœ°å€ */
         subaddrs_index++;
 
         tmos_start_task(multinetflood_taskID, MULTINETFLOOD_EXAMPLE_TX_PERIOD_EVT,
-                        MS1_TO_SYSTEM_TIME(1000)); //ÖÜÆÚĞÔ·¢ËÍ
+                        MS1_TO_SYSTEM_TIME(1000)); /* å‘¨æœŸæ€§å‘é€ */
         return events ^ MULTINETFLOOD_EXAMPLE_TX_PERIOD_EVT;
     }
-
     if(events & SYS_EVENT_MSG)
     {
         uint8_t *pMsg;
         if((pMsg = tmos_msg_receive(task_id)) != NULL)
         {
-            // Release the TMOS message
-            tmos_msg_deallocate(pMsg);
+            /*  Release the TMOS message,tmos_msg_allocate */
+            tmos_msg_deallocate(pMsg); /* é‡Šæ”¾å†…å­˜ */
         }
-        // return unprocessed events
+        /*  return unprocessed events */
         return (events ^ SYS_EVENT_MSG);
     }
-
     return 0;
 }

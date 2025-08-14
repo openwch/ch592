@@ -20,10 +20,44 @@
  **********************/
 UINT8V timerFlag = 0;
 
+
+
+
+static const uint8_t touch_wheel_ch[ TOUCH_WHEEL_ELEMENTS ] = {TOUCH_WHEEL_CHS};
+uint16_t wheel_data[ TOUCH_WHEEL_ELEMENTS ] = {0};
+
+static const uint8_t touch_slidel_ch[ TOUCH_SLIDER_ELEMENTS ] = {TOUCH_SLIDER_CHS};
+uint16_t slider_data[ TOUCH_SLIDER_ELEMENTS ] = {0};
+
+touch_wheel_cfg_t p_wheel = {
+    .num_elements = TOUCH_WHEEL_ELEMENTS,
+    .p_elem_index = touch_wheel_ch,
+    .threshold = 30,
+    .decimal_point_percision = TOUCH_DECIMAL_POINT_PRECISION,
+    .wheel_resolution = TOUCH_WHEEL_RESOLUTION,
+    .pdata = wheel_data};
+
+touch_slider_cfg_t p_slider = {
+    .num_elements = TOUCH_SLIDER_ELEMENTS,
+    .p_elem_index = touch_slidel_ch,
+    .threshold = 30,
+    .decimal_point_percision = TOUCH_DECIMAL_POINT_PRECISION,
+    .slider_resolution = TOUCH_SLIDER_RESOLUTION,
+    .pdata = slider_data
+    };
+
+touch_cfg_t touch_cfg =
+{
+    .touch_button_cfg = NULL,
+    .touch_slider_cfg = &p_slider,
+    .touch_wheel_cfg = &p_wheel
+};
+
 /**********************
  *  STATIC PROTOTYPES
  **********************/
 static void TKY_PeripheralInit(void);
+
 /**********************
  *   GLOBAL FUNCTIONS
  **********************/
@@ -35,26 +69,44 @@ static void TKY_PeripheralInit(void);
  *
  * @return  none
  */
-void touch_dataProcess(void)
+void TKY_dataProcess(void)
 {
-    uint8_t key_val = 0;
+    uint8_t key_val = 0x00;
+    uint16_t Wheel_pros = 0;
+    uint16_t Slider_pros = 0;
+    static uint8_t touchinsflag = 0;
     static uint16_t print_time = 0;
-    static uint16_t wheelslider_time = 0;
-    uint16_t wheelrops=0;
     if(timerFlag)
     {
         timerFlag = 0;
-        touch_KeyScan();
-        wheelslider_time++;
-        if(wheelslider_time==25)
-        {
-        	wheelslider_time=0;
-        	wheelrops = touch_DetectWheelSlider();
-        	if(wheelrops != TOUCH_OFF_VALUE)
-        	{
-        		PRINT ("wheel rops:%u\r\n",wheelrops);
-			}
-        }
+        touch_Scan();
+        if (!(touchinsflag & 0x0A))//当按键实例或者线性滑条实例在触发时，不触发当前滑轮实例
+            {
+                Wheel_pros = touch_GetWheelSliderData();
+                if (Wheel_pros < TOUCH_OFF_VALUE)
+                {
+                    touchinsflag |= 1 << 2;
+                    PRINT("Wheel_pros:%d\n",Wheel_pros);
+                }
+                else
+                {
+                    touchinsflag &= ~(1 << 2);
+                }
+            }
+
+            if (!(touchinsflag & 0x06))//当按键实例或者滑轮实例在触发时，不触发当前线性滑条实例
+            {
+                Slider_pros = touch_GetLineSliderData();
+                if (Slider_pros < TOUCH_OFF_VALUE)
+                {
+                    touchinsflag |= 1 << 3;
+                    PRINT("Slider_pros:%d\n",Slider_pros);
+                }
+                else
+                {
+                    touchinsflag &= ~(1 << 3);
+                }
+            }
 
 #if PRINT_EN
         print_time++;
@@ -76,10 +128,11 @@ void touch_dataProcess(void)
  *
  * @return  none
  */
-void touch_init(void)
+void TKY_Init(void)
 {
-	TKY_PeripheralInit();       /* 初始外设，例如背光和蜂鸣器等 */
-	touch_InitKey();
+	TKY_PeripheralInit();       /* 初始化外设，例如背光和蜂鸣器等 */
+
+    touch_Init(&touch_cfg);             /* 初始化触摸库  */
 
     TKY_SetSleepStatusValue( ~tkyPinAll.tkyQueueAll );
 

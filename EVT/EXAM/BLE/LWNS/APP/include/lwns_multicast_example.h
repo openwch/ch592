@@ -1,11 +1,11 @@
 /********************************** (C) COPYRIGHT *******************************
  * File Name          : lwns_multicast_example.h
  * Author             : WCH
- * Version            : V1.0
- * Date               : 2021/06/20
- * Description        : single-hop multicast£¨◊È≤•¥´ ‰¿˝◊”
+ * Version            : V1.1
+ * Date               : 2025/04/27
+ * Description        : single-hop multicastÔºåÁªÑÊí≠‰º†Ëæì‰æãÂ≠ê
  *********************************************************************************
- * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Copyright (c) 2025 Nanjing Qinheng Microelectronics Co., Ltd.
  * Attention: This software (modified or not) and binary are used for 
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/

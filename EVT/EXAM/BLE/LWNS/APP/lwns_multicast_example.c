@@ -1,64 +1,61 @@
 /********************************** (C) COPYRIGHT *******************************
  * File Name          : lwns_multicast_example.c
  * Author             : WCH
- * Version            : V1.0
- * Date               : 2021/06/20
- * Description        : single-hop multicast£¬×é²¥´«ÊäÀı×Ó
+ * Version            : V1.1
+ * Date               : 2025/04/27
+ * Description        : single-hop multicastï¼Œç»„æ’­ä¼ è¾“ä¾‹å­
  *********************************************************************************
- * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Copyright (c) 2025 Nanjing Qinheng Microelectronics Co., Ltd.
  * Attention: This software (modified or not) and binary are used for 
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 #include "lwns_multicast_example.h"
 
-//Ã¿¸öÎÄ¼şµ¥¶Àdebug´òÓ¡µÄ¿ª¹Ø£¬ÖÃ0¿ÉÒÔ½ûÖ¹±¾ÎÄ¼şÄÚ²¿´òÓ¡
+/* æ¯ä¸ªæ–‡ä»¶å•ç‹¬debugæ‰“å°çš„å¼€å…³ï¼Œç½®0å¯ä»¥ç¦æ­¢æœ¬æ–‡ä»¶å†…éƒ¨æ‰“å° */
 #define DEBUG_PRINT_IN_THIS_FILE    1
 #if DEBUG_PRINT_IN_THIS_FILE
-  #define PRINTF(...)    PRINT(__VA_ARGS__)
+  #define PRINTF(...)       PRINT(__VA_ARGS__)
 #else
-  #define PRINTF(...) \
-    do                \
-    {                 \
-    } while(0)
+  #define PRINTF(...)       do{} while(0)
 #endif
 
-static uint8_t subaddrs_index = 0;                 //·¢ËÍ¶©ÔÄµØÖ·ĞòºÅ
-#define SUBADDR_NUM    3                           //¶©ÔÄµØÖ·ÊıÁ¿
-static uint16_t subaddrs[SUBADDR_NUM] = {1, 2, 3}; //¶©ÔÄµØÖ·Êı×é
+static uint8_t subaddrs_index = 0;                 /* å‘é€è®¢é˜…åœ°å€åºå· */
+#define SUBADDR_NUM    3                           /* è®¢é˜…åœ°å€æ•°é‡ */
+static uint16_t subaddrs[SUBADDR_NUM] = {1, 2, 3}; /* è®¢é˜…åœ°å€æ•°ç»„ */
 
 static uint8_t TX_DATA[10] =
     {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
 static uint8_t  RX_DATA[10];
 static uint16_t lwns_multicast_ProcessEvent(uint8_t task_id, uint16_t events);
-static void     multicast_recv(lwns_controller_ptr c, uint16_t subaddr, const lwns_addr_t *sender); //×é²¥½ÓÊÕ»Øµ÷º¯Êı
-static void     multicast_sent(lwns_controller_ptr ptr);                                            //×é²¥·¢ËÍÍê³É»Øµ÷º¯Êı
+static void     multicast_recv(lwns_controller_ptr c, uint16_t subaddr, const lwns_addr_t *sender); /* ç»„æ’­æ¥æ”¶å›è°ƒå‡½æ•° */
+static void     multicast_sent(lwns_controller_ptr ptr);                                            /* ç»„æ’­å‘é€å®Œæˆå›è°ƒå‡½æ•° */
 
-static lwns_multicast_controller multicast; //ÉùÃ÷×é²¥¿ØÖÆ½á¹¹Ìå
+static lwns_multicast_controller multicast; /* å£°æ˜ç»„æ’­æ§åˆ¶ç»“æ„ä½“ */
 
-static uint8_t multicast_taskID; //ÉùÃ÷×é²¥¿ØÖÆÈÎÎñid
+static uint8_t multicast_taskID; /* å£°æ˜ç»„æ’­æ§åˆ¶ä»»åŠ¡id */
 
 /*********************************************************************
  * @fn      multicast_recv
  *
- * @brief   lwns multicast½ÓÊÕ»Øµ÷º¯Êı
+ * @brief   lwns multicastæ¥æ”¶å›è°ƒå‡½æ•°
  *
- * @param   ptr     -   ±¾´Î½ÓÊÕµ½µÄÊı¾İËùÊôµÄ×é²¥¿ØÖÆ½á¹¹ÌåÖ¸Õë.
- * @param   subaddr -   ±¾´Î½ÓÊÕµ½µÄÊı¾İµÄ¶©ÔÄµØÖ·.
- * @param   sender  -   ±¾´Î½ÓÊÕµ½µÄÊı¾İµÄ·¢ËÍÕßµØÖ·Ö¸Õë.
+ * @param   ptr     -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®æ‰€å±çš„ç»„æ’­æ§åˆ¶ç»“æ„ä½“æŒ‡é’ˆ.
+ * @param   subaddr -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®çš„è®¢é˜…åœ°å€.
+ * @param   sender  -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®çš„å‘é€è€…åœ°å€æŒ‡é’ˆ.
  *
  * @return  None.
  */
 static void multicast_recv(lwns_controller_ptr ptr, uint16_t subaddr, const lwns_addr_t *sender)
 {
     uint8_t len;
-    len = lwns_buffer_datalen(); //»ñÈ¡µ±Ç°»º³åÇø½ÓÊÕµ½µÄÊı¾İ³¤¶È
+    len = lwns_buffer_datalen(); /* è·å–å½“å‰ç¼“å†²åŒºæ¥æ”¶åˆ°çš„æ•°æ®é•¿åº¦ */
     if(len == 10)
     {
-        lwns_buffer_save_data(RX_DATA); //½ÓÊÕÊı¾İµ½ÓÃ»§Êı¾İÇøÓò
+        lwns_buffer_save_data(RX_DATA); /* æ¥æ”¶æ•°æ®åˆ°ç”¨æˆ·æ•°æ®åŒºåŸŸ */
         PRINTF("multicast %d rec from %02x %02x %02x %02x %02x %02x\n",
                get_lwns_object_port(ptr),
                sender->v8[0], sender->v8[1], sender->v8[2], sender->v8[3],
-               sender->v8[4], sender->v8[5]); //fromÎª½ÓÊÕµ½µÄÊı¾İµÄ·¢ËÍ·½µØÖ·
+               sender->v8[4], sender->v8[5]); /* fromä¸ºæ¥æ”¶åˆ°çš„æ•°æ®çš„å‘é€æ–¹åœ°å€ */
         PRINTF("subaddr:%d data:", subaddr);
         for(uint8_t i = 0; i < len; i++)
         {
@@ -75,9 +72,9 @@ static void multicast_recv(lwns_controller_ptr ptr, uint16_t subaddr, const lwns
 /*********************************************************************
  * @fn      multicast_sent
  *
- * @brief   lwns multicast·¢ËÍÍê³É»Øµ÷º¯Êı
+ * @brief   lwns multicastå‘é€å®Œæˆå›è°ƒå‡½æ•°
  *
- * @param   ptr     -   ±¾´Î·¢ËÍÍê³ÉµÄ×é²¥¿ØÖÆ½á¹¹ÌåÖ¸Õë.
+ * @param   ptr     -   æœ¬æ¬¡å‘é€å®Œæˆçš„ç»„æ’­æ§åˆ¶ç»“æ„ä½“æŒ‡é’ˆ.
  *
  * @return  None.
  */
@@ -87,7 +84,7 @@ static void multicast_sent(lwns_controller_ptr ptr)
 }
 
 /**
- * lwns×é²¥»Øµ÷º¯Êı½á¹¹Ìå£¬×¢²á»Øµ÷º¯Êı
+ * lwnsç»„æ’­å›è°ƒå‡½æ•°ç»“æ„ä½“ï¼Œæ³¨å†Œå›è°ƒå‡½æ•°
  */
 static const struct lwns_multicast_callbacks multicast_callbacks =
     {multicast_recv, multicast_sent};
@@ -95,7 +92,7 @@ static const struct lwns_multicast_callbacks multicast_callbacks =
 /*********************************************************************
  * @fn      lwns_multicast_process_init
  *
- * @brief   lwns multicastÀı³Ì³õÊ¼»¯.
+ * @brief   lwns multicastä¾‹ç¨‹åˆå§‹åŒ–.
  *
  * @param   None.
  *
@@ -105,10 +102,10 @@ void lwns_multicast_process_init(void)
 {
     multicast_taskID = TMOS_ProcessEventRegister(lwns_multicast_ProcessEvent);
     lwns_multicast_init(&multicast,
-                        136,                   //´ò¿ªÒ»¸ö¶Ë¿ÚºÅÎª136µÄ×é²¥
-                        subaddrs,              //¶©ÔÄµØÖ·Êı×éÖ¸Õë
-                        SUBADDR_NUM,           //¶©ÔÄµØÖ·ÊıÁ¿
-                        &multicast_callbacks); //·µ»Ø0´ú±í´ò¿ªÊ§°Ü¡£·µ»Ø1´ò¿ª³É¹¦¡£
+                        136,                   /* æ‰“å¼€ä¸€ä¸ªç«¯å£å·ä¸º136çš„ç»„æ’­ */
+                        subaddrs,              /* è®¢é˜…åœ°å€æ•°ç»„æŒ‡é’ˆ */
+                        SUBADDR_NUM,           /* è®¢é˜…åœ°å€æ•°é‡ */
+                        &multicast_callbacks); /* è¿”å›0ä»£è¡¨æ‰“å¼€å¤±è´¥ã€‚è¿”å›1æ‰“å¼€æˆåŠŸã€‚ */
     tmos_start_task(multicast_taskID, MULTICAST_EXAMPLE_TX_PERIOD_EVT,
                     MS1_TO_SYSTEM_TIME(1000));
 }
@@ -128,24 +125,24 @@ void lwns_multicast_process_init(void)
  */
 uint16_t lwns_multicast_ProcessEvent(uint8_t task_id, uint16_t events)
 {
-    if(events & MULTICAST_EXAMPLE_TX_PERIOD_EVT)
-    { //ÖÜÆÚĞÔÔÚ²»Í¬µÄ×é²¥µØÖ·ÉÏ·¢ËÍ×é²¥ÏûÏ¢
+    if(events & MULTICAST_EXAMPLE_TX_PERIOD_EVT)    /* å‘¨æœŸæ€§åœ¨ä¸åŒçš„ç»„æ’­åœ°å€ä¸Šå‘é€ç»„æ’­æ¶ˆæ¯ */
+    {
         uint8_t temp;
         temp = TX_DATA[0];
         for(uint8_t i = 0; i < 9; i++)
         {
-            TX_DATA[i] = TX_DATA[i + 1]; //ÒÆÎ»·¢ËÍÊı¾İ£¬ÒÔ±ã¹Û²ìĞ§¹û
+            TX_DATA[i] = TX_DATA[i + 1]; /* ç§»ä½å‘é€æ•°æ®ï¼Œä»¥ä¾¿è§‚å¯Ÿæ•ˆæœ */
         }
         TX_DATA[9] = temp;
-        lwns_buffer_load_data(TX_DATA, sizeof(TX_DATA)); //ÔØÈëĞèÒª·¢ËÍµÄÊı¾İµ½»º³åÇø
+        lwns_buffer_load_data(TX_DATA, sizeof(TX_DATA)); /* è½½å…¥éœ€è¦å‘é€çš„æ•°æ®åˆ°ç¼“å†²åŒº */
         if(subaddrs_index >= SUBADDR_NUM)
         {
             subaddrs_index = 0;
         }
-        lwns_multicast_send(&multicast, subaddrs[subaddrs_index]); //×é²¥·¢ËÍÊı¾İ¸øÖ¸¶¨½Úµã
+        lwns_multicast_send(&multicast, subaddrs[subaddrs_index]); /* ç»„æ’­å‘é€æ•°æ®ç»™æŒ‡å®šèŠ‚ç‚¹ */
         subaddrs_index++;
         tmos_start_task(multicast_taskID, MULTICAST_EXAMPLE_TX_PERIOD_EVT,
-                        MS1_TO_SYSTEM_TIME(1000)); //ÖÜÆÚĞÔ·¢ËÍ
+                        MS1_TO_SYSTEM_TIME(1000)); /* å‘¨æœŸæ€§å‘é€ */
         return events ^ MULTICAST_EXAMPLE_TX_PERIOD_EVT;
     }
     if(events & SYS_EVENT_MSG)
@@ -153,10 +150,10 @@ uint16_t lwns_multicast_ProcessEvent(uint8_t task_id, uint16_t events)
         uint8_t *pMsg;
         if((pMsg = tmos_msg_receive(task_id)) != NULL)
         {
-            // Release the TMOS message
-            tmos_msg_deallocate(pMsg);
+            /*  Release the TMOS message,tmos_msg_allocate */
+            tmos_msg_deallocate(pMsg); /* é‡Šæ”¾å†…å­˜ */
         }
-        // return unprocessed events
+        /*  return unprocessed events */
         return (events ^ SYS_EVENT_MSG);
     }
     return 0;

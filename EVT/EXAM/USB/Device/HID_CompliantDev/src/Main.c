@@ -13,6 +13,7 @@
 #include "CH59x_common.h"
 
 #define DevEP0SIZE    0x40
+#define DevEP1SIZE    0x40
 // 设备描述符
 const uint8_t MyDevDescr[] = {0x12,0x01,0x10,0x01,0x00,0x00,0x00,DevEP0SIZE,0x3d,0x41,0x07,0x21,0x00,0x00,0x00,0x00,0x00,0x01};
 // 配置描述符
@@ -20,8 +21,8 @@ const uint8_t MyCfgDescr[] = {
     0x09,0x02,0x29,0x00,0x01,0x01,0x04,0xA0,0x23,               //配置描述符
     0x09,0x04,0x00,0x00,0x02,0x03,0x00,0x00,0x05,               //接口描述符
     0x09,0x21,0x00,0x01,0x00,0x01,0x22,0x22,0x00,               //HID类描述符
-    0x07,0x05,0x81,0x03,0x40,0x00,0x01,              //端点描述符
-    0x07,0x05,0x01,0x03,0x40,0x00,0x01               //端点描述符
+    0x07,0x05,0x81,0x03,DevEP1SIZE,0x00,0x01,              //端点描述符
+    0x07,0x05,0x01,0x03,DevEP1SIZE,0x00,0x01               //端点描述符
 };
 /*字符串描述符略*/
 /*HID类报表描述符*/
@@ -52,7 +53,7 @@ uint8_t        Idle_Value = 0x00;
 uint8_t        USB_SleepStatus = 0x00; /* USB睡眠状态 */
 
 //HID设备中断传输中上传给主机4字节的数据
-uint8_t HID_Buf[] = {0,0,0,0};
+uint8_t HID_Buf[DevEP1SIZE] = {0,0,0,0};
 
 /******** 用户自定义分配端点RAM ****************************************/
 __attribute__((aligned(4))) uint8_t EP0_Databuf[64 + 64 + 64]; //ep0(64)+ep4_out(64)+ep4_in(64)
@@ -464,7 +465,7 @@ void DevHIDReport(uint8_t data0,uint8_t data1,uint8_t data2,uint8_t data3)
     HID_Buf[2] = data2;
     HID_Buf[3] = data3;
     memcpy(pEP1_IN_DataBuf, HID_Buf, sizeof(HID_Buf));
-    DevEP1_IN_Deal(sizeof(HID_Buf));
+    DevEP1_IN_Deal(DevEP1SIZE);
 }
 
 /*********************************************************************

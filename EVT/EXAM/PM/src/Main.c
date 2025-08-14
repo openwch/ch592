@@ -114,5 +114,5 @@ __INTERRUPT
 __HIGH_CODE
 void GPIOA_IRQHandler(void)
 {
-    GPIOA_ClearITFlagBit(GPIO_Pin_6 | GPIO_Pin_5);
+    GPIOA_ClearITFlagBit(GPIO_Pin_5);
 }

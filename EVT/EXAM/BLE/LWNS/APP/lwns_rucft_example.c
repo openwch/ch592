@@ -1,39 +1,36 @@
 /********************************** (C) COPYRIGHT *******************************
  * File Name          : lwns_rucft_example.c
  * Author             : WCH
- * Version            : V1.0
- * Date               : 2021/06/30
- * Description        : reliable unicast file transfer£¬¿É¿¿µ¥²¥ÎÄ¼ş´«ÊäÀı×Ó
+ * Version            : V1.1
+ * Date               : 2025/04/27
+ * Description        : reliable unicast file transferï¼Œå¯é å•æ’­æ–‡ä»¶ä¼ è¾“ä¾‹å­
  *********************************************************************************
- * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Copyright (c) 2025 Nanjing Qinheng Microelectronics Co., Ltd.
  * Attention: This software (modified or not) and binary are used for 
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 #include "lwns_rucft_example.h"
 
-//Ã¿¸öÎÄ¼şµ¥¶Àdebug´òÓ¡µÄ¿ª¹Ø£¬ÖÃ0¿ÉÒÔ½ûÖ¹±¾ÎÄ¼şÄÚ²¿´òÓ¡
+/* æ¯ä¸ªæ–‡ä»¶å•ç‹¬debugæ‰“å°çš„å¼€å…³ï¼Œç½®0å¯ä»¥ç¦æ­¢æœ¬æ–‡ä»¶å†…éƒ¨æ‰“å° */
 #define DEBUG_PRINT_IN_THIS_FILE    1
 #if DEBUG_PRINT_IN_THIS_FILE
-  #define PRINTF(...)    PRINT(__VA_ARGS__)
+  #define PRINTF(...)       PRINT(__VA_ARGS__)
 #else
-  #define PRINTF(...) \
-    do                \
-    {                 \
-    } while(0)
+  #define PRINTF(...)       do{} while(0)
 #endif
 
 #if 1
-static lwns_addr_t dst_addr = {{0x66, 0xdf, 0x38, 0xe4, 0xc2, 0x84}}; //Ä¿±ê½ÚµãµØÖ·£¬²âÊÔÊ±£¬Çë¸ù¾İµçÂ·°åĞ¾Æ¬MACµØÖ·²»Í¬½øĞĞĞŞ¸Ä¡£ĞŞ¸ÄÎª½ÓÊÕ·½µÄMACµØÖ·£¬ÇëÎğÊ¹ÓÃ×Ô¼ºµÄMACµØÖ·
+static lwns_addr_t dst_addr = {{0x66, 0xdf, 0x38, 0xe4, 0xc2, 0x84}}; /* ç›®æ ‡èŠ‚ç‚¹åœ°å€ï¼Œæµ‹è¯•æ—¶ï¼Œè¯·æ ¹æ®ç”µè·¯æ¿èŠ¯ç‰‡MACåœ°å€ä¸åŒè¿›è¡Œä¿®æ”¹ã€‚ä¿®æ”¹ä¸ºæ¥æ”¶æ–¹çš„MACåœ°å€ï¼Œè¯·å‹¿ä½¿ç”¨è‡ªå·±çš„MACåœ°å€ */
 #else
 static lwns_addr_t dst_addr = {{0xd9, 0x37, 0x3c, 0xe4, 0xc2, 0x84}};
 #endif
 
 static uint8_t rucft_taskID;
 
-static lwns_rucft_controller rucft; //ÉùÃ÷rucft¿ØÖÆ½á¹¹Ìå
+static lwns_rucft_controller rucft; /* å£°æ˜rucftæ§åˆ¶ç»“æ„ä½“ */
 
 #define FILESIZE    4000
-static char  strsend[FILESIZE]; //·¢ËÍ»º³åÇø
+static char  strsend[FILESIZE]; /* å‘é€ç¼“å†²åŒº */
 static char *strp;
 static void  write_file(lwns_controller_ptr ptr, const lwns_addr_t *sender,
                         int offset, int flag, char *data, int datalen);
@@ -41,7 +38,7 @@ static int   read_file(lwns_controller_ptr ptr, int offset, char *to);
 static void  timedout_rucft(lwns_controller_ptr ptr);
 
 /**
- * lwns ¿É¿¿µ¥²¥ÎÄ¼ş´«Êä»Øµ÷º¯Êı½á¹¹Ìå£¬×¢²á»Øµ÷º¯Êı
+ * lwns å¯é å•æ’­æ–‡ä»¶ä¼ è¾“å›è°ƒå‡½æ•°ç»“æ„ä½“ï¼Œæ³¨å†Œå›è°ƒå‡½æ•°
  */
 const static struct lwns_rucft_callbacks rucft_callbacks = {write_file,
                                                             read_file, timedout_rucft};
@@ -51,72 +48,72 @@ uint16_t lwns_rucft_ProcessEvent(uint8_t task_id, uint16_t events);
 /*********************************************************************
  * @fn      write_file
  *
- * @brief   lwns rucft½ÓÊÕ»Øµ÷º¯Êı£¬×÷ÎªĞ´ÈëÎÄ¼ş»Øµ÷º¯Êı
+ * @brief   lwns rucftæ¥æ”¶å›è°ƒå‡½æ•°ï¼Œä½œä¸ºå†™å…¥æ–‡ä»¶å›è°ƒå‡½æ•°
  *
- * @param   ptr         -   ±¾´Î½ÓÊÕµ½µÄÊı¾İËùÊôµÄnetflood¿ØÖÆ½á¹¹ÌåÖ¸Õë.
- * @param   sender      -   ±¾´Î½ÓÊÕµ½µÄÊı¾İµÄ·¢ËÍÕßµØÖ·Ö¸Õë.
- * @param   offset      -   ±¾´Î½ÓÊÕµ½µÄÊı¾İµÄÆ«ÒÆÁ¿£¬Ò²ÊÇ±¾´ÎÎÄ¼ş´«Êä½ÓÊÕÒÑ¾­ÊÕµ½µÄÊı¾İÁ¿.
- * @param   flag        -   ±¾´Î½ÓÊÕµ½Êı¾İµÄ±êÖ¾£¬LWNS_RUCFT_FLAG_NONE/LWNS_RUCFT_FLAG_NEWFILE/LWNS_RUCFT_FLAG_END.
- * @param   data        -   ±¾´Î½ÓÊÕµ½µÄÊı¾İµÄÍ·Ö¸Õë.
- * @param   datalen     -   ±¾´Î½ÓÊÕµ½µÄÊı¾İµÄ³¤¶È.
+ * @param   ptr         -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®æ‰€å±çš„netfloodæ§åˆ¶ç»“æ„ä½“æŒ‡é’ˆ.
+ * @param   sender      -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®çš„å‘é€è€…åœ°å€æŒ‡é’ˆ.
+ * @param   offset      -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®çš„åç§»é‡ï¼Œä¹Ÿæ˜¯æœ¬æ¬¡æ–‡ä»¶ä¼ è¾“æ¥æ”¶å·²ç»æ”¶åˆ°çš„æ•°æ®é‡.
+ * @param   flag        -   æœ¬æ¬¡æ¥æ”¶åˆ°æ•°æ®çš„æ ‡å¿—ï¼ŒLWNS_RUCFT_FLAG_NONE/LWNS_RUCFT_FLAG_NEWFILE/LWNS_RUCFT_FLAG_END.
+ * @param   data        -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®çš„å¤´æŒ‡é’ˆ.
+ * @param   datalen     -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®çš„é•¿åº¦.
  *
  * @return  None.
  */
 static void write_file(lwns_controller_ptr ptr, const lwns_addr_t *sender,
                        int offset, int flag, char *data, int datalen)
 {
-    //senderÎª·¢ËÍ·½µÄµØÖ·
-    //Èç¹ûĞèÒª½ÓÊÕ²»Í¬µÄÎÄ¼ş£¬ĞèÒªÔÚ´Ëº¯ÊıÖĞ×öºÃ½Ó¿Ú
+    /* senderä¸ºå‘é€æ–¹çš„åœ°å€ */
+    /* å¦‚æœéœ€è¦æ¥æ”¶ä¸åŒçš„æ–‡ä»¶ï¼Œéœ€è¦åœ¨æ­¤å‡½æ•°ä¸­åšå¥½æ¥å£ */
     if(datalen > 0)
-    { //ÉùÃ÷¸ö»º³å´ÓdataÀïÈ¡Êı¾İ´òÓ¡
+    { /* å£°æ˜ä¸ªç¼“å†²ä»dataé‡Œå–æ•°æ®æ‰“å° */
         PRINTF("r:%c\n", *data);
     }
     if(flag == LWNS_RUCFT_FLAG_END)
     {
         PRINTF("re\n");
-        //±¾´ÎÎÄ¼ş´«ÊäµÄ×îºóÒ»¸ö°ü
+        /* æœ¬æ¬¡æ–‡ä»¶ä¼ è¾“çš„æœ€åä¸€ä¸ªåŒ… */
     }
     else if(flag == LWNS_RUCFT_FLAG_NONE)
     {
         PRINTF("ru\n");
-        //±¾´ÎÎÄ¼ş´«ÊäÕı³£µÄ°ü
+        /* æœ¬æ¬¡æ–‡ä»¶ä¼ è¾“æ­£å¸¸çš„åŒ… */
     }
     else if(flag == LWNS_RUCFT_FLAG_NEWFILE)
     {
         PRINTF("rn\n");
-        //±¾´ÎÎÄ¼ş´«ÊäµÄµÚÒ»¸ö°ü
+        /* æœ¬æ¬¡æ–‡ä»¶ä¼ è¾“çš„ç¬¬ä¸€ä¸ªåŒ… */
     }
 }
 
 /*********************************************************************
  * @fn      read_file
  *
- * @brief   lwns rucft·¢ËÍÍê³É»Øµ÷º¯Êı£¬×÷Îª¶ÁÈ¡ÎÄ¼ş»Øµ÷º¯Êı
+ * @brief   lwns rucftå‘é€å®Œæˆå›è°ƒå‡½æ•°ï¼Œä½œä¸ºè¯»å–æ–‡ä»¶å›è°ƒå‡½æ•°
  *
- * @param   ptr         -   ±¾´Î½ÓÊÕµ½µÄÊı¾İËùÊôµÄnetflood¿ØÖÆ½á¹¹ÌåÖ¸Õë.
- * @param   offset      -   ±¾´Î½ÓÊÕµ½µÄÊı¾İµÄÆ«ÒÆÁ¿£¬Ò²ÊÇ±¾´ÎÎÄ¼ş´«Êä·¢ËÍÒÑ¾­·¢ËÍµÄÊı¾İÁ¿.
- * @param   to          -   ±¾´ÎĞèÒª·¢ËÍµÄÊı¾İ»º³åÇøµÄÍ·Ö¸Õë£¬ÓÃ»§½«Êı¾İ¿½±´µ½´ËÖ¸ÕëÖ¸ÏòµÄÄÚ´æ¿Õ¼ä¡£.
+ * @param   ptr         -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®æ‰€å±çš„netfloodæ§åˆ¶ç»“æ„ä½“æŒ‡é’ˆ.
+ * @param   offset      -   æœ¬æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®çš„åç§»é‡ï¼Œä¹Ÿæ˜¯æœ¬æ¬¡æ–‡ä»¶ä¼ è¾“å‘é€å·²ç»å‘é€çš„æ•°æ®é‡.
+ * @param   to          -   æœ¬æ¬¡éœ€è¦å‘é€çš„æ•°æ®ç¼“å†²åŒºçš„å¤´æŒ‡é’ˆï¼Œç”¨æˆ·å°†æ•°æ®æ‹·è´åˆ°æ­¤æŒ‡é’ˆæŒ‡å‘çš„å†…å­˜ç©ºé—´ã€‚.
  *
- * @return  size        -   ·µ»ØµÄsize¼´Îª±¾´ÎĞèÒª·¢ËÍµÄÊı¾İ³¤¶È£¬²»¿É´óÓÚLWNS_RUCFT_DATASIZE.
+ * @return  size        -   è¿”å›çš„sizeå³ä¸ºæœ¬æ¬¡éœ€è¦å‘é€çš„æ•°æ®é•¿åº¦ï¼Œä¸å¯å¤§äºLWNS_RUCFT_DATASIZE.
  */
 static int read_file(lwns_controller_ptr ptr, int offset, char *to)
 {
-    //toÎªĞèÒª±£´æÊı¾İ¹ıÈ¥µÄÖ¸Õë
-    //Èç¹ûĞèÒª·¢ËÍ²»Í¬µÄÎÄ¼ş£¬ĞèÒªÔÚ´Ëº¯ÊıÖĞ×öºÃ½Ó¿Ú
+    /* toä¸ºéœ€è¦ä¿å­˜æ•°æ®è¿‡å»çš„æŒ‡é’ˆ */
+    /* å¦‚æœéœ€è¦å‘é€ä¸åŒçš„æ–‡ä»¶ï¼Œéœ€è¦åœ¨æ­¤å‡½æ•°ä¸­åšå¥½æ¥å£ */
     int size = LWNS_RUCFT_DATASIZE;
     if(offset >= FILESIZE)
     {
-        //ÉÏ´ÎÒÑ¾­·¢Íê,±¾´ÎÊÇ×îºóÈ·ÈÏ
+        /* ä¸Šæ¬¡å·²ç»å‘å®Œ,æœ¬æ¬¡æ˜¯æœ€åç¡®è®¤ */
         PRINTF("Send done\n");
         tmos_start_task(rucft_taskID, RUCFT_EXAMPLE_TX_PERIOD_EVT,
-                        MS1_TO_SYSTEM_TIME(5000)); //5ÃëÖÓºó¼ÌĞø·¢ËÍ²âÊÔ
+                        MS1_TO_SYSTEM_TIME(5000)); /* 5ç§’é’Ÿåç»§ç»­å‘é€æµ‹è¯• */
         return 0;
     }
     else if(offset + LWNS_RUCFT_DATASIZE >= FILESIZE)
     {
         size = FILESIZE - offset;
     }
-    //°Ñ±¾´ÎĞèÒª·¢ËÍµÄÄÚÈİÑ¹½ø°ü»º³å
+    /* æŠŠæœ¬æ¬¡éœ€è¦å‘é€çš„å†…å®¹å‹è¿›åŒ…ç¼“å†² */
     tmos_memcpy(to, strp + offset, size);
     return size;
 }
@@ -124,23 +121,23 @@ static int read_file(lwns_controller_ptr ptr, int offset, char *to)
 /*********************************************************************
  * @fn      timedout_rucft
  *
- * @brief   lwns rucft·¢ËÍ³¬Ê±»Øµ÷º¯Êı
+ * @brief   lwns rucftå‘é€è¶…æ—¶å›è°ƒå‡½æ•°
  *
- * @param   ptr     -   ±¾´Î·¢ËÍÍê³ÉµÄruc¿ØÖÆ½á¹¹ÌåÖ¸Õë.
+ * @param   ptr     -   æœ¬æ¬¡å‘é€å®Œæˆçš„rucæ§åˆ¶ç»“æ„ä½“æŒ‡é’ˆ.
  *
  * @return  None.
  */
 static void timedout_rucft(lwns_controller_ptr ptr)
 {
-    //rucftÖĞ£¬·¢ËÍ·½ÔÙÖØ·¢´ÎÊı³¬¹ı×î´óÖØ·¢´ÎÊıºó£¬»áµ÷ÓÃ¸Ã»Øµ÷¡£
-    //½ÓÊÕ·½³¬Ê±Ã»½ÓÊÕµ½ÏÂÒ»¸ö°üÒ²»áµ÷ÓÃ
+    /* rucftä¸­ï¼Œå‘é€æ–¹å†é‡å‘æ¬¡æ•°è¶…è¿‡æœ€å¤§é‡å‘æ¬¡æ•°åï¼Œä¼šè°ƒç”¨è¯¥å›è°ƒã€‚ */
+    /* æ¥æ”¶æ–¹è¶…æ—¶æ²¡æ¥æ”¶åˆ°ä¸‹ä¸€ä¸ªåŒ…ä¹Ÿä¼šè°ƒç”¨ */
     PRINTF("rucft %d timedout\r\n", get_lwns_object_port(ptr));
 }
 
 /*********************************************************************
  * @fn      lwns_rucft_process_init
  *
- * @brief   lwns rucftÀı³Ì³õÊ¼»¯.
+ * @brief   lwns rucftä¾‹ç¨‹åˆå§‹åŒ–.
  *
  * @param   None.
  *
@@ -150,14 +147,14 @@ void lwns_rucft_process_init(void)
 {
     lwns_addr_t MacAddr;
     rucft_taskID = TMOS_ProcessEventRegister(lwns_rucft_ProcessEvent);
-    lwns_rucft_init(&rucft, 137,            //¶Ë¿ÚºÅ
-                    HTIMER_SECOND_NUM / 10, //µÈ´ıÄ¿±ê½ÚµãackÊ±¼ä
-                    5,                      //×î´óÖØ·¢´ÎÊı£¬ÓërucÖĞµÄruc_sendµÄÖØ·¢´ÎÊı¹¦ÄÜÒ»Ñù
-                    &rucft_callbacks        //»Øµ÷º¯Êı
-    );                                      //·µ»Ø0´ú±í´ò¿ªÊ§°Ü¡£·µ»Ø1´ò¿ª³É¹¦¡£
+    lwns_rucft_init(&rucft, 137,            /* ç«¯å£å· */
+                    HTIMER_SECOND_NUM / 10, /* ç­‰å¾…ç›®æ ‡èŠ‚ç‚¹ackæ—¶é—´ */
+                    5,                      /* æœ€å¤§é‡å‘æ¬¡æ•°ï¼Œä¸rucä¸­çš„ruc_sendçš„é‡å‘æ¬¡æ•°åŠŸèƒ½ä¸€æ · */
+                    &rucft_callbacks        /* å›è°ƒå‡½æ•° */
+    );                                      /* è¿”å›0ä»£è¡¨æ‰“å¼€å¤±è´¥ã€‚è¿”å›1æ‰“å¼€æˆåŠŸã€‚ */
     int i;
-    for(i = 0; i < FILESIZE; i++)
-    { //LWNS_RUCFT_DATASIZE¸öLWNSNK_RUCFT_DATASIZE¸öb£¬µÈµÈ£¬³õÊ¼»¯ĞèÒª·¢ËÍµÄÊı¾İ
+    for(i = 0; i < FILESIZE; i++)   /* LWNS_RUCFT_DATASIZEä¸ªLWNSNK_RUCFT_DATASIZEä¸ªbï¼Œç­‰ç­‰ï¼Œåˆå§‹åŒ–éœ€è¦å‘é€çš„æ•°æ® */
+    {
         strsend[i] = 'a' + i / LWNS_RUCFT_DATASIZE;
     }
     strp = strsend;
@@ -190,7 +187,7 @@ uint16_t lwns_rucft_ProcessEvent(uint8_t task_id, uint16_t events)
     if(events & RUCFT_EXAMPLE_TX_PERIOD_EVT)
     {
         PRINTF("send\n");
-        lwns_rucft_send(&rucft, &dst_addr); //¿ªÊ¼·¢ËÍÖÁÄ¿±ê½Úµã£¬ÓÃ»§ÆôÓÃ·¢ËÍÊ±ÒªÅäÖÃºÃ»Øµ÷º¯ÊıÖĞµÄÊı¾İ°ü¶ÁÈ¡
+        lwns_rucft_send(&rucft, &dst_addr); /* å¼€å§‹å‘é€è‡³ç›®æ ‡èŠ‚ç‚¹ï¼Œç”¨æˆ·å¯ç”¨å‘é€æ—¶è¦é…ç½®å¥½å›è°ƒå‡½æ•°ä¸­çš„æ•°æ®åŒ…è¯»å– */
         return events ^ RUCFT_EXAMPLE_TX_PERIOD_EVT;
     }
     if(events & SYS_EVENT_MSG)
@@ -198,10 +195,10 @@ uint16_t lwns_rucft_ProcessEvent(uint8_t task_id, uint16_t events)
         uint8_t *pMsg;
         if((pMsg = tmos_msg_receive(task_id)) != NULL)
         {
-            // Release the TMOS message
-            tmos_msg_deallocate(pMsg);
+            /*  Release the TMOS message,tmos_msg_allocate */
+            tmos_msg_deallocate(pMsg); /* é‡Šæ”¾å†…å­˜ */
         }
-        // return unprocessed events
+        /*  return unprocessed events */
         return (events ^ SYS_EVENT_MSG);
     }
     return 0;

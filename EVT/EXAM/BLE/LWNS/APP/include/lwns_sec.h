@@ -1,12 +1,12 @@
 /********************************** (C) COPYRIGHT *******************************
  * File Name          : lwns_sec.h
  * Author             : WCH
- * Version            : V1.0
- * Date               : 2021/09/17
- * Description        : lwnsœ˚œ¢º”√‹
+ * Version            : V1.1
+ * Date               : 2025/04/27
+ * Description        : lwnsÂä†ÂØÜÊï∞ÊçÆÂ§ÑÁêÜÊé•Âè£
  *********************************************************************************
- * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
- * Attention: This software (modified or not) and binary are used for 
+ * Copyright (c) 2025 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Attention: This software (modified or not) and binary are used for
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 #ifndef _LWNS_SEC_H_

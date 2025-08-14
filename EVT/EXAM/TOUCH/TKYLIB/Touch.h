@@ -5,7 +5,7 @@
 #include "TouchKey_CFG.h"
 #include "wchtouch.h"
 //是否开启触摸数据打印
-#define PRINT_EN 0
+#define PRINT_EN 1
 
 #if (PRINT_EN)
   #define dg_log               printf
@@ -32,26 +32,11 @@
 #define TKY_FILTER_MODE FILTER_MODE_3
 #endif
 
-#if (TKY_FILTER_MODE == FILTER_MODE_1)
-#define TKY_PollForFilter() TKY_PollForFilterMode_1()
-#elif (TKY_FILTER_MODE == FILTER_MODE_3)
 #define TKY_PollForFilter() TKY_PollForFilterMode_3()
-#elif (TKY_FILTER_MODE == FILTER_MODE_5)
-#define TKY_PollForFilter() TKY_PollForFilterMode_5()
-#elif (TKY_FILTER_MODE == FILTER_MODE_7)
-#define TKY_PollForFilter() TKY_PollForFilterMode_7()
-#elif (TKY_FILTER_MODE == FILTER_MODE_9)
-#define TKY_PollForFilter() TKY_PollForFilterMode_9()
-#endif
 
-
-#if (TKY_FILTER_MODE == FILTER_MODE_7)
-#define TKY_MEMHEAP_SIZE    	(KEY_COUNT*TKY_BUFLEN*2)     //外部定义数据缓冲区长度
-#else
 #define TKY_MEMHEAP_SIZE   		(KEY_COUNT*TKY_BUFLEN)     	 //外部定义数据缓冲区长度
-#endif
 
-
+#define TOUCH_OFF_VALUE                     (0xFFFF)
 typedef struct
 {
 	  UINT32 PaBit;     //----记录A_IO对应PIN脚，输出赋值用----
@@ -88,6 +73,7 @@ typedef enum
 #define KEY_MODE    NORMAL_KEY_MODE      //按键模式设置
 #define KEY_FILTER_TIME   2              //按键滤波次数
 #define KEY_LONG_TIME     0              //单位：以tky_KeyScan()调用的间隔时间为准， 超出次数则认为长按事件
+#define KEY_REPEAT_TIME   0//100             //按键连发的速度，0表示不支持连发，时间单位为按键扫描单位
 
 typedef uint8_t (*pIsKeyDownFunc)(void);
 
@@ -178,14 +164,49 @@ typedef struct
 }KEY_FIFO_T;
 
 /************************WHEEL_SLIDER_DEFINE****************************/
-#define TOUCH_DECIMAL_POINT_PRECISION       (100)
-#define TOUCH_WHEEL_ELEMENTS            	(KEY_COUNT)
-#define TOUCH_WHEEL_RESOLUTION              (360)
-#define TOUCH_OFF_VALUE    					(0xFFFF)
 
 /************************LINE_SLIDER_DEFINE****************************/
 
 /************************TOUCH_PAD_DEFINE****************************/
+
+
+/** Configuration of each button */
+typedef struct st_touch_button_cfg
+{
+    const uint8_t* p_elem_index;      ///< Element number array used by this button.
+    KEY_T       *p_stbtn;
+    uint8_t     num_elements;      ///< Number of elements used by this button.
+} touch_button_cfg_t;
+
+/** Configuration of each slider */
+typedef struct st_touch_slider_cfg
+{
+    const uint8_t* p_elem_index;      ///< Element number array used by this slider.
+    uint8_t  num_elements;      ///< Number of elements used by this slider.
+    uint16_t threshold;         ///< Position calculation start threshold value.
+    uint16_t decimal_point_percision;
+    uint16_t slider_resolution;
+    uint16_t *pdata;
+} touch_slider_cfg_t;
+
+/** Configuration of each wheel */
+typedef struct st_touch_wheel_cfg_t
+{
+    const uint8_t* p_elem_index;      ///< Element number array used by this wheel.
+    uint8_t  num_elements;      ///< Number of elements used by this wheel.
+    uint16_t threshold;         ///< Position calculation start threshold value.
+    uint16_t decimal_point_percision;
+    uint16_t wheel_resolution;
+    uint16_t *pdata;
+} touch_wheel_cfg_t;
+
+/** Configuration of touch */
+typedef struct st_touch_cfg_t
+{
+    touch_button_cfg_t *touch_button_cfg;
+    touch_slider_cfg_t *touch_slider_cfg;
+    touch_wheel_cfg_t *touch_wheel_cfg;
+} touch_cfg_t;
 
 extern uint8_t wakeupflag; // 0  sleep mode   1  wakeup sta
 extern volatile TOUCH_S tkyPinAll;
@@ -193,7 +214,7 @@ extern uint16_t keyData, scanData;
 extern uint8_t wakeUpCount, wakeupflag;
 
 /* 供外部调用的函数声明 */
-extern void touch_InitKey(void);
+extern void touch_Init(touch_cfg_t *p);
 extern void touch_ScanWakeUp(void);
 extern void touch_ScanEnterSleep(void);
 extern void touch_PutKey(uint8_t _KeyCode);
@@ -201,9 +222,10 @@ extern uint8_t touch_GetKey(void);
 extern uint8_t touch_GetKeyState(KEY_ID_E _ucKeyID);
 extern void touch_SetKeyParam(uint8_t _ucKeyID, uint16_t _LongTime, uint8_t  _RepeatSpeed);
 extern void touch_ClearKey(void);
-extern void touch_KeyScan(void);
+extern void touch_Scan(void);
 extern void touch_InfoDebug(void);
-extern uint16_t touch_DetectWheelSlider(void);
+extern uint16_t touch_GetLineSliderData(void);
+extern uint16_t touch_GetWheelSliderData(void);
 extern void touch_GPIOModeCfg(GPIOModeTypeDef mode);
 extern void touch_GPIOSleep(void);
 #endif
