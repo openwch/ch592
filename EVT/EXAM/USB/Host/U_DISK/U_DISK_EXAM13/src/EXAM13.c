@@ -1,5 +1,5 @@
 /********************************** (C) COPYRIGHT *******************************
- * File Name          : EXAM1.C
+ * File Name          : EXAM13.C
  * Author             : WCH
  * Version            : V1.0
  * Date               : 2020/08/11
@@ -362,7 +362,7 @@ uint8_t CreatLongName()
             for(k = 0; k != MAX_PATH_LEN; k++)
                 ParData[k] = mCmdParam.Other.mBuffer[k]; /*试创建文件短文件名*/
             i = mChkName(&j);
-            mCmdParam.Locate.mSectorOffset = tempSec - 1;
+            mCmdParam.Locate.mSectorOffset = (tempSec > 0) ? (tempSec - 1) : 0; /* avoid unsigned underflow */
             i = CHRV3FileLocate();
             if(i != ERR_SUCCESS)
                 return i; //{goto XCC;}			/*出错则不能继续进行*/
@@ -556,31 +556,32 @@ uint8_t CreatLongName()
             pBuf = (uint16_t *)pDirName1;
             pBuf += 16;
 
-            if(pBuf < (uint16_t *)(DATA_BASE_BUF0 + 0x200))
+            /* compare by integer address; different-array pointer compare is UB */
+            if((uint32_t)pBuf < (uint32_t)(DATA_BASE_BUF0 + 0x200))
             {
                 i = 2;
                 while(1)
                 {
                     *pBuf = 0;
                     pBuf++;
-                    if(pBuf == (uint16_t *)(DATA_BASE_BUF0 + 0x200))
+                    if((uint32_t)pBuf == (uint32_t)(DATA_BASE_BUF0 + 0x200))
                         break;
                 }
                 i++;
             }
-            else if(pBuf < (uint16_t *)(DATA_BASE_BUF1 + 0x200))
+            else if((uint32_t)pBuf < (uint32_t)(DATA_BASE_BUF1 + 0x200))
             {
                 i = 1;
                 while(1)
                 {
                     *pBuf = 0;
                     pBuf++;
-                    if(pBuf == (uint16_t *)(DATA_BASE_BUF1 + 0x200))
+                    if((uint32_t)pBuf == (uint32_t)(DATA_BASE_BUF1 + 0x200))
                         break;
                 }
                 i++;
             }
-            mCmdParam.Locate.mSectorOffset = tempSec - 1;
+            mCmdParam.Locate.mSectorOffset = (tempSec > 0) ? (tempSec - 1) : 0; /* avoid unsigned underflow */
             CHRV3DirtyBuffer();
             i = CHRV3FileLocate();
             if(i != ERR_SUCCESS)
@@ -622,7 +623,7 @@ XBB:
  *
  * @return  none
  */
-int main()
+int main(void)
 {
     uint8_t s, i;
 

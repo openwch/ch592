@@ -266,7 +266,7 @@ int bt_ancs_unsubscribe_notification_source(struct bt_ancs_client *ancs_c)
     ancs_c->ns_notif_params.len = 2;
     ancs_c->ns_notif_params.pValue[0] = 0;
     ancs_c->ns_notif_params.pValue[1] = 0;
-    ancs_c->ns_notif_params.handle = ancs_c->handle_ds;
+    ancs_c->ns_notif_params.handle = ancs_c->handle_ns_ccc;
     ancs_c->ns_notif_params.cmd = 0;
     ancs_c->ns_notif_params.sig = 0;
 
@@ -303,7 +303,7 @@ int bt_ancs_unsubscribe_data_source(struct bt_ancs_client *ancs_c)
     ancs_c->ds_notif_params.len = 2;
     ancs_c->ds_notif_params.pValue[0] = 0;
     ancs_c->ds_notif_params.pValue[1] = 0;
-    ancs_c->ds_notif_params.handle = ancs_c->handle_ns;
+    ancs_c->ds_notif_params.handle = ancs_c->handle_ds_ccc;
     ancs_c->ds_notif_params.cmd = 0;
     ancs_c->ds_notif_params.sig = 0;
 

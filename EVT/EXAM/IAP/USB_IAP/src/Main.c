@@ -91,7 +91,7 @@ IAPDataFlashInfo_t p_image_flash;
  *
  * @return  none
  */
-int main()
+int main(void)
 {
     uint16_t i;
     uint8_t  s;

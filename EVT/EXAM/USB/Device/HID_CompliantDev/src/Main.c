@@ -44,7 +44,7 @@ const uint8_t HIDDescr[] = {  0x06, 0x00,0xff,
                               0xC0};
 
 /**********************************************************/
-uint8_t        DevConfig, Ready = 0;
+volatile uint8_t DevConfig, Ready = 0;
 uint8_t        SetupReqCode;
 uint16_t       SetupReqLen;
 const uint8_t *pDescr;
@@ -110,7 +110,6 @@ void USB_DevTransProcess(void)  //USB设备传输中断处理
                             R8_UEP0_CTRL = UEP_R_RES_ACK | UEP_T_RES_NAK;
                                     //R响应OUT事务ACK，T响应IN事务NAK。这个CASE分支里是OUT方向，当DMA相应内存中更新了数据且单片机验收正常时，回ACK握手包。
                             Ready = 1;
-                            PRINT("Ready_STATUS = %d\n",Ready);
                             break;
                     }
                 }
@@ -137,7 +136,6 @@ void USB_DevTransProcess(void)  //USB设备传输中断处理
                     R8_UEP1_CTRL ^= RB_UEP_T_TOG;       //IN事务的DATA切换一下。设定将要发送的包的PID。
                     R8_UEP1_CTRL = (R8_UEP1_CTRL & ~MASK_UEP_T_RES) | UEP_T_RES_NAK;    //当DMA中没有由单片机更新数据时，将T响应IN事务置为NAK。更新了就发出数据。
                     Ready = 1;
-                    PRINT("Ready_IN_EP1 = %d\n",Ready);
                     break;
             }
             R8_USB_INT_FG = RB_UIF_TRANSFER;    //写1清零中断标志
@@ -401,7 +399,6 @@ void USB_DevTransProcess(void)  //USB设备传输中断处理
                 //                  SetupReqCode = 0xFF;
                 R8_UEP0_CTRL = RB_UEP_R_TOG | RB_UEP_T_TOG | UEP_R_RES_STALL | UEP_T_RES_STALL; // STALL
                 Ready = 1;
-                PRINT("Ready_Stall = %d\n",Ready);
             }
             else
             {
@@ -435,12 +432,10 @@ void USB_DevTransProcess(void)  //USB设备传输中断处理
         if(R8_USB_MIS_ST & RB_UMS_SUSPEND)  //取得杂项状态寄存器中的挂起状态位，为1表示USB总线处于挂起态，为0表示总线处于非挂起态
         {
             Ready = 0;
-            PRINT("Ready_Sleep = %d\n",Ready);
         } // 挂起     //当设备处于空闲状态超过3ms，主机会要求设备挂起（类似于电脑休眠）
         else    //挂起或唤醒中断被触发，又没有被判断为挂起
         {
             Ready = 1;
-            PRINT("Ready_WeakUp = %d\n",Ready);
         } // 唤醒
         R8_USB_INT_FG = RB_UIF_SUSPEND; //写1清中断标志
     }
@@ -506,7 +501,7 @@ void DebugInit(void)
  *
  * @return  none
  */
-int main()
+int main(void)
 {
     uint8_t s;
     SetSysClock(CLK_SOURCE_PLL_60MHz);

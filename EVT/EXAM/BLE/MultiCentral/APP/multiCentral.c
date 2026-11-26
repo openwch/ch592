@@ -149,9 +149,9 @@ static gapDevRec_t centralDevList[DEFAULT_MAX_SCAN_RES];
 
 // Peer device address
 static peerAddrDefItem_t PeerAddrDef[CENTRAL_MAX_CONNECTION] = {
-    {0x02, 0x02, 0x03, 0xE4, 0xC2, 0x84},
-    {0x03, 0x02, 0x03, 0xE4, 0xC2, 0x84},
-    {0x04, 0x02, 0x03, 0xE4, 0xC2, 0x84}
+    {0x02, 0x02, 0x03, 0xE4, 0xC2, 0x84|0xC0},
+    {0x03, 0x02, 0x03, 0xE4, 0xC2, 0x84|0xC0},
+    {0x04, 0x02, 0x03, 0xE4, 0xC2, 0x84|0xC0}
 };
 
 // Connection item list
@@ -396,6 +396,7 @@ static uint16_t connect0_ProcessEvent(uint8_t task_id, uint16_t events)
                 {
                     centralConnList[CONNECT0_ITEM].procedureInProgress = TRUE;
                     centralDoWrite = !centralDoWrite;
+                    tmos_start_task(centralConnList[CONNECT0_ITEM].taskID, START_READ_OR_WRITE_EVT, DEFAULT_READ_OR_WRITE_DELAY);
                 }
             }
         }
@@ -540,7 +541,7 @@ static void centralProcessGATTMsg(gattMsgEvent_t *pMsg)
             ((pMsg->method == ATT_ERROR_RSP) &&
              (pMsg->msg.errorRsp.reqOpcode == ATT_WRITE_REQ)))
     {
-        if(pMsg->method == ATT_ERROR_RSP == ATT_ERROR_RSP)
+        if(pMsg->method == ATT_ERROR_RSP)
         {
             uint8_t status = pMsg->msg.errorRsp.errCode;
 
@@ -609,7 +610,10 @@ static void centralEventCB(gapRoleEvent_t *pEvent)
     {
         case GAP_DEVICE_INIT_DONE_EVENT:
         {
+            uint8_t ownAddr[6];
             PRINT("Discovering...\n");
+            GAPRole_GetParameter(GAPROLE_BD_ADDR, ownAddr);
+            GAP_ConfigDeviceAddr(ADDRTYPE_STATIC, ownAddr);
             GAPRole_CentralStartDiscovery(DEFAULT_DISCOVERY_MODE,
                                           DEFAULT_DISCOVERY_ACTIVE_SCAN,
                                           DEFAULT_DISCOVERY_WHITE_LIST);
@@ -751,6 +755,7 @@ static void centralEventCB(gapRoleEvent_t *pEvent)
             if(connItem == CENTRAL_MAX_CONNECTION)
             {
                 // Should not go there
+                break;
             }
             PRINT("  %x  Disconnected...Reason:%x\n", centralConnList[connItem].connHandle, pEvent->linkTerminate.reason);
             centralConnList[connItem].state = BLE_STATE_IDLE;

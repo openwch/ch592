@@ -92,7 +92,7 @@
 #define DelayMs(x)      mDelaymS(x)
 #define DelayUs(x)      mDelayuS(x)
 
-#define ROM_CFG_VERISON    0x7F010
+#define ROM_CFG_VERSION    0x7F010
 
 #ifdef __cplusplus
 }

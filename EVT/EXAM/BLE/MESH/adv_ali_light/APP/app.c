@@ -23,8 +23,8 @@
  */
 #define ADV_TIMEOUT       K_MINUTES(10)
 
-#define SELENCE_ADV_ON    0x01
-#define SELENCE_ADV_OF    0x00
+#define SILENCE_ADV_ON    0x01
+#define SILENCE_ADV_OFF    0x00
 
 /*********************************************************************
  * GLOBAL TYPEDEFS
@@ -146,7 +146,7 @@ static void silen_adv_set(uint8_t flag)
  */
 static void prov_enable(void)
 {
-    silen_adv_set(SELENCE_ADV_OF);
+    silen_adv_set(SILENCE_ADV_OFF);
 
     if(bt_mesh_is_provisioned())
     {
@@ -322,7 +322,7 @@ void send_support_attr(void)
 
     // 添加开关属性
     {
-        /* Add generic onoff attrbute op */
+        /* Add generic onoff attribute op */
         net_buf_simple_add_le16(&(ind->buf->b), ALI_GEN_ATTR_TYPE_POWER_STATE);
 
         /* Add current generic onoff status */
@@ -331,7 +331,7 @@ void send_support_attr(void)
     //	// 可选根据阿里云设置的产品属性功能添加对应属性 ( BLE_MESH_MODEL_OP_LIGHT_LIGHTNESS_SET )
     //	// 这里添加亮度属性留作参考,还需要添加对应的opcode处理函数,添加方式参考开关属性的 gen_onoff_op 结构
     //	{
-    //		/* Add brightness attrbute opcode */
+    //		/* Add brightness attribute opcode */
     //		net_buf_simple_add_le16(&(ind->buf->b), ALI_GEN_ATTR_TYPE_BRIGHTNESS);
 
     //	/* Add brightness status (655~65535对应天猫控制1~100) */
@@ -463,7 +463,7 @@ static void app_silent_adv(void)
         return;
     }
 
-    silen_adv_set(SELENCE_ADV_ON);
+    silen_adv_set(SILENCE_ADV_ON);
 
     /* Disable Scanner not response Provisioner message */
     bt_mesh_scan_disable();

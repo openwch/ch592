@@ -195,7 +195,7 @@ static int app_attr_get(struct bt_ancs_client *ancs_c, const uint8_t *app_id,
 	}
 
 	if (state == APP_ATTR_DONE) {
-	    bt_ancs_cp_write(ancs_c, buf.len, func);
+	    err = bt_ancs_cp_write(ancs_c, buf.len, func);
 
 		ancs_c->parse_info.expected_number_of_attrs =
 			ancs_c->number_of_requested_attr;

@@ -38,7 +38,7 @@ void DebugInit(void)
  *
  * @return  none
  */
-int main()
+int main(void)
 {
     uint16_t i;
     uint8_t  s;
@@ -109,6 +109,8 @@ int main()
     }
     PRINT("\n");
 
+    /* WARNING: this erases code-flash at address 0x5000 (20KB). It is safe only
+       while the running firmware is smaller than 20KB, otherwise it wipes code. */
     s = FLASH_ROM_ERASE(20 * 1024, 4096);
     PRINT("FLASH_ROM_ERASE=%02x\n", s);
     PRINT("FLASH_READ 20k...\n");

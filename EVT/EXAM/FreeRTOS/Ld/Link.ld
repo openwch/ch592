@@ -1,6 +1,6 @@
 ENTRY( _start )
 
-__stack_size = 512;
+__stack_size = 2048;
 
 PROVIDE( _stack_size = __stack_size );
 
@@ -44,6 +44,12 @@ SECTIONS
 		. = ALIGN(4);
         *(.highcode);
         *(.highcode.*);
+		/*
+         * Hot kernel functions promoted to .highcode (run from RAM for speed).
+         */
+        *(.text.vTaskSwitchContext);
+        *(.text.xTaskIncrementTick);
+		
 		. = ALIGN(4); 
         PROVIDE(_highcode_vma_end = .);
     } >RAM AT>FLASH

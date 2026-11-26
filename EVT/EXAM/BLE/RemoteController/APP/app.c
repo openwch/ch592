@@ -44,6 +44,9 @@ signed short RoughCalib_Value = 0; // ADC粗调偏差值
 uint8_t app_sleep_flag = FALSE;
 uint8_t app_pair_flag = FALSE;
 
+/* Set by GPIOB ISR, cleared by App_GpioWakeupHandle() in main loop */
+volatile uint8_t app_gpio_wakeup_flag = FALSE;
+
 uint8_t led_duty_cycle = 0;
 
 /*********************************************************************
@@ -109,7 +112,24 @@ void GPIOB_IRQHandler( void )
     GPIOB_ClearITFlagBit( 0xFFFF );
     // 关闭中断
     R16_PB_INT_EN = 0;
-    tmos_set_event(appTaskId, APP_WEAK_UP_EVT);
+    /* Set flag only; tmos_set_event is invoked from main loop context */
+    app_gpio_wakeup_flag = TRUE;
+}
+
+/*********************************************************************
+ * @fn      App_GpioWakeupHandle
+ *
+ * @brief   Convert GPIO wake flag into TMOS event from main loop
+ *
+ * @return  none
+ */
+void App_GpioWakeupHandle(void)
+{
+    if(app_gpio_wakeup_flag)
+    {
+        app_gpio_wakeup_flag = FALSE;
+        tmos_set_event(appTaskId, APP_WEAK_UP_EVT);
+    }
 }
 
 /*********************************************************************

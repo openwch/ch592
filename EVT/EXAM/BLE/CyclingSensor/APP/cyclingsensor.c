@@ -448,6 +448,12 @@ static void sensorMeasNotify(void)
         // Get length.
         sensorMeas.len = (uint8_t)(p - sensorMeas.pValue);
 
+        // set simulated measurement flag index
+        if(++sensorFlagsIdx == FLAGS_IDX_MAX)
+        {
+            sensorFlagsIdx = 0;
+        }
+
         // Send to service to send the notification.
         if(Cycling_MeasNotify(gapConnHandle, &sensorMeas) != SUCCESS)
         {
@@ -566,6 +572,7 @@ static void SensorGapStateCB(gapRole_States_t newState, gapRoleEvent_t *pEvent)
         // Set the system ID from the bd addr
         uint8_t systemId[DEVINFO_SYSTEM_ID_LEN];
         GAPRole_GetParameter(GAPROLE_BD_ADDR, systemId);
+        GAP_ConfigDeviceAddr(ADDRTYPE_STATIC, systemId);
 
         // shift three bytes up
         systemId[7] = systemId[5];

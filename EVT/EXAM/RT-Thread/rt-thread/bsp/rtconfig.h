@@ -83,7 +83,7 @@
 
 
 
-#define RT_USING_DEVICE
+// #define RT_USING_DEVICE
 
 //#define RT_USING_PM
 

@@ -480,7 +480,7 @@ uint8_t InitDevOnHub(uint8_t HubPortIndex)
     {
         DevOnHubPort[HubPortIndex - 1].DeviceType = USB_DEV_CLASS_HUB;
         PRINT("This program don't support Level 2 HUB\n"); // 需要支持多级HUB级联请参考本程序进行扩展
-        s = HubClearPortFeature(i, HUB_PORT_ENABLE);       // 禁止HUB端口
+        s = HubClearPortFeature(HubPortIndex, HUB_PORT_ENABLE);       // 禁止HUB端口
         if(s != ERR_SUCCESS)
         {
             return (s);

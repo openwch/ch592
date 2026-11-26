@@ -368,8 +368,13 @@ static void peripheralStateNotificationCB(gapRole_States_t newState, gapRoleEven
     switch(newState & GAPROLE_STATE_ADV_MASK)
     {
         case GAPROLE_STARTED:
+        {
+            uint8_t ownAddr[6];
+            GAPRole_GetParameter(GAPROLE_BD_ADDR, ownAddr);
+            GAP_ConfigDeviceAddr(ADDRTYPE_STATIC, ownAddr);
             PRINT("Initialized..\n");
             break;
+        }
 
         case GAPROLE_ADVERTISING:
             PRINT("Advertising..\n");
@@ -497,8 +502,8 @@ void SwitchImageFlag(uint8_t new_flag)
     /* 读取第一块 */
     EEPROM_READ(OTA_DATAFLASH_ADD, (uint32_t *)&block_buf[0], 4);
 
-    /* 擦除第一块 */
-    EEPROM_ERASE(OTA_DATAFLASH_ADD, EEPROM_PAGE_SIZE);
+    /* 擦除第一块(使用块大小，避免 CH592A 上 EEPROM_ERASE 因未按 4096 对齐而死循环) */
+    EEPROM_ERASE(OTA_DATAFLASH_ADD, EEPROM_BLOCK_SIZE);
 
     /* 更新Image信息 */
     block_buf[0] = new_flag;
@@ -516,7 +521,8 @@ void SwitchImageFlag(uint8_t new_flag)
  */
 void DisableAllIRQ(void)
 {
-    SYS_DisableAllIrq(NULL);
+    uint32_t irq_sta;
+    SYS_DisableAllIrq(&irq_sta);
 }
 
 /*********************************************************************
@@ -540,6 +546,15 @@ void Rec_OTA_IAP_DataDeal(void)
             OpAdd = (uint32_t)(iap_rec_data.program.addr[0]);
             OpAdd |= ((uint32_t)(iap_rec_data.program.addr[1]) << 8);
             OpAdd = OpAdd * 16;
+
+            /* address/length range guard: target must stay inside imageA */
+            if((OpParaDataLen > (sizeof(iap_rec_data) - 6)) ||
+               (OpAdd < IMAGE_A_START_ADD) ||
+               ((OpAdd + OpParaDataLen) > IMAGE_B_START_ADD))
+            {
+                OTA_IAP_SendCMDDealSta(0xFF);
+                break;
+            }
 
             PRINT("IAP_PROM: %08x len:%d \r\n", (int)OpAdd, (int)OpParaDataLen);
 
@@ -590,6 +605,15 @@ void Rec_OTA_IAP_DataDeal(void)
             OpAdd = (uint32_t)(iap_rec_data.verify.addr[0]);
             OpAdd |= ((uint32_t)(iap_rec_data.verify.addr[1]) << 8);
             OpAdd = OpAdd * 16;
+
+            /* address/length range guard: target must stay inside imageA */
+            if((OpParaDataLen > (sizeof(iap_rec_data) - 6)) ||
+               (OpAdd < IMAGE_A_START_ADD) ||
+               ((OpAdd + OpParaDataLen) > IMAGE_B_START_ADD))
+            {
+                OTA_IAP_SendCMDDealSta(0xFF);
+                break;
+            }
 
             PRINT("IAP_VERIFY: %08x len:%d \r\n", (int)OpAdd, (int)OpParaDataLen);
 
@@ -687,6 +711,8 @@ void OTA_IAPWriteData(unsigned char index, unsigned char *p_data, unsigned char 
 
     rec_len = w_len;
     rec_data = p_data;
+    if(rec_len > sizeof(iap_rec_data)) /* length guard: avoid buffer overflow */
+        rec_len = sizeof(iap_rec_data);
     tmos_memcpy((unsigned char *)&iap_rec_data, rec_data, rec_len);
     Rec_OTA_IAP_DataDeal();
 }

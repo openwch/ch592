@@ -1,4 +1,4 @@
-本工程为 FreeRTOS-KernelV11.1.0 在Qingke V4C RISC-V内核的CH592/1上的移植。
+本工程为 FreeRTOS-KernelV11.3.0 在Qingke V4C RISC-V内核的CH592/1上的移植。
 
 需要注意以下几点：
 

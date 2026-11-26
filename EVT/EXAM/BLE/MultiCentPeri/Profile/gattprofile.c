@@ -351,15 +351,15 @@ bStatus_t SimpleProfile_RegisterAppCBs(simpleProfileCBs_t *appCallbacks)
  *
  * @return  bStatus_t
  */
-bStatus_t SimpleProfile_SetParameter(uint8_t param, uint8_t len, void *value)
+bStatus_t SimpleProfile_SetParameter(uint8_t param, uint16_t len, void *value)
 {
     bStatus_t ret = SUCCESS;
     switch(param)
     {
         case SIMPLEPROFILE_CHAR1:
-            if(len == SIMPLEPROFILE_CHAR1_LEN)
+            if(len <= SIMPLEPROFILE_CHAR1_LEN)
             {
-                tmos_memcpy(simpleProfileChar1, value, SIMPLEPROFILE_CHAR1_LEN);
+                tmos_memcpy(simpleProfileChar1, value, len);
             }
             else
             {
@@ -368,9 +368,9 @@ bStatus_t SimpleProfile_SetParameter(uint8_t param, uint8_t len, void *value)
             break;
 
         case SIMPLEPROFILE_CHAR2:
-            if(len == SIMPLEPROFILE_CHAR2_LEN)
+            if(len <= SIMPLEPROFILE_CHAR2_LEN)
             {
-                tmos_memcpy(simpleProfileChar2, value, SIMPLEPROFILE_CHAR2_LEN);
+                tmos_memcpy(simpleProfileChar2, value, len);
             }
             else
             {
@@ -379,9 +379,9 @@ bStatus_t SimpleProfile_SetParameter(uint8_t param, uint8_t len, void *value)
             break;
 
         case SIMPLEPROFILE_CHAR3:
-            if(len == SIMPLEPROFILE_CHAR3_LEN)
+            if(len <= SIMPLEPROFILE_CHAR3_LEN)
             {
-                tmos_memcpy(simpleProfileChar3, value, SIMPLEPROFILE_CHAR3_LEN);
+                tmos_memcpy(simpleProfileChar3, value, len);
             }
             else
             {
@@ -390,9 +390,9 @@ bStatus_t SimpleProfile_SetParameter(uint8_t param, uint8_t len, void *value)
             break;
 
         case SIMPLEPROFILE_CHAR4:
-            if(len == SIMPLEPROFILE_CHAR4_LEN)
+            if(len <= SIMPLEPROFILE_CHAR4_LEN)
             {
-                tmos_memcpy(simpleProfileChar4, value, SIMPLEPROFILE_CHAR4_LEN);
+                tmos_memcpy(simpleProfileChar4, value, len);
             }
             else
             {
@@ -401,9 +401,9 @@ bStatus_t SimpleProfile_SetParameter(uint8_t param, uint8_t len, void *value)
             break;
 
         case SIMPLEPROFILE_CHAR5:
-            if(len == SIMPLEPROFILE_CHAR5_LEN)
+            if(len <= SIMPLEPROFILE_CHAR5_LEN)
             {
-                tmos_memcpy(simpleProfileChar5, value, SIMPLEPROFILE_CHAR5_LEN);
+                tmos_memcpy(simpleProfileChar5, value, len);
             }
             else
             {

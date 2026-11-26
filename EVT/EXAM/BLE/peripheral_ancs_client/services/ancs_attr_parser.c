@@ -316,6 +316,11 @@ void bt_ancs_parse_get_attrs_response(struct bt_ancs_client *ancs_c,
 			break;
 
 		case BT_ANCS_PARSE_STATE_NOTIF_UID:
+			/* wait for the remaining UID bytes in the next notification */
+			if (index + 4 > data_len) {
+				index = data_len;
+				break;
+			}
 			ancs_c->parse_info.parse_state =
 				notif_uid_parse(ancs_c, data_src, &index);
 			break;

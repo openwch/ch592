@@ -258,7 +258,8 @@ void SwitchImageFlag(uint8_t new_flag)
  */
 void DisableAllIRQ(void)
 {
-    SYS_DisableAllIrq(NULL);
+    uint32_t irq_status;
+    SYS_DisableAllIrq(&irq_status);
 }
 
 /*********************************************************************
@@ -288,6 +289,12 @@ void Rec_OTA_IAP_DataDeal(void)
             PRINT("IAP_PROM: %08x len:%d \r\n", (int)OpAdd, (int)OpParaDataLen);
 
             /* 当前是ImageA，直接编程 */
+            /* Validate that the write window stays inside imageB */
+            if(OpAdd < IMAGE_B_START_ADD || (OpAdd + OpParaDataLen) > IMAGE_IAP_START_ADD)
+            {
+                OTA_IAP_SendCMDDealSta(0xFF);
+                break;
+            }
             status = FLASH_ROM_WRITE(OpAdd, iap_rec_data.program.buf, (uint16_t)OpParaDataLen);
             if(status)             PRINT("IAP_PROM err \r\n");
             OTA_IAP_SendCMDDealSta(status);
@@ -339,6 +346,12 @@ void Rec_OTA_IAP_DataDeal(void)
             PRINT("IAP_VERIFY: %08x len:%d \r\n", (int)OpAdd, (int)OpParaDataLen);
 
             /* 当前是ImageA，直接读取ImageB校验 */
+            /* Validate that the verify window stays inside imageB */
+            if(OpAdd < IMAGE_B_START_ADD || (OpAdd + OpParaDataLen) > IMAGE_IAP_START_ADD)
+            {
+                OTA_IAP_SendCMDDealSta(0xFF);
+                break;
+            }
             status = FLASH_ROM_VERIFY(OpAdd, iap_rec_data.verify.buf, OpParaDataLen);
             if(status)
             {
@@ -442,6 +455,11 @@ void OTA_IAPWriteData(unsigned char index, unsigned char *p_data, unsigned char 
 
     rec_len = w_len;
     rec_data = p_data;
+    /* Reject frames larger than the fixed IAP receive buffer */
+    if(rec_len > sizeof(iap_rec_data))
+    {
+        return;
+    }
     tmos_memcpy((unsigned char *)&iap_rec_data, rec_data, rec_len);
     Rec_OTA_IAP_DataDeal();
 }

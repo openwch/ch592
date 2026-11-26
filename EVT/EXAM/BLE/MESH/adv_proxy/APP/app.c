@@ -241,7 +241,7 @@ static void cfg_srv_rsp_handler( const cfg_srv_status_t *val )
     }
     else
     {
-        APP_DBG("Unknow opcode 0x%02x", val->cfgHdr.opcode);
+        APP_DBG("Unknown opcode 0x%02x", val->cfgHdr.opcode);
     }
 }
 

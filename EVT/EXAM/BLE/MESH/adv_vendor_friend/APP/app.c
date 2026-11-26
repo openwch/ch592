@@ -22,8 +22,8 @@
  */
 #define ADV_TIMEOUT       K_MINUTES(10)
 
-#define SELENCE_ADV_ON    0x01
-#define SELENCE_ADV_OF    0x00
+#define SILENCE_ADV_ON    0x01
+#define SILENCE_ADV_OFF    0x00
 
 #define APP_WAIT_ADD_APPKEY_DELAY     1600*10
 
@@ -180,7 +180,7 @@ static void prov_enable(void)
         return;
     }
 
-    // Make sure we're scanning for provisioning inviations
+    // Make sure we're scanning for provisioning invitations
     bt_mesh_scan_enable();
     // Enable unprovisioned beacon sending
     bt_mesh_beacon_enable();
@@ -296,7 +296,7 @@ static void cfg_srv_rsp_handler( const cfg_srv_status_t *val )
     }
     else
     {
-        APP_DBG("Unknow opcode 0x%02x", val->cfgHdr.opcode);
+        APP_DBG("Unknown opcode 0x%02x", val->cfgHdr.opcode);
     }
 }
 
@@ -322,7 +322,7 @@ static void friend_state(uint16_t lpn_addr, uint8_t state)
     }
     else
     {
-        APP_DBG("unknow state %x", state);
+        APP_DBG("unknown state %x", state);
     }
 }
 
@@ -345,6 +345,11 @@ static void vendor_model_srv_rsp_handler(const vendor_model_srv_status_t *val)
     }
     if(val->vendor_model_srv_Hdr.opcode == OP_VENDOR_MESSAGE_TRANSPARENT_MSG)
     {
+        if((val->vendor_model_srv_Event.trans.len == 0) ||
+           (val->vendor_model_srv_Event.trans.len > sizeof(app_mesh_manage)))
+        {
+            return;
+        }
         // 收到透传数据
         APP_DBG("len %d, data 0x%02x from 0x%04x", val->vendor_model_srv_Event.trans.len,
                 val->vendor_model_srv_Event.trans.pdata[0],
@@ -398,6 +403,10 @@ static void vendor_model_srv_rsp_handler(const vendor_model_srv_status_t *val)
     }
     else if(val->vendor_model_srv_Hdr.opcode == OP_VENDOR_MESSAGE_TRANSPARENT_WRT)
     {
+        if(val->vendor_model_srv_Event.write.len == 0)
+        {
+            return;
+        }
         // 收到write数据
         APP_DBG("len %d, data 0x%02x from 0x%04x", val->vendor_model_srv_Event.write.len,
                 val->vendor_model_srv_Event.write.pdata[0],
@@ -409,7 +418,7 @@ static void vendor_model_srv_rsp_handler(const vendor_model_srv_status_t *val)
     }
     else
     {
-        APP_DBG("Unknow opcode 0x%02x", val->vendor_model_srv_Hdr.opcode);
+        APP_DBG("Unknown opcode 0x%02x", val->vendor_model_srv_Hdr.opcode);
     }
 }
 

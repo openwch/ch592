@@ -276,10 +276,18 @@ static bStatus_t OTAProfile_WriteAttrCB(uint16_t connHandle, gattAttribute_t *pA
                     uint16_t i;
                     uint8_t *p_rec_buf;
 
-                    OTAProfileWriteLen = len;
-                    p_rec_buf = pValue;
-                    for(i = 0; i < OTAProfileWriteLen; i++)
-                        OTAProfileWriteBuf[i] = p_rec_buf[i];
+                    if(len <= IAP_LEN)
+                    {
+                        OTAProfileWriteLen = (uint8_t)len;
+                        p_rec_buf = pValue;
+                        for(i = 0; i < OTAProfileWriteLen; i++)
+                            OTAProfileWriteBuf[i] = p_rec_buf[i];
+                    }
+                    else
+                    {
+                        /* Frame too long, drop it */
+                        OTAProfileWriteLen = 0;
+                    }
                 }
                 break;
             }

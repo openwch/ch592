@@ -25,6 +25,9 @@
  * MACROS
  */
 
+// Maximum ATT payload (MTU-3) sent per notification; fixed size keeps stack usage bounded
+#define SBP_USB_NOTIFY_MAX_LEN                20
+
 /*********************************************************************
  * CONSTANTS
  */
@@ -379,16 +382,21 @@ uint16_t Peripheral_ProcessEvent(uint8_t task_id, uint16_t events)
     {
         while(RingMemUSB.CurrentLen)
         {
-            uint8_t buf[peripheralMTU - 3];
-            if(RingMemUSB.CurrentLen > peripheralMTU - 3)
+            uint8_t  buf[SBP_USB_NOTIFY_MAX_LEN];
+            uint32_t sendLen = peripheralMTU - 3;
+            if(sendLen > sizeof(buf))
             {
-                RingMemCopy(&RingMemUSB, buf, peripheralMTU - 3);
-                if(app_usb_notify(buf, peripheralMTU - 3))
+                sendLen = sizeof(buf);
+            }
+            if(RingMemUSB.CurrentLen > sendLen)
+            {
+                RingMemCopy(&RingMemUSB, buf, sendLen);
+                if(app_usb_notify(buf, sendLen))
                 {
                     tmos_start_task(Peripheral_TaskID, SBP_PROCESS_USBDATA_EVT, 80);
                     break;
                 }
-                RingMemDelete(&RingMemUSB, peripheralMTU - 3);
+                RingMemDelete(&RingMemUSB, sendLen);
             }
             else
             {
@@ -476,8 +484,8 @@ static void Peripheral_ProcessTMOSMsg(tmos_event_hdr_t *pMsg)
             pMsgEvent = (gattMsgEvent_t *)pMsg;
             if(pMsgEvent->method == ATT_MTU_UPDATED_EVENT)
             {
-                peripheralMTU = pMsgEvent->msg.exchangeMTUReq.clientRxMTU;
-                PRINT("mtu exchange: %d\n", pMsgEvent->msg.exchangeMTUReq.clientRxMTU);
+                peripheralMTU = pMsgEvent->msg.mtuEvt.MTU;
+                PRINT("mtu exchange: %d\n", pMsgEvent->msg.mtuEvt.MTU);
             }
             break;
         }
@@ -619,8 +627,13 @@ static void peripheralStateNotificationCB(gapRole_States_t newState, gapRoleEven
     switch(newState & GAPROLE_STATE_ADV_MASK)
     {
         case GAPROLE_STARTED:
+        {
+            uint8_t ownAddr[6];
+            GAPRole_GetParameter(GAPROLE_BD_ADDR, ownAddr);
+            GAP_ConfigDeviceAddr(ADDRTYPE_STATIC, ownAddr);
             PRINT("Initialized..\n");
             break;
+        }
 
         case GAPROLE_ADVERTISING:
             if(pEvent->gap.opcode == GAP_LINK_TERMINATED_EVENT)

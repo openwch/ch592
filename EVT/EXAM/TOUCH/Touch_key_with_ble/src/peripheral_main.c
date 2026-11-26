@@ -1,5 +1,5 @@
 /********************************** (C) COPYRIGHT *******************************
- * File Name          : main.c
+ * File Name          : peripheral_main.c
  * Author             : WCH
  * Version            : V1.1
  * Date               : 2024/02/27
@@ -93,8 +93,8 @@ int main(void)
 #endif
 	SetSysClock(CLK_SOURCE_PLL_60MHz);
 #if(defined(HAL_SLEEP)) && (HAL_SLEEP == TRUE)
-	GPIOA_ModeCfg(GPIO_Pin_All, GPIO_ModeIN_PU);
-	GPIOB_ModeCfg(GPIO_Pin_All, GPIO_ModeIN_PU);
+	GPIOA_ModeCfg(GPIO_Pin_All, GPIO_ModeIN_PD);
+	GPIOB_ModeCfg(GPIO_Pin_All, GPIO_ModeIN_PD);
 #endif
 
 	DebugInit();

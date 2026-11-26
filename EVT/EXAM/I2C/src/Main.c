@@ -47,7 +47,7 @@ static void i2c_on_slave_receive_user(uint8_t *data, uint8_t len)
 }
 #endif
 
-int main()
+int main(void)
 {
     uint8_t i = 0;
     SetSysClock(CLK_SOURCE_PLL_60MHz);

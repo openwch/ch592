@@ -8,12 +8,12 @@
 /************************WHEEL_SLIDER_DEFINE****************************/
 #define TOUCH_WHEEL_ELEMENTS                (3)
 #define TOUCH_WHEEL_RESOLUTION              (120)
-#define TOUCH_WHEEL_CHS                     0,1,2
+#define TOUCH_WHEEL_QUEUES                     0,1,2
 
 /************************LINE_SLIDER_DEFINE****************************/
 #define TOUCH_SLIDER_ELEMENTS               (3)
 #define TOUCH_SLIDER_RESOLUTION             (120)
-#define TOUCH_SLIDER_CHS                    3,4,5
+#define TOUCH_SLIDER_QUEUES                    3,4,5
 
 
 extern volatile uint8_t timerFlag;

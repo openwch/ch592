@@ -25,7 +25,7 @@ __HIGH_CODE
 void SetSysClock(SYS_CLKTypeDef sc)
 {
     uint8_t chip_type=0;
-    if(((*(uint32_t*)ROM_CFG_VERISON)&0xFF) == DEF_CHIP_ID_CH592A)
+    if(((*(uint32_t*)ROM_CFG_VERSION)&0xFF) == DEF_CHIP_ID_CH592A)
     {
         chip_type = 1;
     }
@@ -63,6 +63,7 @@ void SetSysClock(SYS_CLKTypeDef sc)
         }
         else
         {
+            // 注意如果芯片供电电压小于2.3V，需要配置为0x53
             R8_FLASH_CFG = 0X52;
         }
         sys_safe_access_disable();

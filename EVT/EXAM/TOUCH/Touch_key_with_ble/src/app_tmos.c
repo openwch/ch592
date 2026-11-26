@@ -1,5 +1,5 @@
 /********************************** (C) COPYRIGHT *******************************
- * File Name          : app_tmos.C
+ * File Name          : app_tmos.c
  * Author             : WCH
  * Version            : V1.0
  * Date               : 2023/8/5
@@ -170,7 +170,6 @@ void tky_DealData_stop(void)
  */
 tmosEvents Touch_Key_ProcessEvent(tmosTaskID task_id, tmosEvents events)
 {
-    uint16_t res;
 
     if (events & WAKEUP_DATA_DEAL_EVT)
     {
@@ -191,6 +190,19 @@ tmosEvents Touch_Key_ProcessEvent(tmosTaskID task_id, tmosEvents events)
 #endif
             tmos_start_task(TouchKey_TaskID, DEALDATA_EVT, triggerTime);
         return (events ^ DEALDATA_EVT);
+    }
+
+    if (events & TKY_BLE_PERIOD_EVT)
+    {
+        /* BLE advertising tick deferred from the link-layer callback.
+         * Runs in TMOS task context: during touch sleep the periodic
+         * DEALDATA_EVT chain is stopped, so this keeps the wake-up scan
+         * going; wakeupflag is only read/written in task context. */
+        if (!wakeupflag)
+        {
+            PeriodicDealData();
+        }
+        return (events ^ TKY_BLE_PERIOD_EVT);
     }
 
 #if PRINT_EN

@@ -99,7 +99,7 @@ void task3_entry(void *parameter)
  *
  * @return  none
  */
-int main()
+int main(void)
 {
     rt_enter_critical();
 

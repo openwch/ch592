@@ -372,6 +372,10 @@ uint16_t Central_ProcessEvent(uint8_t task_id, uint16_t events)
                     centralProcedureInProgress = TRUE;
                     centralDoWrite = !centralDoWrite;
                 }
+                else
+                {
+                    centralProcedureInProgress = FALSE;
+                }
             }
         }
         return (events ^ START_READ_OR_WRITE_EVT);
@@ -534,7 +538,10 @@ static void centralEventCB(gapRoleEvent_t *pEvent)
     {
         case GAP_DEVICE_INIT_DONE_EVENT:
         {
+            uint8_t ownAddr[6];
             PRINT("Discovering...\n");
+            GAPRole_GetParameter(GAPROLE_BD_ADDR, ownAddr);
+            GAP_ConfigDeviceAddr(ADDRTYPE_STATIC, ownAddr);
             GAPRole_CentralStartDiscovery(DEFAULT_DISCOVERY_MODE,
                                           DEFAULT_DISCOVERY_ACTIVE_SCAN,
                                           DEFAULT_DISCOVERY_WHITE_LIST);

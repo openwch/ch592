@@ -30,7 +30,7 @@ const uint8_t MyManuInfo[] = {0x0E, 0x03, 'w', 0, 'c', 0, 'h', 0, '.', 0, 'c', 0
 const uint8_t MyProdInfo[] = {0x0C, 0x03, 'C', 0, 'H', 0, '5', 0, '9', 0, 'x', 0};
 
 /**********************************************************/
-uint8_t        DevConfig;
+volatile uint8_t DevConfig;
 uint8_t        SetupReqCode;
 uint16_t       SetupReqLen;
 const uint8_t *pDescr;
@@ -317,6 +317,7 @@ void USB_DevTransProcess(void)
         R8_UEP1_CTRL = UEP_R_RES_ACK | UEP_T_RES_NAK;
         R8_UEP2_CTRL = UEP_R_RES_ACK | UEP_T_RES_NAK;
         R8_UEP3_CTRL = UEP_R_RES_ACK | UEP_T_RES_NAK;
+        R8_UEP4_CTRL = UEP_R_RES_ACK | UEP_T_RES_NAK; /* EP4 is enabled, reset it too */
         R8_USB_INT_FG = RB_UIF_BUS_RST;
     }
     else if(intflag & RB_UIF_SUSPEND)
@@ -359,7 +360,7 @@ void DebugInit(void)
  *
  * @return  none
  */
-int main()
+int main(void)
 {
     SetSysClock(CLK_SOURCE_PLL_60MHz);
 

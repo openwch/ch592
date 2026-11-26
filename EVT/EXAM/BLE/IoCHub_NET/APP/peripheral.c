@@ -706,8 +706,13 @@ static void peripheralStateNotificationCB(gapRole_States_t newState, gapRoleEven
     switch(newState & GAPROLE_STATE_ADV_MASK)
     {
         case GAPROLE_STARTED:
+        {
+            uint8_t ownAddr[6];
+            GAPRole_GetParameter(GAPROLE_BD_ADDR, ownAddr);
+            GAP_ConfigDeviceAddr(ADDRTYPE_STATIC, ownAddr);
             PRINT("Initialized..\n");
             break;
+        }
 
         case GAPROLE_ADVERTISING:
             if(pEvent->gap.opcode == GAP_LINK_TERMINATED_EVENT)
@@ -838,6 +843,10 @@ uint8_t ble_send_frame(uint8_t frame_cmd, uint8_t frame_type, uint8_t* frame_buf
 
     uint16_t send_len = frame_dlc+BLE_HEAD_LEN+BLE_FOMRAT_LEN+BLE_TAIL_LEN;
     send_value = (uint8_t *)tmos_msg_allocate(send_len);
+    if(send_value == NULL)
+    {
+        return 0x01;
+    }
     uint8_t *p = send_value;
     *p++ = BLE_SEND_FST;
     *p++ = BLE_SEND_SEC;

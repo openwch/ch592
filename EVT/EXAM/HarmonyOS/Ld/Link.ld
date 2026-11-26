@@ -37,6 +37,19 @@ SECTIONS
 		. = ALIGN(4);
         *(.highcode);
         *(.highcode.*);
+		/*
+         * Hot kernel functions promoted to .highcode (run from RAM for speed).
+         */
+		*(.text.OsUpdateSysTimeBase)
+        *(.text.OsTickHandler)
+        *(.text.OsTickTimerBaseReset)
+        *(.text.OsTickTimerReload)
+        *(.text.LOS_SchedTickHandler)
+        *(.text.OsSchedResetSchedResponseTime)
+        *(.text.OsSchedUpdateExpireTime)
+        *(.text.OsSchedTaskDeQueue)
+        *(.text.OsGetTopTask)
+
 		. = ALIGN(4); 
         PROVIDE(_highcode_vma_end = .);
     } >RAM AT>FLASH

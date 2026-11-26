@@ -77,13 +77,21 @@ static void tm_attr_get(struct bt_mesh_model   *model,
                         struct net_buf_simple  *buf)
 {
     uint16_t attr_type;
+    if(buf->len < 3)
+    {
+        return;
+    }
     if((buf->data[1] | (buf->data[2] << 8)) < ALI_GEN_ATTR_TYPE_WORK_STATUS)
     {
         attr_type = buf->data[1] | (buf->data[2] << 8);
     }
-    else
+    else if(buf->len >= 5)
     {
         attr_type = buf->data[3] | (buf->data[4] << 8);
+    }
+    else
+    {
+        return;
     }
 
     APP_DBG("attr_type£º0x%04x ", attr_type);
@@ -118,13 +126,21 @@ static void tm_attr_set(struct bt_mesh_model   *model,
 {
     uint16_t attr_type;
 
+    if(buf->len < 3)
+    {
+        return;
+    }
     if((buf->data[1] | (buf->data[2] << 8)) < ALI_GEN_ATTR_TYPE_WORK_STATUS)
     {
         attr_type = buf->data[1] | (buf->data[2] << 8);
     }
-    else
+    else if(buf->len >= 5)
     {
         attr_type = buf->data[3] | (buf->data[4] << 8);
+    }
+    else
+    {
+        return;
     }
 
     APP_DBG("attr_type£º0x%04x ", attr_type);
@@ -158,13 +174,21 @@ static void tm_attr_set_unack(struct bt_mesh_model   *model,
                               struct net_buf_simple  *buf)
 {
     uint16_t attr_type;
+    if(buf->len < 3)
+    {
+        return;
+    }
     if((buf->data[1] | (buf->data[2] << 8)) < ALI_GEN_ATTR_TYPE_WORK_STATUS)
     {
         attr_type = buf->data[1] | (buf->data[2] << 8);
     }
-    else
+    else if(buf->len >= 5)
     {
         attr_type = buf->data[3] | (buf->data[4] << 8);
+    }
+    else
+    {
+        return;
     }
 
     APP_DBG("attr_type£º0x%04x ", attr_type);
@@ -288,7 +312,7 @@ static void uuid_generate(struct bt_als_cfg const *cfg)
                                 01£ºBLE4.2
                                 10£ºBLE5.0
                                 11£ºBLE5.0ÒÔÉÏ */
-    /* Advertising Verison */
+    /* Advertising Version */
     tm_uuid[2] = BIT(0) | /* adv version */
                  BIT(4) | /* secret */
                  BIT(5) | /* ota */
@@ -306,7 +330,7 @@ static void uuid_generate(struct bt_als_cfg const *cfg)
         tm_uuid[2 + 1 + 4 + i] = cfg->mac[5 - i];
     }
 
-    /* UUID Verison */
+    /* UUID Version */
     tm_uuid[2 + 1 + 4 + 6] = BIT(1);
 
     /* RFU */
@@ -605,7 +629,7 @@ void send_led_indicate(struct indicate_param *param)
     /* Add tid field */
     net_buf_simple_add_u8(&(ind->buf->b), param->tid);
 
-    /* Add generic onoff attrbute op */
+    /* Add generic onoff attribute op */
     net_buf_simple_add_le16(&(ind->buf->b), ALI_GEN_ATTR_TYPE_POWER_STATE);
 
     /* Add current generic onoff status */
@@ -641,7 +665,7 @@ void send_windspeed_indicate(struct indicate_param *param)
     /* Add tid field */
     net_buf_simple_add_u8(&(ind->buf->b), param->tid);
 
-    /* Add windspeed attrbute opcode */
+    /* Add windspeed attribute opcode */
     net_buf_simple_add_le16(&(ind->buf->b), ALI_GEN_ATTR_TYPE_WINDSPEED);
 
     /* Add windspeed status  */

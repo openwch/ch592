@@ -1311,14 +1311,14 @@ STATIC INLINE UINT32 OsMemFree(struct OsMemPoolHead *pool, struct OsMemNodeHead 
         g_lms->check((UINTPTR)node + OS_MEM_NODE_HEAD_SIZE, TRUE);
     }
 #endif
-    struct OsMemNodeHead *preNode = node->ptr.prev; /* merage preNode */
+    struct OsMemNodeHead *preNode = node->ptr.prev; /* merge preNode */
     if ((preNode != NULL) && !OS_MEM_NODE_GET_USED_FLAG(preNode->sizeAndFlag)) {
         OsMemFreeNodeDelete(pool, (struct OsMemFreeNodeHead *)preNode);
         OsMemMergeNode(node);
         node = preNode;
     }
 
-    struct OsMemNodeHead *nextNode = OS_MEM_NEXT_NODE(node); /* merage nextNode */
+    struct OsMemNodeHead *nextNode = OS_MEM_NEXT_NODE(node); /* merge nextNode */
     if ((nextNode != NULL) && !OS_MEM_NODE_GET_USED_FLAG(nextNode->sizeAndFlag)) {
         OsMemFreeNodeDelete(pool, (struct OsMemFreeNodeHead *)nextNode);
         OsMemMergeNode(nextNode);
@@ -1645,7 +1645,7 @@ STATIC UINT32 OsMemIntegrityCheckSub(struct OsMemNodeHead **tmpNode, const VOID 
     if (!OsMemAddrValidCheck(pool, (*tmpNode)->ptr.prev)) {
         PRINT_ERR("[%s], %d, memory check error!\n"
                   " node prev: %p is out of legal mem range\n",
-                  __FUNCTION__, __LINE__, (*tmpNode)->ptr.next);
+                  __FUNCTION__, __LINE__, (*tmpNode)->ptr.prev);
         return LOS_NOK;
     }
 

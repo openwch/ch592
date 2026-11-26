@@ -276,7 +276,7 @@ static void ble_new_neighbor_callback(lwns_addr_t *n)
  * @param   dataptr     - 待发送的数据缓冲头指针.
  * @param   len         - 待发送的数据缓冲长度.
  *
- * @return  TRUE if success, FLASE is failed.
+ * @return  TRUE if success, FALSE is failed.
  */
 static BOOL ble_phy_output(uint8_t *dataptr, uint8_t len)
 {

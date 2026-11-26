@@ -55,7 +55,7 @@
 #define CMD_FLASH_ROM_VERIFY	0x03		// read FlashROM data block, minimal block is dword, return 0 if success, parameter @StartAddr,Buffer,Length
 #endif
 
-#define ROM_CFG_VERISON     0x7F010
+#define ROM_CFG_VERSION     0x7F010
 #define DEF_CHIP_ID_CH592A  9               // QFN28
 #define ROM_CFG_MAC_ADDR	0x7F018			// address for MAC address information
 #define ROM_CFG_BOOT_INFO	0x7DFF8			// address for BOOT information
@@ -105,7 +105,7 @@ extern uint32_t FLASH_EEPROM_CMD( uint8_t cmd, uint32_t StartAddr, void *Buffer,
 #define GET_BOOT_INFO(Buffer)                       FLASH_EEPROM_CMD( CMD_GET_ROM_INFO, ROM_CFG_BOOT_INFO, Buffer, 0 )
 
 /**
- * @brief   power-down FlashROM
+ * @brief   power-down FlashROM. After a power-down, do not execute a reset directly; a power-up must be performed first.
  *
  * @return  0-SUCCESS  (!0)-FAILURE
  */
@@ -138,7 +138,7 @@ extern uint32_t FLASH_EEPROM_CMD( uint8_t cmd, uint32_t StartAddr, void *Buffer,
  */
 __attribute__((always_inline)) RV_STATIC_INLINE uint32_t EEPROM_ERASE(uint32_t StartAddr, uint32_t Length)
 {
-    if(((*(uint32_t*)ROM_CFG_VERISON)&0xFF) == DEF_CHIP_ID_CH592A)
+    if(((*(uint32_t*)ROM_CFG_VERSION)&0xFF) == DEF_CHIP_ID_CH592A)
     {
         if(Length%EEPROM_BLOCK_SIZE)
         {

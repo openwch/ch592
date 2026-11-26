@@ -110,7 +110,7 @@ STATIC INLINE VOID OsSchedSetNextExpireTime(UINT32 responseID, UINT64 taskEndTim
     }
 
     nextResponseTime = nextExpireTime - currTime;
-    if (nextResponseTime < g_tickResponsePrecision) {
+    if ((nextResponseTime < g_tickResponsePrecision) || (nextExpireTime < currTime)) {
         nextResponseTime = g_tickResponsePrecision;
     }
     g_schedResponseTime = currTime + OsTickTimerReload(nextResponseTime);

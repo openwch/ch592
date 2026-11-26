@@ -22,8 +22,8 @@
  */
 #define ADV_TIMEOUT       K_MINUTES(10)
 
-#define SELENCE_ADV_ON    0x01
-#define SELENCE_ADV_OF    0x00
+#define SILENCE_ADV_ON    0x01
+#define SILENCE_ADV_OFF    0x00
 
 #define APP_DELETE_LOCAL_NODE_DELAY   3200
 // shall not less than APP_DELETE_LOCAL_NODE_DELAY
@@ -210,7 +210,7 @@ static void prov_enable(void)
         return;
     }
 
-    // Make sure we're scanning for provisioning inviations
+    // Make sure we're scanning for provisioning invitations
     bt_mesh_scan_enable();
     // Enable unprovisioned beacon sending
     bt_mesh_beacon_enable();
@@ -340,15 +340,15 @@ static void cfg_local_net_info(void)
     {
         APP_DBG("Unable set app key");
     }
-    APP_DBG("lcoal app key added");
+    APP_DBG("local app key added");
     // 绑定应用密钥到沁恒自定义模型
     vnd_models[0].keys[0] = (uint16_t)self_prov_app_idx;
     bt_mesh_store_mod_bind(&vnd_models[0]);
-    APP_DBG("lcoal app key binded");
+    APP_DBG("local app key binded");
     // 本地添加订阅地址
     vnd_models[0].groups[0] = (uint16_t)vendor_sub_addr;
     bt_mesh_store_mod_sub(&vnd_models[0]);
-    APP_DBG("lcoal sub addr added");
+    APP_DBG("local sub addr added");
 }
 
 /*********************************************************************
@@ -382,7 +382,7 @@ static void cfg_srv_rsp_handler( const cfg_srv_status_t *val )
     }
     else
     {
-        APP_DBG("Unknow opcode 0x%02x", val->cfgHdr.opcode);
+        APP_DBG("Unknown opcode 0x%02x", val->cfgHdr.opcode);
     }
 }
 
@@ -424,6 +424,11 @@ static void vendor_model_srv_rsp_handler(const vendor_model_srv_status_t *val)
     }
     if(val->vendor_model_srv_Hdr.opcode == OP_VENDOR_MESSAGE_TRANSPARENT_MSG)
     {
+        if((val->vendor_model_srv_Event.trans.len == 0) ||
+           (val->vendor_model_srv_Event.trans.len > sizeof(app_mesh_manage)))
+        {
+            return;
+        }
         // 收到透传数据
         APP_DBG("len %d, data 0x%02x from 0x%04x", val->vendor_model_srv_Event.trans.len,
                 val->vendor_model_srv_Event.trans.pdata[0],
@@ -490,6 +495,10 @@ static void vendor_model_srv_rsp_handler(const vendor_model_srv_status_t *val)
     }
     else if(val->vendor_model_srv_Hdr.opcode == OP_VENDOR_MESSAGE_TRANSPARENT_WRT)
     {
+        if(val->vendor_model_srv_Event.write.len == 0)
+        {
+            return;
+        }
         // 收到write数据
         APP_DBG("len %d, data 0x%02x from 0x%04x", val->vendor_model_srv_Event.write.len,
                 val->vendor_model_srv_Event.write.pdata[0],
@@ -501,7 +510,7 @@ static void vendor_model_srv_rsp_handler(const vendor_model_srv_status_t *val)
     }
     else
     {
-        APP_DBG("Unknow opcode 0x%02x", val->vendor_model_srv_Hdr.opcode);
+        APP_DBG("Unknown opcode 0x%02x", val->vendor_model_srv_Hdr.opcode);
     }
 }
 
@@ -695,7 +704,7 @@ void blemesh_on_sync(void)
                                 self_prov_iv_index, self_prov_addr, self_prov_dev_key);
         if(err)
         {
-            APP_DBG("Self Privisioning (err %d)", err);
+            APP_DBG("Self Provisioning (err %d)", err);
             return;
         }
     }

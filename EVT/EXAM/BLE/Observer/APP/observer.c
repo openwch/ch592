@@ -201,10 +201,13 @@ static void ObserverEventCB(gapRoleEvent_t *pEvent)
     {
         case GAP_DEVICE_INIT_DONE_EVENT:
         {
+            uint8_t ownAddr[6];
+            PRINT("Discovering...\n");
+            GAPRole_GetParameter(GAPROLE_BD_ADDR, ownAddr);
+            GAP_ConfigDeviceAddr(ADDRTYPE_STATIC, ownAddr);
             GAPRole_ObserverStartDiscovery(DEFAULT_DISCOVERY_MODE,
                                            DEFAULT_DISCOVERY_ACTIVE_SCAN,
                                            DEFAULT_DISCOVERY_WHITE_LIST);
-            PRINT("Discovering...\n");
         }
         break;
 
@@ -233,6 +236,9 @@ static void ObserverEventCB(gapRoleEvent_t *pEvent)
                     PRINT("\n");
                 }
             }
+
+            // Reset local scan result count for the next discovery cycle
+            ObserverScanRes = 0;
 
             GAPRole_ObserverStartDiscovery(DEFAULT_DISCOVERY_MODE,
                                            DEFAULT_DISCOVERY_ACTIVE_SCAN,

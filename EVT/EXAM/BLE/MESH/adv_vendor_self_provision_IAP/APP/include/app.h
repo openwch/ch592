@@ -41,7 +41,7 @@ extern "C" {
 #define IMAGE_IAP_SIZE         4 * 1024
 
 /* 存放在DataFlash地址，不能占用蓝牙的位置 */
-#define OTA_DATAFLASH_ADD      0x00077000 - FLASH_ROM_MAX_SIZE
+#define OTA_DATAFLASH_ADD      0x00076000 - FLASH_ROM_MAX_SIZE
 
 /* 存放在DataFlash里的OTA信息 */
 typedef struct

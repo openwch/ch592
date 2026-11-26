@@ -143,11 +143,11 @@ void DevEP1_OUT_Deal( uint8_t l )
  */
 void DevEP2_OUT_Deal( uint8_t l )
 { /* 用户可自定义 */
-    if(RingMemWrite(&RingMemUSB, pEP2_OUT_DataBuf, l) != SUCCESS)
+    /* ISR context: no PRINT here, only buffer the data and signal the task */
+    if(RingMemWrite(&RingMemUSB, pEP2_OUT_DataBuf, l) == SUCCESS)
     {
-        PRINT("RingMemBLE ERR \n");
+        tmos_start_task(Peripheral_TaskID, SBP_PROCESS_USBDATA_EVT, 32);
     }
-    tmos_start_task(Peripheral_TaskID, SBP_PROCESS_USBDATA_EVT, 32);
 
 }
 

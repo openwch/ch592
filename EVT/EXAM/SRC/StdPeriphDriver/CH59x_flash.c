@@ -183,3 +183,21 @@ void GET_UNIQUE_ID(uint8_t *Buffer)
     Buffer[6] = temp&0xFF;
     Buffer[7] = (temp>>8)&0xFF;
 }
+
+/*********************************************************************
+ * @fn      GET_CHIP_VERSION
+ *
+ * @brief   get 4 bit chip version, increment starting from 0x01
+ *
+ * @return  0-Err, other-chip version
+ */
+uint8_t GET_CHIP_VERSION(void)
+{
+    uint8_t temp;
+    temp = (uint8_t)((*((PUINT32V)ROM_CFG_VERSION)) >> 24);
+    if(((temp >> 4) ^ (temp & 0x0F)) == 0x0F)
+    {
+        return (temp & 0x0F);
+    }
+    return 0;
+}

@@ -88,7 +88,6 @@ void rt_tick_set(rt_tick_t tick)
  * @brief    This function will notify kernel there is one tick passed.
  *           Normally, this function is invoked by clock ISR.
  */
-__attribute__((section(".highcode")))
 void rt_tick_increase(void)
 {
     struct rt_thread *thread;

@@ -276,6 +276,8 @@ static bStatus_t OTAProfile_WriteAttrCB(uint16_t connHandle, gattAttribute_t *pA
                     uint16_t i;
                     uint8_t *p_rec_buf;
 
+                    if(len > sizeof(OTAProfileWriteBuf)) /* length guard: avoid buffer overflow */
+                        len = sizeof(OTAProfileWriteBuf);
                     OTAProfileWriteLen = len;
                     p_rec_buf = pValue;
                     for(i = 0; i < OTAProfileWriteLen; i++)

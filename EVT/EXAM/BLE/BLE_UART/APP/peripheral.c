@@ -1,6 +1,6 @@
 /********************************** (C) COPYRIGHT *******************************
  * File Name          : peripheral.C
- * Author             : zhangxiyi @WCH
+ * Author             : @WCH
  * Version            : v0.1
  * Date               : 2020/11/26
  * Description        :
@@ -486,6 +486,10 @@ uint16_t Peripheral_ProcessEvent(uint8_t task_id, uint16_t events)
                     break;
                 }
                 read_length = ATT_GetMTU(peripheralConnList.connHandle) - 3;
+                if(read_length > sizeof(to_test_buffer))
+                {
+                    read_length = sizeof(to_test_buffer);
+                }
 
                 if(app_drv_fifo_length(&app_uart_rx_fifo) >= read_length)
                 {
@@ -723,8 +727,13 @@ static void peripheralStateNotificationCB(gapRole_States_t newState, gapRoleEven
     switch(newState & GAPROLE_STATE_ADV_MASK)
     {
         case GAPROLE_STARTED:
+        {
+            uint8_t ownAddr[6];
+            GAPRole_GetParameter(GAPROLE_BD_ADDR, ownAddr);
+            GAP_ConfigDeviceAddr(ADDRTYPE_STATIC, ownAddr);
             PRINT("Initialized..\n");
             break;
+        }
 
         case GAPROLE_ADVERTISING:
             if(pEvent->gap.opcode == GAP_LINK_TERMINATED_EVENT)

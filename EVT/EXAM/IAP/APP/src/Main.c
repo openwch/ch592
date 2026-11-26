@@ -35,7 +35,7 @@ void DebugInit(void)
  *
  * @return  none
  */
-int main()
+int main(void)
 {
     uint16_t i = 0;
     uint8_t  s = 0;

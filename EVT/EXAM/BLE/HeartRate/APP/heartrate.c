@@ -403,6 +403,12 @@ static void heartRateMeasNotify(void)
             heartRateBpm = BPM_DEFAULT;
         }
         heartRateRrInterval1 = heartRateRrInterval2 = HEARTRATE_BPM_TO_RR(heartRateBpm);
+
+        // set simulated measurement flag index
+        if(++heartRateFlagsIdx == FLAGS_IDX_MAX)
+        {
+            heartRateFlagsIdx = 0;
+        }
     }
 }
 
@@ -476,6 +482,7 @@ static void HeartRateGapStateCB(gapRole_States_t newState, gapRoleEvent_t *pEven
         // Set the system ID from the bd addr
         uint8_t systemId[DEVINFO_SYSTEM_ID_LEN];
         GAPRole_GetParameter(GAPROLE_BD_ADDR, systemId);
+        GAP_ConfigDeviceAddr(ADDRTYPE_STATIC, systemId);
 
         // shift three bytes up
         systemId[7] = systemId[5];

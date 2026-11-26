@@ -38,12 +38,12 @@ void DebugInit(void)
  *
  * @return  none
  */
-int main()
+int main(void)
 {
     SetSysClock(CLK_SOURCE_PLL_60MHz);
     PWR_DCDCCfg(ENABLE);
-    GPIOA_ModeCfg(GPIO_Pin_All, GPIO_ModeIN_PU);
-    GPIOB_ModeCfg(GPIO_Pin_All, GPIO_ModeIN_PU);
+    GPIOA_ModeCfg(GPIO_Pin_All, GPIO_ModeIN_PD);
+    GPIOB_ModeCfg(GPIO_Pin_All, GPIO_ModeIN_PD);
 
     /* 配置串口调试 */
     DebugInit();
@@ -58,7 +58,7 @@ int main()
     PWR_PeriphWakeUpCfg(ENABLE, RB_SLP_GPIO_WAKE, Long_Delay);
 #endif
 
-#if 1
+#if 0
     PRINT("IDLE mode sleep \n");
     DelayMs(1);
     LowPower_Idle();
@@ -66,7 +66,7 @@ int main()
     DelayMs(500);
 #endif
 
-#if 1
+#if 0
     PRINT("Halt mode sleep \n");
     DelayMs(2);
     LowPower_Halt();
@@ -76,7 +76,7 @@ int main()
     DelayMs(500);
 #endif
 
-#if 1
+#if 0
     PRINT("sleep mode sleep \n");
     DelayMs(2);
     // 注意当主频为80M时，Sleep睡眠唤醒中断不可调用flash内代码。

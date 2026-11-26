@@ -62,7 +62,7 @@ void Lib_Write_Flash_592A(uint32_t addr, uint32_t num, uint32_t *pBuf)
 {
     __attribute__((aligned(4))) uint32_t FLASH_BUF[(BLE_SNV_BLOCK*BLE_SNV_NUM) / 4];
     EEPROM_READ(addr&0xFFFFF000, FLASH_BUF, BLE_SNV_BLOCK*BLE_SNV_NUM);
-    tmos_memcpy(&FLASH_BUF[addr&0xFFF], pBuf, num * 4);
+    tmos_memcpy(&FLASH_BUF[(addr-BLE_SNV_ADDR)/4], pBuf, num * 4);
     EEPROM_ERASE(addr&0xFFFFF000, ((BLE_SNV_BLOCK*BLE_SNV_NUM+EEPROM_BLOCK_SIZE-1)/EEPROM_BLOCK_SIZE)*EEPROM_BLOCK_SIZE);
     EEPROM_WRITE(addr&0xFFFFF000, FLASH_BUF, BLE_SNV_BLOCK*BLE_SNV_NUM);
 }
@@ -80,7 +80,7 @@ void Lib_Write_Flash_592A(uint32_t addr, uint32_t num, uint32_t *pBuf)
  */
 uint32_t Lib_Write_Flash(uint32_t addr, uint32_t num, uint32_t *pBuf)
 {
-    if(((*(uint32_t*)ROM_CFG_VERISON)&0xFF) == DEF_CHIP_ID_CH592A)
+    if(((*(uint32_t*)ROM_CFG_VERSION)&0xFF) == DEF_CHIP_ID_CH592A)
     {
         Lib_Write_Flash_592A(addr, num, pBuf);
     }

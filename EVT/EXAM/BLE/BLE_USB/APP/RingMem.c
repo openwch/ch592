@@ -64,7 +64,14 @@ uint8_t RingMemWrite( RingMemParm_t *Parm, uint8_t *pData, uint32_t len )
 	}
 
 	if( len > Parm->RemanentLen )
+	{
+		/* restore interrupt state on early return */
+		if(RingMemProtection)
+		{
+			RingMemProtection(DISABLE);
+		}
 		return !SUCCESS;
+	}
 	
 	edgelen = Parm->pEnd - Parm->pWrite; //Calculate the length of the remaining to the boundary
 	
@@ -118,7 +125,14 @@ uint8_t RingMemRead( RingMemParm_t *Parm, uint8_t *pData, uint32_t len )
     }
 
     if( len > Parm->CurrentLen )	//Not enough reading length
-		return !SUCCESS;
+    {
+        /* restore interrupt state on early return */
+        if(RingMemProtection)
+        {
+            RingMemProtection(DISABLE);
+        }
+        return !SUCCESS;
+    }
 	
 	edgelen = Parm->pEnd - Parm->pRead;			//Calculate the length of the remaining to the boundarythe length of the remaining to the boundary
 	
@@ -174,7 +188,14 @@ uint8_t RingMemCopy( RingMemParm_t *Parm, uint8_t *pData, uint32_t len )
 	uint8_t volatile *pRead = Parm->pRead;
 	
 	if( len > Parm->CurrentLen )						//The length that can be copied is not enough
+	{
+		/* restore interrupt state on early return */
+		if(RingMemProtection)
+		{
+			RingMemProtection(DISABLE);
+		}
 		return !SUCCESS;
+	}
 	
 	edgelen = Parm->pEnd - Parm->pRead;			//Calculate the length of the remaining to the boundary
 	
@@ -225,7 +246,14 @@ uint8_t RingMemDelete( RingMemParm_t *Parm, uint32_t len )
     }
 
 	if( len > Parm->CurrentLen )						//Can delete not enough length
+	{
+		/* restore interrupt state on early return */
+		if(RingMemProtection)
+		{
+			RingMemProtection(DISABLE);
+		}
 		return !SUCCESS;
+	}
 	
 	edgelen = Parm->pEnd - Parm->pRead;			//Calculate the length of the remaining to the boundary
 	
@@ -270,7 +298,14 @@ uint8_t RingAddInStart( RingMemParm_t *Parm, uint8_t *pData, uint32_t len )
     }
 
 	if( len > Parm->RemanentLen )
+	{
+		/* restore interrupt state on early return */
+		if(RingMemProtection)
+		{
+			RingMemProtection(DISABLE);
+		}
 		return !SUCCESS;
+	}
 	
 	edgelen = Parm->pRead - Parm->pData;			//Calculate the length of the remaining to the boundary
 	

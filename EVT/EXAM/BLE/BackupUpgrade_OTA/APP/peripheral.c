@@ -420,8 +420,13 @@ static void peripheralStateNotificationCB(gapRole_States_t newState, gapRoleEven
     switch(newState)
     {
         case GAPROLE_STARTED:
+        {
+            uint8_t ownAddr[6];
+            GAPRole_GetParameter(GAPROLE_BD_ADDR, ownAddr);
+            GAP_ConfigDeviceAddr(ADDRTYPE_STATIC, ownAddr);
             PRINT("Initialized..\n");
             break;
+        }
 
         case GAPROLE_ADVERTISING:
             PRINT("Advertising..\n");
@@ -608,7 +613,8 @@ void SwitchImageFlag(uint8_t new_flag)
  */
 void DisableAllIRQ(void)
 {
-    SYS_DisableAllIrq(NULL);
+    uint32_t irq_sta;
+    SYS_DisableAllIrq(&irq_sta);
 }
 
 /*********************************************************************
@@ -634,6 +640,15 @@ void Rec_OTA_IAP_DataDeal(void)
             OpAdd = OpAdd * 16;
 
             OpAdd += IMAGE_A_SIZE;
+
+            /* address/length range guard: target must stay inside imageB */
+            if((OpParaDataLen > (sizeof(iap_rec_data) - 6)) ||
+               (OpAdd < IMAGE_B_START_ADD) ||
+               ((OpAdd + OpParaDataLen) > IMAGE_IAP_START_ADD))
+            {
+                OTA_IAP_SendCMDDealSta(0xFF);
+                break;
+            }
 
             PRINT("IAP_PROM: %08x len:%d \r\n", (int)OpAdd, (int)OpParaDataLen);
 
@@ -686,6 +701,16 @@ void Rec_OTA_IAP_DataDeal(void)
             OpAdd = OpAdd * 16;
 
             OpAdd += IMAGE_A_SIZE;
+
+            /* address/length range guard: target must stay inside imageB */
+            if((OpParaDataLen > (sizeof(iap_rec_data) - 6)) ||
+               (OpAdd < IMAGE_B_START_ADD) ||
+               ((OpAdd + OpParaDataLen) > IMAGE_IAP_START_ADD))
+            {
+                OTA_IAP_SendCMDDealSta(0xFF);
+                break;
+            }
+
             PRINT("IAP_VERIFY: %08x len:%d \r\n", (int)OpAdd, (int)OpParaDataLen);
 
             /* 当前是ImageA，直接读取ImageB校验 */
@@ -785,6 +810,8 @@ void OTA_IAPWriteData(unsigned char index, unsigned char *p_data, unsigned char 
 
     rec_len = w_len;
     rec_data = p_data;
+    if(rec_len > sizeof(iap_rec_data)) /* length guard: avoid buffer overflow */
+        rec_len = sizeof(iap_rec_data);
     tmos_memcpy((unsigned char *)&iap_rec_data, rec_data, rec_len);
     Rec_OTA_IAP_DataDeal();
 }

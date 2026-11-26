@@ -1,5 +1,5 @@
 /********************************** (C) COPYRIGHT *******************************
- * File Name          : peripheral.C
+ * File Name          : peripheral.c
  * Author             : WCH
  * Version            : V1.0
  * Date               : 2018/12/10
@@ -191,12 +191,12 @@ static simpleProfileCBs_t Peripheral_SimpleProfileCBs = {
 
 void blk_period(uint32_t timeUs)
 {
-    if (!wakeupflag)
-    {
-        dg_log("1\n");
-        PeriodicDealData();
-        dg_log("2\n");
-    }
+    (void)timeUs;
+    /* Link-layer advertising callback context: only signal the touch TMOS
+     * task. The heavy scan/sleep work (PeriodicDealData) and the wakeupflag
+     * test run in TMOS task context, avoiding re-entrancy with the task path
+     * and keeping UART printing out of the callback. */
+    tmos_set_event(TouchKey_TaskID, TKY_BLE_PERIOD_EVT);
 }
 /*********************************************************************
  * @fn      Peripheral_Init
@@ -455,8 +455,8 @@ static void Peripheral_ProcessTMOSMsg(tmos_event_hdr_t *pMsg)
             pMsgEvent = (gattMsgEvent_t *) pMsg;
             if (pMsgEvent->method == ATT_MTU_UPDATED_EVENT)
             {
-                peripheralMTU = pMsgEvent->msg.exchangeMTUReq.clientRxMTU;
-                PRINT( "mtu exchange: %d\n", pMsgEvent->msg.exchangeMTUReq.clientRxMTU );
+                peripheralMTU = pMsgEvent->msg.mtuEvt.MTU;
+                PRINT( "mtu exchange: %d\n", pMsgEvent->msg.mtuEvt.MTU );
             }
             break;
         }

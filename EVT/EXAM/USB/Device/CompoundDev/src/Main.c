@@ -53,17 +53,21 @@ const uint8_t MouseRepDesc[] = {0x05, 0x01, 0x09, 0x02, 0xA1, 0x01, 0x09, 0x01, 
                                 0x08, 0x95, 0x03, 0x81, 0x06, 0xC0, 0xC0};
 
 /**********************************************************/
-uint8_t        DevConfig, Ready;
+volatile uint8_t DevConfig, Ready;
 uint8_t        SetupReqCode;
 uint16_t       SetupReqLen;
 const uint8_t *pDescr;
 uint8_t        Report_Value = 0x00;
 uint8_t        Idle_Value = 0x00;
-uint8_t        USB_SleepStatus = 0x00; /* USB睡眠状态 */
+volatile uint8_t USB_SleepStatus = 0x00; /* USB睡眠状态 */
 
 /*鼠标键盘数据*/
 uint8_t HIDMouse[4] = {0x0, 0x0, 0x0, 0x0};
 uint8_t HIDKey[8] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+
+/* LED report captured in USB ISR, printed from main loop (keep ISR short) */
+volatile uint8_t USB_LedReportFlag = 0x00;
+volatile uint8_t USB_LedReportVal = 0x00;
 /******** 用户自定义分配端点RAM ****************************************/
 __attribute__((aligned(4))) uint8_t EP0_Databuf[64 + 64 + 64]; //ep0(64)+ep4_out(64)+ep4_in(64)
 __attribute__((aligned(4))) uint8_t EP1_Databuf[64 + 64];      //ep1_out(64)+ep1_in(64)
@@ -123,9 +127,9 @@ void USB_DevTransProcess(void)
                     len = R8_USB_RX_LEN;
                     if(SetupReqCode == 0x09)
                     {
-                        PRINT("[%s] Num Lock\t", (pEP0_DataBuf[0] & (1<<0)) ? "*" : " ");
-                        PRINT("[%s] Caps Lock\t", (pEP0_DataBuf[0] & (1<<1)) ? "*" : " ");
-                        PRINT("[%s] Scroll Lock\n", (pEP0_DataBuf[0] & (1<<2)) ? "*" : " ");
+                        /* forward LED report to main loop instead of printing here */
+                        USB_LedReportVal = pEP0_DataBuf[0];
+                        USB_LedReportFlag = 1;
                     }
                 }
                 break;
@@ -651,7 +655,7 @@ void DebugInit(void)
  *
  * @return  none
  */
-int main()
+int main(void)
 {
     SetSysClock(CLK_SOURCE_PLL_60MHz);
 
@@ -669,6 +673,13 @@ int main()
 
     while(1)
     {
+        if(USB_LedReportFlag)
+        {
+            USB_LedReportFlag = 0;
+            PRINT("[%s] Num Lock\t", (USB_LedReportVal & (1<<0)) ? "*" : " ");
+            PRINT("[%s] Caps Lock\t", (USB_LedReportVal & (1<<1)) ? "*" : " ");
+            PRINT("[%s] Scroll Lock\n", (USB_LedReportVal & (1<<2)) ? "*" : " ");
+        }
         mDelaymS(1000);
         //鼠标左键
         DevHIDMouseReport(0x01);

@@ -3,9 +3,9 @@
  * Author             : WCH
  * Version            : V1.1
  * Date               : 2020/08/06
- * Description        : Ö÷»úÀı³Ì£¬Ö÷¶¯É¨ÃèÖÜÎ§Éè±¸£¬Á¬½ÓÖÁ¸ø¶¨µÄ´Ó»úÉè±¸µØÖ·£¬
- *                      Ñ°ÕÒ×Ô¶¨Òå·şÎñ¼°ÌØÕ÷£¬Ö´ĞĞ¶ÁĞ´ÃüÁî£¬ĞèÓë´Ó»úÀı³ÌÅäºÏÊ¹ÓÃ,
-                       ²¢½«´Ó»úÉè±¸µØÖ·ĞŞ¸ÄÎª¸ÃÀı³ÌÄ¿±êµØÖ·£¬Ä¬ÈÏÎª(84:C2:E4:03:02:02)
+ * Description        : ä¸»æœºä¾‹ç¨‹ï¼Œä¸»åŠ¨æ‰«æå‘¨å›´è®¾å¤‡ï¼Œè¿æ¥è‡³ç»™å®šçš„ä»æœºè®¾å¤‡åœ°å€ï¼Œ
+ *                      å¯»æ‰¾è‡ªå®šä¹‰æœåŠ¡åŠç‰¹å¾ï¼Œæ‰§è¡Œè¯»å†™å‘½ä»¤ï¼Œéœ€ä¸ä»æœºä¾‹ç¨‹é…åˆä½¿ç”¨,
+                       å¹¶å°†ä»æœºè®¾å¤‡åœ°å€ä¿®æ”¹ä¸ºè¯¥ä¾‹ç¨‹ç›®æ ‡åœ°å€ï¼Œé»˜è®¤ä¸º(84:C2:E4:03:02:02)
  *********************************************************************************
  * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
  * Attention: This software (modified or not) and binary are used for 
@@ -63,10 +63,10 @@
 #define DEFAULT_RSSI_PERIOD                 2400
 
 // Minimum connection interval (units of 1.25ms)
-#define DEFAULT_UPDATE_MIN_CONN_INTERVAL    20
+#define DEFAULT_UPDATE_MIN_CONN_INTERVAL    40
 
 // Maximum connection interval (units of 1.25ms)
-#define DEFAULT_UPDATE_MAX_CONN_INTERVAL    20
+#define DEFAULT_UPDATE_MAX_CONN_INTERVAL    40
 
 // Slave latency to use parameter update
 #define DEFAULT_UPDATE_SLAVE_LATENCY        0
@@ -151,13 +151,13 @@ static uint8_t centralScanRes;
 static gapDevRec_t centralDevList[DEFAULT_MAX_SCAN_RES];
 
 // Peer device address
-static uint8_t PeerAddrDef[B_ADDR_LEN] = {0x02, 0x02, 0x03, 0xE4, 0xC2, 0x84};
+static uint8_t PeerAddrDef[B_ADDR_LEN] = {0x02, 0x02, 0x03, 0xE4, 0xC2, 0x84|0xC0};
 
 // RSSI polling state
 static uint8_t centralRssi = FALSE;
 
 // Parameter update state
-static uint8_t centralParamUpdate = FALSE;
+static uint8_t centralParamUpdate = 0;
 
 // Phy update state
 static uint8_t centralPhyUpdate = TRUE;
@@ -191,6 +191,10 @@ static uint8_t centralDoWrite = TRUE;
 static uint8_t centralProcedureInProgress = FALSE;
 
 static uint32_t centralRxDataLen = 0;
+static uint32_t centralTxDataLen = 0;                      
+static uint16_t centralMtu = ATT_MTU_SIZE;                 // åå•†åçš„MTU
+static uint8_t  centralSpeedTestEn = FALSE;                
+static uint8_t  speed_test_buf[BLE_BUFF_MAX_LEN - 7] = {0}; // write without responseè½½è·
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
@@ -205,6 +209,8 @@ static void central_ProcessTMOSMsg(tmos_event_hdr_t *pMsg);
 static void centralGATTDiscoveryEvent(gattMsgEvent_t *pMsg);
 static void centralStartDiscovery(void);
 static void centralAddDeviceInfo(uint8_t *pAddr, uint8_t addrType);
+static void centralConnectEventCB(uint32_t timeUs);
+static uint8_t centralChar1Write(uint8_t *pValue, uint16_t len);
 /*********************************************************************
  * PROFILE CALLBACKS
  */
@@ -270,6 +276,9 @@ void Central_Init()
     GATT_RegisterForInd(centralTaskId);
     // Setup a delayed profile startup
     tmos_set_event(centralTaskId, START_DEVICE_EVT);
+
+    // æ³¨å†Œè¿æ¥äº‹ä»¶å›è°ƒï¼Œç”¨äºåœ¨æ¯ä¸ªè¿æ¥äº‹ä»¶æ³µwrite without response
+    LL_ConnectEventRegister(centralConnectEventCB);
 }
 
 /*********************************************************************
@@ -380,10 +389,28 @@ uint16_t Central_ProcessEvent(uint8_t task_id, uint16_t events)
 
     if(events & START_SPEED_TEST_EVT)
     {
-        PRINT("Rx: %dB/s\n", centralRxDataLen);
-        centralRxDataLen=0;
+        PRINT("Rx: %dB/s, Tx: %dB/s\n", centralRxDataLen, centralTxDataLen);
+        centralRxDataLen = 0;
+        centralTxDataLen = 0;
         tmos_start_task(centralTaskId, START_SPEED_TEST_EVT, 1600);
         return (events ^ START_SPEED_TEST_EVT);
+    }
+
+    if(events & START_WRITE_DATA_EVT)
+    {
+        if((centralState == BLE_STATE_CONNECTED) && (centralCharHdl != 0))
+        {
+            uint16_t len = (centralMtu > 3) ? (centralMtu - 3) : 1;
+            if(len > sizeof(speed_test_buf))
+            {
+                len = sizeof(speed_test_buf);
+            }
+            if(centralChar1Write(speed_test_buf, len) == SUCCESS)
+            {
+                centralTxDataLen += len;
+            }
+        }
+        return (events ^ START_WRITE_DATA_EVT);
     }
 
     // Discard unknown events
@@ -442,6 +469,7 @@ static void centralProcessGATTMsg(gattMsgEvent_t *pMsg)
     if(pMsg->method == ATT_MTU_UPDATED_EVENT)
     {
         PRINT("MTU: %x\n", pMsg->msg.mtuEvt.MTU);
+        centralMtu = pMsg->msg.mtuEvt.MTU; // è®°å½•åå•†åMTU
     }
 
     if((pMsg->method == ATT_READ_RSP) ||
@@ -475,6 +503,7 @@ static void centralProcessGATTMsg(gattMsgEvent_t *pMsg)
         {
             // Write success
             PRINT("Write success \n");
+            centralSpeedTestEn = TRUE; 
         }
 
         centralProcedureInProgress = FALSE;
@@ -537,7 +566,10 @@ static void centralEventCB(gapRoleEvent_t *pEvent)
     {
         case GAP_DEVICE_INIT_DONE_EVENT:
         {
+            uint8_t ownAddr[6];
             PRINT("Discovering...\n");
+            GAPRole_GetParameter(GAPROLE_BD_ADDR, ownAddr);
+            GAP_ConfigDeviceAddr(ADDRTYPE_STATIC, ownAddr);
             GAPRole_CentralStartDiscovery(DEFAULT_DISCOVERY_MODE,
                                           DEFAULT_DISCOVERY_ACTIVE_SCAN,
                                           DEFAULT_DISCOVERY_WHITE_LIST);
@@ -648,6 +680,8 @@ static void centralEventCB(gapRoleEvent_t *pEvent)
             centralCharHdl = 0;
             centralScanRes = 0;
             centralProcedureInProgress = FALSE;
+            centralSpeedTestEn = FALSE;
+            centralTxDataLen = 0;
             tmos_stop_task(centralTaskId, START_READ_RSSI_EVT);
             PRINT("Disconnected...Reason:%x\n", pEvent->linkTerminate.reason);
             PRINT("Discovering...\n");
@@ -734,6 +768,54 @@ static void centralPasscodeCB(uint8_t *deviceAddr, uint16_t connectionHandle,
     }
     // Send passcode response
     GAPBondMgr_PasscodeRsp(connectionHandle, SUCCESS, passcode);
+}
+
+/*********************************************************************
+ * @fn      centralConnectEventCB
+ *
+ * @brief   æ¯ä¸ªè¿æ¥äº‹ä»¶å›è°ƒï¼Œæµ‹é€Ÿä½¿èƒ½åç½®å‘é€äº‹ä»¶ï¼Œåœ¨äº‹ä»¶é‡Œæ³µwrite without response
+ *
+ * @param   timeUs - Time to next connect event
+ *
+ * @return  none
+ */
+static void centralConnectEventCB(uint32_t timeUs)
+{
+    if(centralSpeedTestEn)
+    {
+        tmos_set_event(centralTaskId, START_WRITE_DATA_EVT);
+    }
+}
+
+/*********************************************************************
+ * @fn      centralChar1Write
+ *
+ * @brief   ä»¥write without responseæ–¹å¼å‘CHAR1å‘é€æµ‹é€Ÿæ•°æ®
+ *
+ * @param   pValue - data to write
+ *          len - length of data
+ *
+ * @return  SUCCESS or error code
+ */
+static uint8_t centralChar1Write(uint8_t *pValue, uint16_t len)
+{
+    attWriteReq_t req;
+    req.cmd = TRUE; // Write Without Response
+    req.sig = FALSE;
+    req.handle = centralCharHdl;
+    req.len = len;
+    req.pValue = GATT_bm_alloc(centralConnHandle, ATT_WRITE_CMD, req.len, NULL, 0);
+    if(req.pValue)
+    {
+        tmos_memcpy(req.pValue, pValue, req.len);
+        if(GATT_WriteNoRsp(centralConnHandle, &req) != SUCCESS)
+        {
+            GATT_bm_free((gattMsg_t *)&req, ATT_WRITE_CMD);
+            return bleMemAllocError;
+        }
+        return SUCCESS;
+    }
+    return bleMemAllocError;
 }
 
 /*********************************************************************

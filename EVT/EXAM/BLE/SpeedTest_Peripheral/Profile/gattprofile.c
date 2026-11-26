@@ -3,7 +3,7 @@
  * Author             : WCH
  * Version            : V1.0
  * Date               : 2018/12/10
- * Description        : ×Ô¶¨Òå°üº¬ÎåÖÖ²»Í¬ÊôÐÔµÄ·þÎñ£¬°üº¬¿É¶Á¡¢¿ÉÐ´¡¢Í¨Öª¡¢¿É¶Á¿ÉÐ´¡¢°²È«¿É¶Á
+ * Description        : è‡ªå®šä¹‰åŒ…å«äº”ç§ä¸åŒå±žæ€§çš„æœåŠ¡ï¼ŒåŒ…å«å¯è¯»ã€å¯å†™ã€é€šçŸ¥ã€å¯è¯»å¯å†™ã€å®‰å…¨å¯è¯»
  *********************************************************************************
  * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
  * Attention: This software (modified or not) and binary are used for 
@@ -80,7 +80,7 @@ static simpleProfileCBs_t *simpleProfile_AppCBs = NULL;
 static const gattAttrType_t simpleProfileService = {ATT_BT_UUID_SIZE, simpleProfileServUUID};
 
 // Simple Profile Characteristic 1 Properties
-static uint8_t simpleProfileChar1Props = GATT_PROP_READ | GATT_PROP_WRITE;
+static uint8_t simpleProfileChar1Props = GATT_PROP_READ | GATT_PROP_WRITE | GATT_PROP_WRITE_NO_RSP;
 
 // Characteristic 1 Value
 static uint8_t simpleProfileChar1[SIMPLEPROFILE_CHAR1_LEN] = {0};
@@ -634,10 +634,7 @@ static bStatus_t simpleProfile_WriteAttrCB(uint16_t connHandle, gattAttribute_t 
                 // Make sure it's not a blob oper
                 if(offset == 0)
                 {
-                    if(len > SIMPLEPROFILE_CHAR1_LEN)
-                    {
-                        status = ATT_ERR_INVALID_VALUE_SIZE;
-                    }
+                    // åŒå‘æµ‹é€Ÿï¼šCHAR1ä½œä¸ºwrite without responseæ•°æ®é€šé“ï¼ŒæŽ¥å—ä»»æ„é•¿åº¦
                 }
                 else
                 {
@@ -647,7 +644,8 @@ static bStatus_t simpleProfile_WriteAttrCB(uint16_t connHandle, gattAttribute_t 
                 //Write the value
                 if(status == SUCCESS)
                 {
-                    tmos_memcpy(pAttr->pValue, pValue, SIMPLEPROFILE_CHAR1_LEN);
+                    uint16_t storeLen = (len > SIMPLEPROFILE_CHAR1_LEN) ? SIMPLEPROFILE_CHAR1_LEN : len;
+                    tmos_memcpy(pAttr->pValue, pValue, storeLen);
                     notifyApp = SIMPLEPROFILE_CHAR1;
                 }
                 break;

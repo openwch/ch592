@@ -20,7 +20,8 @@ extern "C" {
 //#include "att.h"
 #include "stdint.h"
 
-#define BLE_UART_RX_BUFF_SIZE    1
+// RX characteristic value buffer must hold up to ATT_MTU-3 bytes (BLE_BUFF_MAX_LEN-4-3)
+#define BLE_UART_RX_BUFF_SIZE    20
 
 typedef enum
 {

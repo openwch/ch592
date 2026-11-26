@@ -3,7 +3,7 @@
  * Author             : WCH
  * Version            : V1.1
  * Date               : 2024/02/27
- * Description        : 外设从机应用主函数及任务系统初始化
+ * Description        : 触摸滑轮滑条例程
  * Copyright (c) 2024 Nanjing Qinheng Microelectronics Co., Ltd.
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/

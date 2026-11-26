@@ -128,8 +128,16 @@ void gen_windspeed_set(struct bt_mesh_model   *model,
     APP_DBG("ttl: 0x%02x dst: 0x%04x rssi: %d ",
             ctx->recv_ttl, ctx->recv_dst, ctx->recv_rssi);
 
+    if(buf->len < 3)
+    {
+        return;
+    }
     if((buf->data[1] | (buf->data[2] << 8)) < ALI_GEN_ATTR_TYPE_WORK_STATUS)
     {
+        if(buf->len < 4)
+        {
+            return;
+        }
         // 命令为设定值
         set_windspeed(buf->data[3]);
     }
@@ -140,6 +148,10 @@ void gen_windspeed_set(struct bt_mesh_model   *model,
             // 命令为设定变化量
             case ALI_GEN_ATTR_TYPE_DELTA_VALUE:
             {
+                if(buf->len < 6)
+                {
+                    return;
+                }
                 char delta = (char)buf->data[5];
                 set_windspeed(read_windspeed() + delta);
             }
@@ -178,8 +190,16 @@ void gen_windspeed_set_unack(struct bt_mesh_model   *model,
 {
     APP_DBG(" ");
 
+    if(buf->len < 3)
+    {
+        return;
+    }
     if((buf->data[1] | (buf->data[2] << 8)) < ALI_GEN_ATTR_TYPE_WORK_STATUS)
     {
+        if(buf->len < 4)
+        {
+            return;
+        }
         // 命令为设定值
         set_windspeed(buf->data[3]);
     }
@@ -190,6 +210,10 @@ void gen_windspeed_set_unack(struct bt_mesh_model   *model,
             // 命令为设定变化量
             case ALI_GEN_ATTR_TYPE_DELTA_VALUE:
             {
+                if(buf->len < 6)
+                {
+                    return;
+                }
                 char delta = (char)buf->data[5];
                 set_windspeed(read_windspeed() + delta);
             }

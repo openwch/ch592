@@ -23,8 +23,8 @@
  */
 #define ADV_TIMEOUT       K_MINUTES(10)
 
-#define SELENCE_ADV_ON    0x01
-#define SELENCE_ADV_OF    0x00
+#define SILENCE_ADV_ON    0x01
+#define SILENCE_ADV_OFF    0x00
 
 /*********************************************************************
  * GLOBAL TYPEDEFS
@@ -780,6 +780,10 @@ static void cfg_cli_rsp_handler(const cfg_cli_status_t *val)
         {
             bt_mesh_node_del_by_addr(reset_node_addr);
             node = node_get(reset_node_addr);
+            if(!node)
+            {
+                return;
+            }
             node->stage.node = NODE_INIT;
             node->node_addr = BLE_MESH_ADDR_UNASSIGNED;
             node->fixed = FALSE;
@@ -826,6 +830,11 @@ static void vendor_model_cli_rsp_handler(const vendor_model_cli_status_t *val)
     }
     if(val->vendor_model_cli_Hdr.opcode == OP_VENDOR_MESSAGE_TRANSPARENT_MSG)
     {
+        if((val->vendor_model_cli_Event.trans.len == 0) ||
+           (val->vendor_model_cli_Event.trans.len > sizeof(app_mesh_manage)))
+        {
+            return;
+        }
         // 收到透传数据
         APP_DBG("trans len %d, data 0x%02x from 0x%04x", val->vendor_model_cli_Event.trans.len,
                 val->vendor_model_cli_Event.trans.pdata[0],
@@ -845,9 +854,12 @@ static void vendor_model_cli_rsp_handler(const vendor_model_cli_status_t *val)
                 tmos_stop_task(App_TaskID, APP_DELETE_NODE_TIMEOUT_EVT);
                 bt_mesh_node_del_by_addr(val->vendor_model_cli_Event.trans.addr);
                 node = node_get(val->vendor_model_cli_Event.trans.addr);
-                node->stage.node = NODE_INIT;
-                node->node_addr = BLE_MESH_ADDR_UNASSIGNED;
-                node->fixed = FALSE;
+                if(node)
+                {
+                    node->stage.node = NODE_INIT;
+                    node->node_addr = BLE_MESH_ADDR_UNASSIGNED;
+                    node->fixed = FALSE;
+                }
                 APP_DBG("Delete node complete");
                 break;
             }
@@ -866,7 +878,7 @@ static void vendor_model_cli_rsp_handler(const vendor_model_cli_status_t *val)
     }
     else
     {
-        APP_DBG("Unknow opcode 0x%02x", val->vendor_model_cli_Hdr.opcode);
+        APP_DBG("Unknown opcode 0x%02x", val->vendor_model_cli_Hdr.opcode);
     }
 }
 
@@ -1087,7 +1099,7 @@ void blemesh_on_sync(void)
                                 self_prov_iv_index, self_prov_addr, self_prov_dev_key);
         if(err)
         {
-            APP_DBG("Self Privisioning (err %d)", err);
+            APP_DBG("Self Provisioning (err %d)", err);
             return;
         }
     }

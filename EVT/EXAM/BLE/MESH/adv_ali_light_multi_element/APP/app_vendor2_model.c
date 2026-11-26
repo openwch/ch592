@@ -54,13 +54,21 @@ static void tm2_attr_get(struct bt_mesh_model   *model,
                          struct net_buf_simple  *buf)
 {
     uint16_t attr_type;
+    if(buf->len < 3)
+    {
+        return;
+    }
     if((buf->data[1] | (buf->data[2] << 8)) < ALI_GEN_ATTR_TYPE_WORK_STATUS)
     {
         attr_type = buf->data[1] | (buf->data[2] << 8);
     }
-    else
+    else if(buf->len >= 5)
     {
         attr_type = buf->data[3] | (buf->data[4] << 8);
+    }
+    else
+    {
+        return;
     }
 
     APP_DBG("attr_type£º0x%04x ", attr_type);
@@ -95,13 +103,21 @@ static void tm2_attr_set(struct bt_mesh_model   *model,
 {
     uint16_t attr_type;
 
+    if(buf->len < 3)
+    {
+        return;
+    }
     if((buf->data[1] | (buf->data[2] << 8)) < ALI_GEN_ATTR_TYPE_WORK_STATUS)
     {
         attr_type = buf->data[1] | (buf->data[2] << 8);
     }
-    else
+    else if(buf->len >= 5)
     {
         attr_type = buf->data[3] | (buf->data[4] << 8);
+    }
+    else
+    {
+        return;
     }
 
     APP_DBG("attr_type£º0x%04x ", attr_type);
@@ -125,13 +141,21 @@ static void tm2_attr_set_unack(struct bt_mesh_model   *model,
                                struct net_buf_simple  *buf)
 {
     uint16_t attr_type;
+    if(buf->len < 3)
+    {
+        return;
+    }
     if((buf->data[1] | (buf->data[2] << 8)) < ALI_GEN_ATTR_TYPE_WORK_STATUS)
     {
         attr_type = buf->data[1] | (buf->data[2] << 8);
     }
-    else
+    else if(buf->len >= 5)
     {
         attr_type = buf->data[3] | (buf->data[4] << 8);
+    }
+    else
+    {
+        return;
     }
 
     APP_DBG("attr_type£º0x%04x ", attr_type);
@@ -425,7 +449,7 @@ void send_led2_indicate(struct indicate_param *param)
     /* Add tid field */
     net_buf_simple_add_u8(&(ind->buf->b), param->tid);
 
-    /* Add generic onoff attrbute op */
+    /* Add generic onoff attribute op */
     net_buf_simple_add_le16(&(ind->buf->b), ALI_GEN_ATTR_TYPE_POWER_STATE);
 
     /* Add current generic onoff status */
@@ -461,7 +485,7 @@ void send_angle_auto_LR_indicate(struct indicate_param *param)
     /* Add tid field */
     net_buf_simple_add_u8(&(ind->buf->b), param->tid);
 
-    /* Add angle_auto_LR attrbute opcode */
+    /* Add angle_auto_LR attribute opcode */
     net_buf_simple_add_le16(&(ind->buf->b), ALI_GEN_ATTR_TYPE_ANGLEAUTO_LR_ONOFF);
 
     /* Add angle_auto_LR status  */

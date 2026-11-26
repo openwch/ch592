@@ -3,8 +3,8 @@
  * Author             : WCH
  * Version            : V1.0
  * Date               : 2018/12/10
- * Description        : ÍâÉè´Ó»ú¶àÁ¬½ÓÓ¦ÓÃ³ÌÐò£¬³õÊ¼»¯¹ã²¥Á¬½Ó²ÎÊý£¬È»ºó¹ã²¥£¬Á¬½ÓÖ÷»úºó£¬
- *                      ÇëÇó¸üÐÂÁ¬½Ó²ÎÊý£¬Í¨¹ý×Ô¶¨Òå·þÎñ´«ÊäÊý¾Ý
+ * Description        : å¤–è®¾ä»Žæœºå¤šè¿žæŽ¥åº”ç”¨ç¨‹åºï¼Œåˆå§‹åŒ–å¹¿æ’­è¿žæŽ¥å‚æ•°ï¼Œç„¶åŽå¹¿æ’­ï¼Œè¿žæŽ¥ä¸»æœºåŽï¼Œ
+ *                      è¯·æ±‚æ›´æ–°è¿žæŽ¥å‚æ•°ï¼Œé€šè¿‡è‡ªå®šä¹‰æœåŠ¡ä¼ è¾“æ•°æ®
  *********************************************************************************
  * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
  * Attention: This software (modified or not) and binary are used for 
@@ -143,9 +143,10 @@ static uint16_t peripheralMTU = ATT_MTU_SIZE;
 
 static uint8_t speed_test_enable = FALSE;
 
-static uint8_t speed_test_buf[244] = {0};
+static uint8_t speed_test_buf[BLE_BUFF_MAX_LEN - 7] = {0};
 
 static uint32_t peripheralTxDataLen = 0;
+static uint32_t peripheralRxDataLen = 0;
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
@@ -341,8 +342,9 @@ uint16_t Peripheral_ProcessEvent(uint8_t task_id, uint16_t events)
     {
         if( speed_test_enable )
         {
-            PRINT("Tx: %dB/s\n",peripheralTxDataLen);
+            PRINT("Tx: %dB/s, Rx: %dB/s\n", peripheralTxDataLen, peripheralRxDataLen);
             peripheralTxDataLen = 0;
+            peripheralRxDataLen = 0;
         }
         else
         {
@@ -372,6 +374,33 @@ uint16_t Peripheral_ProcessEvent(uint8_t task_id, uint16_t events)
         GAPRole_ReadRssiCmd(peripheralConnList.connHandle);
         tmos_start_task(Peripheral_TaskID, SBP_READ_RSSI_EVT, SBP_READ_RSSI_EVT_PERIOD);
         return (events ^ SBP_READ_RSSI_EVT);
+    }
+
+    if(events & SBP_TEST_EVT)
+    {
+        uint16_t len;
+        uint8_t  cnt;
+
+        /* Send a bounded number of notifications per event instead of an
+         * unbounded while(1) loop, so this task cannot block the scheduler.
+         * If the cap is reached, keep pumping shortly afterwards. */
+        if(peripheralMTU > 3)
+        {
+            len = peripheralMTU - 3;
+            for(cnt = 0; cnt < 16; cnt++)
+            {
+                if(peripheralChar4Notify(speed_test_buf, len) != SUCCESS)
+                {
+                    break;
+                }
+                peripheralTxDataLen += len;
+            }
+            if(cnt == 16)
+            {
+                tmos_start_task(Peripheral_TaskID, SBP_TEST_EVT, 1);
+            }
+        }
+        return (events ^ SBP_TEST_EVT);
     }
 
     // Discard unknown events
@@ -429,8 +458,8 @@ static void Peripheral_ProcessTMOSMsg(tmos_event_hdr_t *pMsg)
             pMsgEvent = (gattMsgEvent_t *)pMsg;
             if(pMsgEvent->method == ATT_MTU_UPDATED_EVENT)
             {
-                peripheralMTU = pMsgEvent->msg.exchangeMTUReq.clientRxMTU;
-                PRINT("mtu exchange: %d\n", pMsgEvent->msg.exchangeMTUReq.clientRxMTU);
+                peripheralMTU = pMsgEvent->msg.mtuEvt.MTU;
+                PRINT("mtu exchange: %d\n", pMsgEvent->msg.mtuEvt.MTU);
             }
             break;
         }
@@ -500,6 +529,8 @@ static void Peripheral_LinkTerminated(gapRoleEvent_t *pEvent)
         peripheralConnList.connTimeout = 0;
         tmos_stop_task(Peripheral_TaskID, SBP_SPEED_TEST_EVT);
         tmos_stop_task(Peripheral_TaskID, SBP_READ_RSSI_EVT);
+        peripheralTxDataLen = 0;
+        peripheralRxDataLen = 0;
 
         // Restart advertising
         {
@@ -571,8 +602,13 @@ static void peripheralStateNotificationCB(gapRole_States_t newState, gapRoleEven
     switch(newState)
     {
         case GAPROLE_STARTED:
+        {
+            uint8_t ownAddr[6];
+            GAPRole_GetParameter(GAPROLE_BD_ADDR, ownAddr);
+            GAP_ConfigDeviceAddr(ADDRTYPE_STATIC, ownAddr);
             PRINT("Initialized..\n");
             break;
+        }
 
         case GAPROLE_ADVERTISING:
             if(pEvent->gap.opcode == GAP_LINK_TERMINATED_EVENT)
@@ -691,15 +727,19 @@ static void simpleProfileChangeCB(uint8_t paramID, uint8_t *pValue, uint16_t len
     {
         case SIMPLEPROFILE_CHAR1:
         {
-            uint8_t newValue[SIMPLEPROFILE_CHAR1_LEN];
-            tmos_memcpy(newValue, pValue, len);
-            PRINT("profile ChangeCB CHAR1.. \n");
+            peripheralRxDataLen += len;
             break;
         }
 
         case SIMPLEPROFILE_CHAR3:
         {
             uint8_t newValue[SIMPLEPROFILE_CHAR3_LEN];
+
+            /* Clamp the copy length to avoid a stack buffer overflow. */
+            if(len > SIMPLEPROFILE_CHAR3_LEN)
+            {
+                len = SIMPLEPROFILE_CHAR3_LEN;
+            }
             tmos_memcpy(newValue, pValue, len);
             PRINT("profile ChangeCB CHAR3..\n");
             break;
@@ -724,18 +764,7 @@ static void peripheralConnectEventCB( uint32_t timeUs )
 {
     if( speed_test_enable )
     {
-        while(1)
-        {
-            if( peripheralChar4Notify(speed_test_buf, peripheralMTU - 3) )
-            {
-                break;
-            }
-            else
-            {
-                peripheralTxDataLen += peripheralMTU - 3;
-            }
-
-        }
+        tmos_set_event(Peripheral_TaskID, SBP_TEST_EVT);
     }
 }
 

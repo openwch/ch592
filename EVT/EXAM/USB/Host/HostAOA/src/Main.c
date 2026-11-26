@@ -59,7 +59,7 @@ uint8_t TouchStartAOA(void); // 尝试启动AOA模式
  *
  * @return  none
  */
-int main()
+int main(void)
 {
     uint8_t s;
     uint8_t touchaoatm = 0;
@@ -115,7 +115,7 @@ int main()
                     //执行到这，说明可能不支持AOA，或是其他设备
                     PRINT("UNKOWN Device\n");
                     SetUsbSpeed(1);
-                    while(1);
+                    touchaoatm = 0; /* do not halt; allow retry on next hot-plug */
                 }
             }
             //if ( s != ERR_SUCCESS ) 	return( s );

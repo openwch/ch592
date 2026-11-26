@@ -153,7 +153,7 @@ void lwns_rucft_process_init(void)
                     &rucft_callbacks        /* 回调函数 */
     );                                      /* 返回0代表打开失败。返回1打开成功。 */
     int i;
-    for(i = 0; i < FILESIZE; i++)   /* LWNS_RUCFT_DATASIZE个LWNSNK_RUCFT_DATASIZE个b，等等，初始化需要发送的数据 */
+    for(i = 0; i < FILESIZE; i++)   /* LWNS_RUCFT_DATASIZE 个 LWNS_RUCFT_DATASIZE，等等，初始化需要发送的数据 */
     {
         strsend[i] = 'a' + i / LWNS_RUCFT_DATASIZE;
     }

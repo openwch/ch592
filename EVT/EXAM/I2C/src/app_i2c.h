@@ -10,8 +10,8 @@
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 
-#ifndef EVT_EXAM_I2C_SRC_APP_I2C_C
-#define EVT_EXAM_I2C_SRC_APP_I2C_C
+#ifndef EVT_EXAM_I2C_SRC_APP_I2C_H
+#define EVT_EXAM_I2C_SRC_APP_I2C_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -112,4 +112,4 @@ int i2c_read_from(uint8_t addr_7bit, uint8_t *data, uint8_t length,
 }
 #endif
 
-#endif /* EVT_EXAM_I2C_SRC_APP_I2C_C */
+#endif /* EVT_EXAM_I2C_SRC_APP_I2C_H */

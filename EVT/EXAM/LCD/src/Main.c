@@ -24,7 +24,7 @@ unsigned char const lcd[10]={0x7d, 0x60, 0x3e, 0x7a, 0x63, 0x5b, 0x5f, 0x70, 0x0
        D
 */
 /* 注意：使用此例程，下载时需关闭外部手动复位功能 */
-int main()
+int main(void)
 {
     uint32_t VER = 0;
 
@@ -50,7 +50,7 @@ int main()
     GPIOB_ITModeCfg(GPIO_Pin_0, GPIO_ITMode_FallEdge); // 下降沿唤醒
     PFIC_EnableIRQ(GPIO_B_IRQn);
     PWR_PeriphWakeUpCfg(ENABLE, RB_SLP_GPIO_WAKE, Long_Delay);
-    VER = (*((PUINT32)ROM_CFG_VERISON));
+    VER = (*((PUINT32)ROM_CFG_VERSION));
     if((VER&0xFF000000) == 0xFF000000)
     {
         aux_power = R16_AUX_POWER_ADJ;

@@ -157,7 +157,7 @@ void lwns_mesh_process_init(void)
                    TRUE,                  /* 决定是否添加路由回路，比如收到了一个来自a节点的mesh数据包，本机是否需要存储前往a节点的路由表。FALSE不存，TRUE存。 */
                    HTIMER_SECOND_NUM * 2, /* 路由超时时间，超过时间，停止寻找路由，进入timeout回调，该值应大于 route_discovery_hoptime * (hops+1) * 2 */
                    &callbacks);           /* 没有初始化路由表的话，会返回0，代表打开失败。返回1打开成功。 */
-    if(MESH_TEST_SELF_ADDR_IDX == 0) /* 如果是主机，则开始周期性轮训其他节点。 */
+    if(MESH_TEST_SELF_ADDR_IDX == 0) /* 如果是主机，则开始周期性轮询其他节点。 */
     {
         mesh_test_send_dst = 1;
         tmos_start_task(lwns_mesh_test_taskID, MESH_EXAMPLE_TX_PERIOD_EVT,

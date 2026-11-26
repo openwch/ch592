@@ -107,7 +107,7 @@ int i2c_write_to(uint8_t addr_7bit, const uint8_t *data, uint8_t length,
             I2C_SendData(i2c_slave_addr_rw);
         } while(R16_I2C_STAR1 & RB_I2C_BTF);
 
-        /* Disabled in IRS */
+        /* Disabled in ISR */
         I2C_ITConfig(I2C_IT_BUF, ENABLE);
         I2C_ITConfig(I2C_IT_EVT, ENABLE);
         I2C_ITConfig(I2C_IT_ERR, ENABLE);
@@ -165,7 +165,7 @@ int i2c_read_from(uint8_t addr_7bit, uint8_t *data, uint8_t length,
             I2C_SendData(i2c_slave_addr_rw);
         } while(R16_I2C_STAR1 & RB_I2C_BTF);
 
-        /* Disabled in IRS */
+        /* Disabled in ISR */
         I2C_ITConfig(I2C_IT_BUF, ENABLE);
         I2C_ITConfig(I2C_IT_EVT, ENABLE);
         I2C_ITConfig(I2C_IT_ERR, ENABLE);
@@ -301,7 +301,7 @@ void I2C_IRQHandler(void)
                 I2C_DBG("  NACK received, sent stop\n");
             }
         } else {
-        /* I2C Master reveiver */
+        /* I2C Master receiver */
             I2C_DBG("Master receiver:\n");
 
             /* address sent, ack received */
@@ -312,7 +312,7 @@ void I2C_IRQHandler(void)
                     I2C_DBG("  address sent\n");
                     I2C_DBG("  ACK next\n");
                 } else {
-                    //XXX: Should not delay too match before NACK 
+                    //XXX: Should not delay too much before NACK 
                     I2C_AcknowledgeConfig(DISABLE);
                     is_nack_sent = true;
                     I2C_DBG("  address sent\n");
@@ -320,7 +320,7 @@ void I2C_IRQHandler(void)
                 }
             }
 
-            /* data reveived */
+            /* data received */
             if (event & (RB_I2C_RxNE)) {
                 /* put byte into buffer */ 
                 i2c_master_buffer[i2c_master_buffer_index++] = I2C_ReceiveData();
@@ -329,7 +329,7 @@ void I2C_IRQHandler(void)
                     I2C_AcknowledgeConfig(ENABLE);
                     I2C_DBG("  ACK next\n");
                 } else {
-                    //XXX: Should not delay too match before NACK 
+                    //XXX: Should not delay too much before NACK 
                     I2C_AcknowledgeConfig(DISABLE);
                     I2C_DBG("  NACK next\n");
 
@@ -399,7 +399,7 @@ void I2C_IRQHandler(void)
                     slave_cb->on_transmit(i2c_slave_txbuffer, &i2c_slave_txbuffer_length);
                 }
             } else {
-                I2C_DBG("Slave reveiver address matched\n");
+                I2C_DBG("Slave receiver address matched\n");
 
                 i2c_state = I2C_SRX;
                 i2c_slave_rxbuffer_index = 0;

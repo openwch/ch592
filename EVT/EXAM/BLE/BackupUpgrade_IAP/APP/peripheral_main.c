@@ -44,8 +44,8 @@ void SwitchImageFlag(uint8_t new_flag)
     /* 读取第一块 */
     EEPROM_READ(OTA_DATAFLASH_ADD, (uint32_t *)&block_buf[0], 4);
 
-    /* 擦除第一块 */
-    EEPROM_ERASE(OTA_DATAFLASH_ADD, EEPROM_PAGE_SIZE);
+    /* 擦除第一块(使用块大小，避免 CH592A 上 EEPROM_ERASE 因未按 4096 对齐而死循环) */
+    EEPROM_ERASE(OTA_DATAFLASH_ADD, EEPROM_BLOCK_SIZE);
 
     /* 更新Image信息 */
     block_buf[0] = new_flag;
@@ -65,7 +65,7 @@ void jump_APP(void)
 {
     if(CurrImageFlag == IMAGE_IAP_FLAG)
     {
-        __attribute__((aligned(8))) uint8_t flash_Data[1024];
+        static __attribute__((aligned(8))) uint8_t flash_Data[1024]; /* static: avoid stack overflow (stack is 512B) */
 
         uint8_t i;
         FLASH_ROM_ERASE(IMAGE_A_START_ADD, IMAGE_A_SIZE);
@@ -118,8 +118,8 @@ int main(void)
 #endif
     SetSysClock(CLK_SOURCE_PLL_60MHz);
 #if(defined(HAL_SLEEP)) && (HAL_SLEEP == TRUE)
-    GPIOA_ModeCfg(GPIO_Pin_All, GPIO_ModeIN_PU);
-    GPIOB_ModeCfg(GPIO_Pin_All, GPIO_ModeIN_PU);
+    GPIOA_ModeCfg(GPIO_Pin_All, GPIO_ModeIN_PD);
+    GPIOB_ModeCfg(GPIO_Pin_All, GPIO_ModeIN_PD);
 #endif
 #ifdef DEBUG
     GPIOA_SetBits(bTXD1);

@@ -306,7 +306,7 @@ void Calibration_LSI(Cali_LevelTypeDef cali_Lv)
         sys_safe_access_disable();
         i = R16_OSC_CAL_CNT; // 实时校准后采样值
         cnt_offset = (i & 0x3FFF) + R8_OSC_CAL_OV_CNT * 0x3FFF -  4000 * (1 << cali_Lv) * (freq_sys / 1000000) / 256 * 1000/(CAB_LSIFQ/256);
-        cnt_offset = (cnt_offset > 0) ? ((((cnt_offset * 2*(100 )) / (1366 * ((1 << cali_Lv)/8) * (freq_sys/1000) / 60000)) + 1) / 2) : ((((cnt_offset * 2*(100)) / (1366 * ((1 << cali_Lv)/8) * (freq_sys/1000) / 60000)) - 1) / 2);
+        cnt_offset = (cnt_offset > 0) ? ((((cnt_offset * 2*(100 )) / (1320 * ((1 << cali_Lv)/8) * (freq_sys/1000) / 60000)) + 1) / 2) : ((((cnt_offset * 2*(100)) / (1320 * ((1 << cali_Lv)/8) * (freq_sys/1000) / 60000)) - 1) / 2);
         if((cnt_offset > 0)&&(((R16_INT32K_TUNE>>5)+cnt_offset)>0xFF))
         {
             if(retry_all>2)

@@ -14,5 +14,5 @@
 	.global	_start
 	.align	1
 _start:
-	j	0xC000
+	j	0xC000 /* = IMAGE_B_START_ADD; keep in sync with OTA partition macros (ota.h) */
 

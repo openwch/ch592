@@ -527,7 +527,7 @@ uint32_t __get_MISA(void);
 uint32_t __get_MTVEC(void);
 
 /**
- * @brief   Return the Machine Seratch Register
+ * @brief   Return the Machine Scratch Register
  *
  * @return  mscratch value
  */

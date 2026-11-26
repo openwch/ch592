@@ -183,7 +183,7 @@ static simpleProfileCBs_t Peripheral_SimpleProfileCBs = {
  *          This is called during initialization and should contain
  *          any application specific initialization (ie. hardware
  *          initialization/setup, table initialization, power up
- *          notificaiton ... ).
+ *          notification ... ).
  *
  * @param   task_id - the ID assigned by TMOS.  This ID should be
  *                    used to send messages and set timers.
@@ -506,8 +506,13 @@ static void peripheralStateNotificationCB(gapRole_States_t newState, gapRoleEven
     switch(newState)
     {
         case GAPROLE_STARTED:
+        {
+            uint8_t ownAddr[6];
+            GAPRole_GetParameter(GAPROLE_BD_ADDR, ownAddr);
+            GAP_ConfigDeviceAddr(ADDRTYPE_STATIC, ownAddr);
             PRINT("Initialized..\n");
             break;
+        }
 
         case GAPROLE_ADVERTISING:
             if(pEvent->gap.opcode == GAP_LINK_TERMINATED_EVENT)
@@ -601,6 +606,10 @@ void peripheralChar4Notify(uint8_t *pValue, uint16_t len)
     {
         noti.len = len;
         noti.pValue = GATT_bm_alloc(peripheralConnList.connHandle, ATT_HANDLE_VALUE_NOTI, noti.len, NULL, 0);
+        if(noti.pValue == NULL)
+        {
+            return;
+        }
         tmos_memcpy(noti.pValue, pValue, noti.len);
         if(simpleProfile_Notify(peripheralConnList.connHandle, &noti) != SUCCESS)
         {
@@ -628,7 +637,7 @@ static void simpleProfileChangeCB(uint8_t paramID, uint8_t *pValue, uint16_t len
         case SIMPLEPROFILE_CHAR1:
         {
             PRINT("profile ChangeCB CHAR1.. \n");
-            App_peripheral_reveived(pValue, len);
+            App_peripheral_received(pValue, len);
             break;
         }
 
@@ -647,18 +656,18 @@ static void simpleProfileChangeCB(uint8_t paramID, uint8_t *pValue, uint16_t len
 }
 
 /*********************************************************************
- * @fn      Peripheral_AdvertData_Privisioned
+ * @fn      Peripheral_AdvertData_Provisioned
  *
  * @brief   修改广播数据内配网标志.
  *
- * @param   privisioned - 是否已配网
+ * @param   provisioned - 是否已配网
  *
  * @return  none
  */
-void Peripheral_AdvertData_Privisioned(uint8_t privisioned)
+void Peripheral_AdvertData_Provisioned(uint8_t provisioned)
 {
     uint8_t  advertising_enable;
-    if(privisioned)
+    if(provisioned)
     {
         advertData[11]=0x01;
         advertData[12]=0x00;

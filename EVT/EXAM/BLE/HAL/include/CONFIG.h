@@ -112,7 +112,7 @@
 #define BLE_SNV                             TRUE
 #endif
 #ifndef BLE_SNV_ADDR
-#define BLE_SNV_ADDR                        0x77000-FLASH_ROM_MAX_SIZE
+#define BLE_SNV_ADDR                        (0x77000-FLASH_ROM_MAX_SIZE)
 #endif
 #ifndef BLE_SNV_BLOCK
 #define BLE_SNV_BLOCK                       256
@@ -136,7 +136,7 @@
 #define BLE_TX_NUM_EVENT                    1
 #endif
 #ifndef BLE_TX_POWER
-#define BLE_TX_POWER                        LL_TX_POWEER_0_DBM
+#define BLE_TX_POWER                        LL_TX_PWR_0_DBM
 #endif
 #ifndef PERIPHERAL_MAX_CONNECTION
 #define PERIPHERAL_MAX_CONNECTION           1

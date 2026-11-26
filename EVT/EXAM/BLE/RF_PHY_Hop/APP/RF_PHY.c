@@ -25,6 +25,23 @@ uint8_t TX_DATA[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
 volatile uint8_t tx_end_flag=0;
 volatile uint8_t rx_end_flag=0;
 
+/* RF_2G4StatusCallBack runs in ISR context, so it must not call the blocking
+ * PRINT (UART) nor busy-wait. Received frames are buffered here and printed
+ * from RF_ProcessEvent (task context) instead. */
+#define SBP_RF_PRINT_EVT      (1 << 5)
+#define RF_PRINT_NONE         0
+#define RF_PRINT_TX_RX        1
+#define RF_PRINT_RX_RX        2
+#define RF_PRINT_HOP_TX       3
+#define RF_PRINT_HOP_RX       4
+#define RF_PRINT_BUF_SIZE     251
+
+static volatile uint8_t rf_print_kind = RF_PRINT_NONE;
+static volatile uint8_t rf_print_crc = 0;
+static volatile int8_t  rf_print_rssi = 0;
+static volatile uint8_t rf_print_len = 0;
+static volatile uint8_t rf_print_buf[RF_PRINT_BUF_SIZE];
+
 /*********************************************************************
  * @fn      RF_Wait_Tx_End
  *
@@ -102,26 +119,23 @@ void RF_2G4StatusCallBack(uint8_t sta, uint8_t crc, uint8_t *rxBuf)
         }
         case TX_MODE_RX_DATA:
         {
+            uint8_t i;
+
             tx_end_flag = TRUE;
             if (crc == 0) {
-                uint8_t i;
-
-                PRINT("tx recv,rssi:%d\n", (int8_t)rxBuf[0]);
-                PRINT("len:%d-", rxBuf[1]);
-
-                for (i = 0; i < rxBuf[1]; i++) {
-                    PRINT("%x ", rxBuf[i + 2]);
+                /* ISR context: buffer result and print from task */
+                rf_print_len = rxBuf[1];
+                if (rf_print_len > RF_PRINT_BUF_SIZE) {
+                    rf_print_len = RF_PRINT_BUF_SIZE;
                 }
-                PRINT("\n");
-            } else {
-                if (crc & (1<<0)) {
-                    PRINT("crc error\n");
+                for (i = 0; i < rf_print_len; i++) {
+                    rf_print_buf[i] = rxBuf[i + 2];
                 }
-
-                if (crc & (1<<1)) {
-                    PRINT("match type error\n");
-                }
+                rf_print_rssi = (int8_t)rxBuf[0];
             }
+            rf_print_kind = RF_PRINT_TX_RX;
+            rf_print_crc = crc;
+            tmos_set_event(taskID, SBP_RF_PRINT_EVT);
             break;
         }
         case TX_MODE_RX_TIMEOUT: // Timeout is about 200us
@@ -132,7 +146,8 @@ void RF_2G4StatusCallBack(uint8_t sta, uint8_t crc, uint8_t *rxBuf)
         case TX_MODE_HOP_SHUT:
         {
             tx_end_flag = TRUE;
-            PRINT("TX_MODE_HOP_SHUT...\n");
+            rf_print_kind = RF_PRINT_HOP_TX;
+            tmos_set_event(taskID, SBP_RF_PRINT_EVT);
             tmos_set_event(taskID, SBP_RF_CHANNEL_HOP_TX_EVT);
             break;
         }
@@ -142,23 +157,21 @@ void RF_2G4StatusCallBack(uint8_t sta, uint8_t crc, uint8_t *rxBuf)
             if (crc == 0) {
                 uint8_t i;
 
-                RF_Wait_Rx_End();
-                PRINT("rx recv, rssi: %d\n", (int8_t)rxBuf[0]);
-                PRINT("len:%d-", rxBuf[1]);
+                /* ISR context: no busy-wait / blocking print here.
+                 * Buffer the frame and print it from the task. */
+                rf_print_len = rxBuf[1];
+                if (rf_print_len > RF_PRINT_BUF_SIZE) {
+                    rf_print_len = RF_PRINT_BUF_SIZE;
+                }
+                for (i = 0; i < rf_print_len; i++) {
+                    rf_print_buf[i] = rxBuf[i + 2];
+                }
+                rf_print_rssi = (int8_t)rxBuf[0];
                 
-                for (i = 0; i < rxBuf[1]; i++) {
-                    PRINT("%x ", rxBuf[i + 2]);
                 }
-                PRINT("\n");
-            } else {
-                if (crc & (1<<0)) {
-                    PRINT("crc error\n");
-                }
-
-                if (crc & (1<<1)) {
-                    PRINT("match type error\n");
-                }
-            }
+            rf_print_kind = RF_PRINT_RX_RX;
+            rf_print_crc = crc;
+            tmos_set_event(taskID, SBP_RF_PRINT_EVT);
             tmos_set_event(taskID, SBP_RF_RF_RX_EVT);
             break;
         }
@@ -174,7 +187,8 @@ void RF_2G4StatusCallBack(uint8_t sta, uint8_t crc, uint8_t *rxBuf)
         }
         case RX_MODE_HOP_SHUT:
         {
-            PRINT("RX_MODE_HOP_SHUT...\n");
+            rf_print_kind = RF_PRINT_HOP_RX;
+            tmos_set_event(taskID, SBP_RF_PRINT_EVT);
             rx_end_flag = TRUE;
             tmos_set_event(taskID, SBP_RF_CHANNEL_HOP_RX_EVT);
             break;
@@ -261,6 +275,70 @@ uint16_t RF_ProcessEvent(uint8_t task_id, uint16_t events)
             RF_Rx(TX_DATA, 10, 0xFF, 0xFF);
         }
         return events ^ SBP_RF_CHANNEL_HOP_RX_EVT;
+    }
+    /* Print the deferred RF results here (task context), never inside the ISR. */
+    if(events & SBP_RF_PRINT_EVT)
+    {
+        uint8_t i;
+
+        if(rf_print_kind == RF_PRINT_TX_RX)
+        {
+            if(rf_print_crc == 0)
+            {
+                PRINT("tx recv,rssi:%d\n", rf_print_rssi);
+                PRINT("len:%d-", rf_print_len);
+                for(i = 0; i < rf_print_len; i++)
+                {
+                    PRINT("%x ", rf_print_buf[i]);
+                }
+                PRINT("\n");
+            }
+            else
+            {
+                if(rf_print_crc & (1<<0))
+                {
+                    PRINT("crc error\n");
+                }
+                if(rf_print_crc & (1<<1))
+                {
+                    PRINT("match type error\n");
+                }
+            }
+        }
+        else if(rf_print_kind == RF_PRINT_RX_RX)
+        {
+            if(rf_print_crc == 0)
+            {
+                PRINT("rx recv, rssi: %d\n", rf_print_rssi);
+                PRINT("len:%d-", rf_print_len);
+                for(i = 0; i < rf_print_len; i++)
+                {
+                    PRINT("%x ", rf_print_buf[i]);
+                }
+                PRINT("\n");
+            }
+            else
+            {
+                if(rf_print_crc & (1<<0))
+                {
+                    PRINT("crc error\n");
+                }
+                if(rf_print_crc & (1<<1))
+                {
+                    PRINT("match type error\n");
+                }
+            }
+        }
+        else if(rf_print_kind == RF_PRINT_HOP_TX)
+        {
+            PRINT("TX_MODE_HOP_SHUT...\n");
+        }
+        else if(rf_print_kind == RF_PRINT_HOP_RX)
+        {
+            PRINT("RX_MODE_HOP_SHUT...\n");
+        }
+        rf_print_kind = RF_PRINT_NONE;
+        return events ^ SBP_RF_PRINT_EVT;
     }
     return 0;
 }

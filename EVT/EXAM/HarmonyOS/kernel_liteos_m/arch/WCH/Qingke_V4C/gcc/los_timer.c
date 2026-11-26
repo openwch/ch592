@@ -50,9 +50,9 @@ extern "C" {
 
 //#define SYSTICK_TICK_CONST  (OS_SYS_CLOCK / LOSCFG_BASE_CORE_TICK_PER_SECOND)
 
-static HWI_PROC_FUNC systick_handler;
+static volatile HWI_PROC_FUNC systick_handler;
 
-extern UINT32 g_intCount;
+extern volatile UINT32 g_intCount;
 
 __attribute__((interrupt("WCH-Interrupt-fast")))
 __attribute__((section(".highcode")))

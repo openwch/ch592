@@ -18,7 +18,7 @@
 
 #include "CH59x_common.h"
 /* board configuration */
-#define SRAM_SIZE  32
+#define SRAM_SIZE  26
 #define SRAM_END (0x20000000 + SRAM_SIZE * 1024)
 
 extern int _ebss;

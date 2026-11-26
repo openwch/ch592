@@ -21,18 +21,18 @@ SECTIONS
 		. = ALIGN(4);
 		_einit = .;
 	} >FLASH AT>FLASH
-	
+
  /*   .vector :
     {
         *(.vector);
     } >FLASH AT>FLASH */
-    
+
     .highcodelalign : 
     {       
         . = ALIGN(4);
         PROVIDE(_highcode_lma = .); 
     } >FLASH AT>FLASH 
-    
+
     .highcode : 
     {
         . = ALIGN(4);
@@ -44,10 +44,28 @@ SECTIONS
 		. = ALIGN(4);
         *(.highcode);
         *(.highcode.*);
+
+		/*
+         * Hot kernel functions promoted to .highcode (run from RAM for speed).
+         */
+		*(.text.rt_tick_get)
+		*(.text.rt_tick_set)
+		*(.text.rt_tick_increase)
+		*(.text.rt_interrupt_leave)
+		*(.text.rt_interrupt_enter)
+		*(.text.rt_schedule)
+		*(.text.rt_schedule_insert_thread)
+		*(.text.rt_schedule_remove_thread)
+		*(.text.rt_thread_self)
+		*(.text.rt_thread_yield)
+		*(.text.rt_timer_check)
+		*(.text.rt_enter_critical)
+		*(.text.rt_exit_critical)
+		*(.text.rt_critical_level)
 		. = ALIGN(4); 
         PROVIDE(_highcode_vma_end = .);
     } >RAM AT>FLASH
-     
+
 	.text :
 	{
 		. = ALIGN(4);
@@ -60,7 +78,7 @@ SECTIONS
 		*(.glue_7)
 		*(.glue_7t)
 		*(.gnu.linkonce.t.*)
-		
+
 		/* section information for finsh shell */
 		. = ALIGN(4);
     	__fsymtab_start = .;
@@ -71,7 +89,7 @@ SECTIONS
     	KEEP(*(VSymTab))
     	__vsymtab_end = .;
     	. = ALIGN(4);
-    
+
     	/* section information for initial. */
     	. = ALIGN(4);
     	__rt_init_start = .;
@@ -103,7 +121,7 @@ SECTIONS
 	  KEEP (*(.preinit_array))
 	  PROVIDE_HIDDEN (__preinit_array_end = .);
 	} >FLASH AT>FLASH 
-	
+
 	.init_array     :
 	{
 	  PROVIDE_HIDDEN (__init_array_start = .);
@@ -111,7 +129,7 @@ SECTIONS
 	  KEEP (*(.init_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .ctors))
 	  PROVIDE_HIDDEN (__init_array_end = .);
 	} >FLASH AT>FLASH 
-	
+
 	.fini_array     :
 	{
 	  PROVIDE_HIDDEN (__fini_array_start = .);
@@ -119,7 +137,7 @@ SECTIONS
 	  KEEP (*(.fini_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .dtors))
 	  PROVIDE_HIDDEN (__fini_array_end = .);
 	} >FLASH AT>FLASH 
-	
+
 	.ctors          :
 	{
 	  /* gcc uses crtbegin.o to find the start of
@@ -141,7 +159,7 @@ SECTIONS
 	  KEEP (*(SORT(.ctors.*)))
 	  KEEP (*(.ctors))
 	} >FLASH AT>FLASH 
-	
+
 	.dtors          :
 	{
 	  KEEP (*crtbegin.o(.dtors))
@@ -198,7 +216,7 @@ SECTIONS
 
 	PROVIDE( _end = _ebss);
 	PROVIDE( end = . );
-	
+
     .stack ORIGIN(RAM) + LENGTH(RAM) - __stack_size :
     {
         PROVIDE( _heap_end = . );   

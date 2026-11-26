@@ -14,5 +14,5 @@
 	.global	_start
 	.align	1
 _start:
-	j	0x6D000
+	j	0x6D000 /* = IMAGE_IAP_START_ADD defined in APP/include/ota.h; keep in sync */
 

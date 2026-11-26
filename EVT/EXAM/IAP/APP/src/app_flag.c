@@ -29,8 +29,8 @@ void SwitchImageFlag(uint8_t new_flag)
     EEPROM_READ(IAP_FLAG_DATAFLASH_ADD, (PUINT32) &imgFlag, 4);
     if (imgFlag.ImageFlag != new_flag)
     {
-        /* 擦除第一块 */
-        EEPROM_ERASE(IAP_FLAG_DATAFLASH_ADD, EEPROM_PAGE_SIZE);
+        /* 擦除第一块(使用块大小，避免 CH592A 上 EEPROM_ERASE 因未按 4096 对齐而死循环) */
+        EEPROM_ERASE(IAP_FLAG_DATAFLASH_ADD, EEPROM_BLOCK_SIZE);
 
         /* 更新Image信息 */
         imgFlag.ImageFlag = new_flag;

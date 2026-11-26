@@ -303,6 +303,7 @@ __HIGH_CODE
 void LowPower_Sleep(uint16_t rm)
 {
     __attribute__((aligned(4))) uint8_t MacAddr[6] = {0};
+    __attribute__((aligned(4))) uint8_t mac[6] = {0};
     uint8_t x32Mpw;
     uint16_t power_plan;
 
@@ -342,6 +343,35 @@ void LowPower_Sleep(uint16_t rm)
     __nop();
     __nop();
 
+    GetMACAddress(mac);
+
+    if(*((uint32_t *)mac) != *((uint32_t *)MacAddr))
+    {
+        uint8_t slp_ctrl,rtc_ctrl;
+        uint32_t rtc_time;
+        uint32_t irqv;
+
+        SYS_DisableAllIrq( &irqv );
+        slp_ctrl = R8_SLP_WAKE_CTRL;
+        rtc_ctrl = R8_RTC_MODE_CTRL;
+        rtc_time = RTC_GetCycle32k();
+        rtc_time += 10;
+        if (rtc_time > RTC_MAX_COUNT) {
+            rtc_time = rtc_time - RTC_MAX_COUNT;
+        }
+        sys_safe_access_enable();
+        R8_SLP_WAKE_CTRL = RB_SLP_RTC_WAKE; // RTC»½ÐÑ
+        R8_RTC_MODE_CTRL = RB_RTC_TRIG_EN;  // ´¥·¢Ä£Ê½
+        R32_RTC_TRIG = rtc_time;
+        sys_safe_access_disable();
+        __WFE();
+        sys_safe_access_enable();
+        R8_SLP_WAKE_CTRL = slp_ctrl;
+        R8_RTC_MODE_CTRL = rtc_ctrl;
+        sys_safe_access_disable();
+        SYS_RecoverIrq(irqv);
+    }
+
     sys_safe_access_enable();
     R16_POWER_PLAN &= ~RB_PWR_PLAN_EN;
     sys_safe_access_disable();
@@ -376,6 +406,7 @@ __HIGH_CODE
 void LowPower_Shutdown(uint16_t rm)
 {
     uint8_t x32Kpw, x32Mpw;
+    uint32_t HW_Data[2];
 
     FLASH_ROM_SW_RESET();
     x32Kpw = R8_XT32K_TUNE;
@@ -400,6 +431,7 @@ void LowPower_Shutdown(uint16_t rm)
     sys_safe_access_enable();
     R16_POWER_PLAN = RB_PWR_PLAN_EN | rm;
     sys_safe_access_disable();
+
     __WFI();
     __nop();
     __nop();

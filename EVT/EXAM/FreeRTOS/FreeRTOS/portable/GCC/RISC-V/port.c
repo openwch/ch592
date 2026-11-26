@@ -21,6 +21,10 @@
 /* Standard includes. */
 #include "string.h"
 
+/* Nesting count of the critical sections; interrupts are re-enabled only when
+the outermost critical section is exited. */
+static UBaseType_t uxCriticalNesting = 0;
+
 /* Let the user override the pre-loading of the initial LR with the address of
 prvTaskExitError() in case it messes up unwinding of the stack in the
 debugger. */
@@ -137,8 +141,9 @@ extern void xPortStartFirstTask( void );
 	}
 
     /* Initialise the critical nesting count ready for the first task. */
-	xPortStartFirstTask();
+    uxCriticalNesting = 0;
 
+    xPortStartFirstTask();
 	/* Should not get here as after calling xPortStartFirstTask() only tasks
 	should be executing. */
 	return pdFAIL;
@@ -168,11 +173,17 @@ __HIGH_CODE
 void vPortEnterCritical( void )
 {
     portDISABLE_INTERRUPTS();
+    uxCriticalNesting++;
 }
 
 /*-----------------------------------------------------------*/
 __HIGH_CODE
 void vPortExitCritical( void )
 {
-    portENABLE_INTERRUPTS();
+    configASSERT( uxCriticalNesting );
+    uxCriticalNesting--;
+    if( uxCriticalNesting == 0 )
+    {
+        portENABLE_INTERRUPTS();
+    }
 }

@@ -122,7 +122,7 @@ void __set_MTVEC(uint32_t value)
 /*********************************************************************
  * @fn      __get_MSCRATCH
  *
- * @brief   Return the Machine Seratch Register
+ * @brief   Return the Machine Scratch Register
  *
  * @return  mscratch value
  */
@@ -137,7 +137,7 @@ uint32_t __get_MSCRATCH(void)
 /*********************************************************************
  * @fn      __set_MSCRATCH
  *
- * @brief   Set the Machine Seratch Register
+ * @brief   Set the Machine Scratch Register
  *
  * @param   value  - set mscratch value
  *

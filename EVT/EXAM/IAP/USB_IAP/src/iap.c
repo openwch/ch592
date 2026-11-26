@@ -341,11 +341,23 @@ void myDevEP2_OUT_Deal(uint8_t l)
     switch (g_iap_cmd.other.buf[0])
     {
     case CMD_IAP_PROM:
+        if (g_iap_cmd.program.len > (IAP_LEN - 2)) /* buffer overflow guard */
+        {
+            s = 0xfe;
+            myDevEP2_IN_Deal(s);
+            break;
+        }
         if (g_iap_cmd.program.len == 0)
         {
             if (g_buf_write_ptr != 0)
             {
             	g_buf_write_ptr = ((g_buf_write_ptr + 3) & (~3)); //四字节对齐
+                if ((g_flash_write_ptr + g_buf_write_ptr) > APP_CODE_END_ADDR) /* write address bound guard */
+                {
+                    s = 0xfe;
+                    myDevEP2_IN_Deal(s);
+                    break;
+                }
                 s = FLASH_ROM_WRITE(g_flash_write_ptr, (PUINT32)g_write_buf, g_buf_write_ptr);
                 g_buf_write_ptr = 0;
             }
@@ -356,6 +368,12 @@ void myDevEP2_OUT_Deal(uint8_t l)
             g_buf_write_ptr += g_iap_cmd.program.len;
             if (g_buf_write_ptr >= 256)
             {
+                if ((g_flash_write_ptr + 256) > APP_CODE_END_ADDR) /* write address bound guard */
+                {
+                    s = 0xfe;
+                    myDevEP2_IN_Deal(s);
+                    break;
+                }
                 s = FLASH_ROM_WRITE(g_flash_write_ptr, (PUINT32)g_write_buf, 256);
                 g_flash_write_ptr += 256;
                 g_buf_write_ptr = g_buf_write_ptr - 256;    //超出的长度
@@ -383,11 +401,14 @@ void myDevEP2_OUT_Deal(uint8_t l)
         myDevEP2_IN_Deal(s);
         break;
     case CMD_IAP_VERIFY:
-		my_memcpy(g_write_buf, g_iap_cmd.verify.buf, g_iap_cmd.verify.len);
+		my_memcpy(g_write_buf, g_iap_cmd.verify.buf, (g_iap_cmd.verify.len > (IAP_LEN - 6)) ? (IAP_LEN - 6) : g_iap_cmd.verify.len);
 		addr = (g_iap_cmd.verify.addr[0]
 				| (uint32_t) g_iap_cmd.verify.addr[1] << 8
 				| (uint32_t) g_iap_cmd.verify.addr[2] << 16
 				| (uint32_t) g_iap_cmd.verify.addr[3] << 24);
+		if ((g_iap_cmd.verify.len > (IAP_LEN - 6)) || ((addr & 3) != 0) || (addr < APP_CODE_START_ADDR) || ((addr + g_iap_cmd.verify.len) > APP_CODE_END_ADDR))
+			s = 0xfe;
+		else
 		s = FLASH_ROM_VERIFY(addr, g_write_buf, g_iap_cmd.verify.len);
         myDevEP2_IN_Deal(s);
         break;

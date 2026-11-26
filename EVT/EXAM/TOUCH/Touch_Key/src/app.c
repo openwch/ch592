@@ -1,5 +1,5 @@
 /********************************** (C) COPYRIGHT *******************************
- * File Name          : app_tmos.C
+ * File Name          : app.c
  * Author             : WCH
  * Version            : V1.0
  * Date               : 2023/8/5
@@ -119,7 +119,7 @@ void TKY_dataProcess(void)
 
 
 /*********************************************************************
- * @fn      touch_init
+ * @fn      TKY_Init
  *
  * @brief   触摸初始化函数（不使用tmos，需要设备开启定时器）
  *

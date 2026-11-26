@@ -43,7 +43,12 @@ extern "C" {
 #endif /* __cplusplus */
 #endif /* __cplusplus */
 
-UINT32 g_intCount = 0;
+volatile UINT32 g_intCount = 0;
+
+/* Set by HalHwiDefaultHandler when an unhandled interrupt is taken. It is
+polled outside ISR context (by a task or the debugger) instead of printing
+inside the ISR. */
+volatile UINT32 g_hwiDefaultFlag = 0;
 
 STATIC UINT32 HwiUnmask(HWI_HANDLE_T hwiNum)
 {
@@ -147,7 +152,9 @@ LITE_OS_SEC_TEXT UINT32 ArchHwiDelete(HWI_HANDLE_T hwiNum, HwiIrqParam *irqParam
  **************************************************************************** */
 LITE_OS_SEC_TEXT_INIT VOID HalHwiDefaultHandler(VOID)
 {
-    PRINT_ERR("default handler\n");
+    /* Do not call the debug print inside ISR context; raise a flag and trap
+    so that a task or the debugger can detect the unhandled interrupt. */
+    g_hwiDefaultFlag = 1;
     while (1)
     {
     }

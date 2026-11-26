@@ -53,7 +53,7 @@ void mStopIfError(uint8_t iError)
  *
  * @return  none
  */
-int main()
+int main(void)
 {
     uint8_t  s, i;
     uint8_t *pCodeStr;

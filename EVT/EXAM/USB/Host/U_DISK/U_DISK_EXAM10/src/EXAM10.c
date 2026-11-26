@@ -56,7 +56,7 @@ void mStopIfError(uint8_t iError)
  *
  * @return  none
  */
-int main()
+int main(void)
 {
     uint8_t s, c, i;
 
@@ -118,7 +118,8 @@ int main()
                     mStopIfError(s);
                     PRINT("ByteWrite\n");
                     //实际应该判断写数据长度和定义缓冲区长度是否相符，如果大于缓冲区长度则需要多次写入
-                    i = sprintf((uint8_t *)buf, "Note: \xd\xa这个程序是以字节为单位进行U盘文件读写,RV3简单演示功能。\xd\xa"); /*演示 */
+                    i = (uint8_t)snprintf((char *)buf, sizeof(buf), "Note: \r\n这个程序是以字节为单位进行U盘文件读写,RV3简单演示功能。\r\n"); /*演示 */
+                    if(i >= sizeof(buf)) i = sizeof(buf) - 1; /* guard against truncation */
                     for(c = 0; c < 10; c++)
                     {
                         mCmdParam.ByteWrite.mByteCount = i;    /* 指定本次写入的字节数 */

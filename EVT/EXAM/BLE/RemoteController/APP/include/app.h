@@ -89,6 +89,7 @@ void Key_Scan(void);
 uint8_t App_GetBattInfo(void);
 void App_Update_Sleep(void);
 void App_LedUpdate(void);
+void App_GpioWakeupHandle(void);
 /*********************************************************************
 *********************************************************************/
 

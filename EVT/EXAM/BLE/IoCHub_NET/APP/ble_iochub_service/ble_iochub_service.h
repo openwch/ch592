@@ -20,7 +20,8 @@ extern "C" {
 //#include "att.h"
 #include "stdint.h"
 
-#define BLE_IOCHUB_RX_BUFF_SIZE    1
+// RX characteristic value buffer must hold up to ATT_MTU-3 bytes
+#define BLE_IOCHUB_RX_BUFF_SIZE    20
 
 #define BLE_IOCHUB_SERVICE_UUID 0xFFF3
 #define BLE_IOCHUB_TXCHAR_UUID 0xFFF4

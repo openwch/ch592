@@ -34,6 +34,8 @@ UINT8 UserOptionByteClose_SWD(void);
 void UserOptionByte_Active(void);
 
 void GET_UNIQUE_ID(uint8_t *Buffer);
+
+uint8_t GET_CHIP_VERSION(void);
 #ifdef __cplusplus
 }
 #endif

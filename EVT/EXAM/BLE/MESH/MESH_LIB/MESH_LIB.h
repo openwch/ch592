@@ -120,7 +120,7 @@ typedef signed int ssize_t;
 #endif
 
 /******************************************************************************/
-#define  VER_MESH_FILE            "MESH_LIB_V1.7"
+#define  VER_MESH_FILE            "MESH_LIB_V1.8"
 extern const uint8_t VER_MESH_LIB[];
 
 // Global_Error_Code

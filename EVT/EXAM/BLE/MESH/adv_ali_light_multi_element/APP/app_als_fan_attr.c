@@ -142,6 +142,10 @@ void gen_fan_set(struct bt_mesh_model   *model,
         param.period = K_MSEC(100);
     }
 
+    if(buf->len < 4)
+    {
+        return;
+    }
     if((buf->data[1] | (buf->data[2] << 8)) == ALI_GEN_ATTR_TYPE_ANGLEAUTO_LR_ONOFF)
     {
         // 命令为设定值
@@ -150,9 +154,6 @@ void gen_fan_set(struct bt_mesh_model   *model,
         send_angle_auto_LR_indicate(&param);
 
         gen_angle_auto_LR_status(model, ctx);
-    }
-    else if((buf->data[1] | (buf->data[2] << 8)) == ALI_GEN_ATTR_TYPE_ANGLEAUTO_LR_ONOFF)
-    {
     }
 }
 
@@ -170,6 +171,10 @@ void gen_fan_set_unack(struct bt_mesh_model   *model,
 {
     APP_DBG(" ");
 
+    if(buf->len < 4)
+    {
+        return;
+    }
     if((buf->data[1] | (buf->data[2] << 8)) == ALI_GEN_ATTR_TYPE_ANGLEAUTO_LR_ONOFF)
     {
         // 命令为设定值

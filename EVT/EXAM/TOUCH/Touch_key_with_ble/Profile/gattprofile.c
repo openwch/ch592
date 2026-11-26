@@ -1,5 +1,5 @@
 /********************************** (C) COPYRIGHT *******************************
- * File Name          : gattprofile.C
+ * File Name          : gattprofile.c
  * Author             : WCH
  * Version            : V1.0
  * Date               : 2018/12/10
@@ -21,9 +21,6 @@
 /*********************************************************************
  * CONSTANTS
  */
-
-// Position of simpleProfilechar4 value in attribute array
-#define SIMPLEPROFILE_CHAR4_VALUE_POS 11
 
 #define SIMPLEPROFILE_CHAR2_VALUE_POS 5
 
@@ -358,7 +355,7 @@ bStatus_t SimpleProfile_RegisterAppCBs(simpleProfileCBs_t *appCallbacks)
  * @brief   Set a Simple Profile parameter.
  *
  * @param   param - Profile parameter ID
- * @param   len - length of data to right
+ * @param   len - length of data to write
  * @param   value - pointer to data to write.  This is dependent on
  *          the parameter ID and WILL be cast to the appropriate
  *          data type (example: data type of uint16_t will be cast to
@@ -549,7 +546,7 @@ static bStatus_t simpleProfile_ReadAttrCB(uint16_t connHandle, gattAttribute_t *
         // gattserverapp handles those reads
 
         // characteristics 1 and 2 have read permissions
-        // characteritisc 3 does not have read permissions; therefore it is not
+        // characteristic 3 does not have read permissions; therefore it is not
         //   included here
         // characteristic 4 does not have read permissions, but because it
         //   can be sent as a notification, it is included here
@@ -713,7 +710,7 @@ static bStatus_t simpleProfile_WriteAttrCB(uint16_t connHandle, gattAttribute_t 
         status = ATT_ERR_INVALID_HANDLE;
     }
 
-    // If a charactersitic value changed then callback function to notify application of change
+    // If a characteristic value changed then callback function to notify application of change
     if ((notifyApp != 0xFF) && simpleProfile_AppCBs && simpleProfile_AppCBs->pfnSimpleProfileChange)
     {
         simpleProfile_AppCBs->pfnSimpleProfileChange(notifyApp, pValue, len);

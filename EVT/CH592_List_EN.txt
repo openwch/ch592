@@ -1,5 +1,5 @@
 
-Nanjing Qinheng Microelectronics Co., Ltd. 2025.11
+Nanjing Qinheng Microelectronics Co., Ltd. 2026.10
 
 https://wch-ic.com
 
@@ -14,7 +14,15 @@ Directory
   |      |      |      |      |-- RVMSIS: kernal system header file
   |      |      |      |      |-- Startup: CH59x startup file
   |      |      |      |      |-- StdPeriphDriver: basic peripheral driver source file and header file
-  |      |      |      |-- ADC: ADC sampling routines, including temperature detection, single channel detection, differential channel detection, TouchKey detection and interrupt sampling
+  |      |      |      |-- ADC
+  |      |      |      |      |-- ADC_DMA: ADC DMA continuous sampling routine
+  |      |      |      |      |-- ADC_Differential: ADC differential channel sampling routine
+  |      |      |      |      |-- ADC_Interrupt: ADC interrupt sampling routine
+  |      |      |      |      |-- ADC_Scan: ADC multi-channel automatic scan sampling routine
+  |      |      |      |      |-- ADC_SingleChannel: ADC single channel sampling routine with rough calibration
+  |      |      |      |      |-- ADC_Temperature: ADC temperature detection routine
+  |      |      |      |      |-- ADC_TouchKey: ADC TouchKey detection routine
+  |      |      |      |-- CC: CrossConnect IoT platform introduction
   |      |      |      |-- FLASH: on-chip flash routines: erase/read/write Code area and DataFlash area
   |      |      |      |-- FreeRTOS: FreeRTOS porting routine
   |      |      |      |-- HarmonyOS: HarmonyOS porting routine
@@ -26,14 +34,24 @@ Directory
   |      |      |      |      |-- USB_IAP: Routine to update on-chip program via USB 
   |      |      |      |      |-- UART_IAP: Routines to update the on-chip program via UART 
   |      |      |      |      |-- WCHMcuIAP_WinAPP: IAP PC tools and source code
+  |      |      |      |-- IWDG: independent watchdog (IWDG) routine
   |      |      |      |-- PM: Syetem sleep mode and wake-up routine: GPIOA_5 as wake-up source, four power consumption levels
-  |      |      |      |-- PWMX: PWM4-11 output routine
-  |      |      |      |-- SPI0: SPI0 routine, master/slave mode, data transceiver
-  |      |      |      |-- TMR: Timer routine  
+  |      |      |      |-- PWMX
+  |      |      |      |      |-- PWMX_8Bit: 7-channel 8-bit PWM output routine (PWM4-10)
+  |      |      |      |      |-- PWMX_16Bit: 6-channel 16-bit PWM output routine (PWM4-9)
+  |      |      |      |-- SPI
+  |      |      |      |      |-- SPI0_8Bit: SPI0 standard 4-wire routine, master/slave mode, data transceiver
+  |      |      |      |      |-- SPI0_2Wire: SPI0 2-wire half-duplex routine, master/slave mode, data transceiver
+  |      |      |      |-- TMR
+  |      |      |      |      |-- TMR0_TimerInterrupt: TMR0 timer interrupt routine
+  |      |      |      |      |-- TMR1_Capture: TMR1 edge capture routine
+  |      |      |      |      |-- TMR2_DMAPWM: TMR2 DMA-driven PWM output routine
+  |      |      |      |      |-- TMR2_ExternalCount: TMR2 external pulse counting routine
+  |      |      |      |      |-- TMR3_PWM: TMR3 PWM output routine
   |      |      |      |-- TOUCH
   |      |      |      |      |-- TKYLIB£ºTouch library files and their header files
-  |      |      |      |      |-- Touch_Keys£ºTouch button routine, implementing 12 buttons
-  |      |      |      |      |-- Touch_Keys_with_ble£ºBluetooth touch button routine, combined with Bluetooth peripheral routine on the basis of touch button routine, realizes touch button key value reporting
+  |      |      |      |      |-- Touch_Key£ºTouch button routine, implementing 12 buttons
+  |      |      |      |      |-- Touch_key_with_ble£ºBluetooth touch button routine, combined with Bluetooth peripheral routine on the basis of touch button routine, realizes touch button key value reporting
   |      |      |      |      |-- Touch_Proximity£ºSpace separated touch routine, implemented using a touch channel
   |      |      |      |      |-- Touch_WheelSlider£ºTouch pulley routine, resolution of 360 points, implemented using 8 touch channels
   |      |      |      |      |-- WCH Touch Library User Manual.PDF
@@ -44,17 +62,17 @@ Directory
   |      |      |      |      |      |-- COM£ºUSB simulate CDC device routines
   |      |      |      |      |      |-- VendorDefinedDev: simulate custom USB devices (CH372 device) routine, provide eight non-zero channels (upload + download), implement that data is first downloaded, and then the data content is reversed and uploaded
   |      |      |      |      |      |-- CompoundDev: simulate keyboard/mouse routine, support HID class commands 
-  |      |      |      |      |      |-- CompoundU2Dev: USB2 simulate keyboard/mouse routine, support HID class commands 
   |      |      |      |      |      |-- HID_CompliantDev£ºUSB simulate HID compliant device routines
   |      |      |      |      |-- Host
   |      |      |      |      |      |-- HostEnum:  simple enumeration procedure routine for USB devices
   |      |      |      |      |      |-- HostAOA: USB host application routine, support connect to Android devices and communicate with APP
   |      |      |      |      |      |-- U_DISK: U disk file system routine
-  |      |      |      |      |      |      |-- EXAM1.C: C Programming Language exam, read/write file in bytes, including creating files, deleting files, modifying file attribute, and modifying file name  
-  |      |      |      |      |      |      |-- EXAM10.C: C Programming Language exam, including creating files, deleting files, modifying file attribute, and modifying file name  
-  |      |      |      |      |      |      |-- EXAM11.C: C Programming Language exam, enumerate files in the root directory or specified directory  
-  |      |      |      |      |      |      |-- EXAM13.C: C Programming Language exam, create files with long file name  
+  |      |      |      |      |      |      |-- U_DISK_EXAM1: read/write file in bytes, including creating files, deleting files, modifying file attribute, and modifying file name
+  |      |      |      |      |      |      |-- U_DISK_EXAM10: creating files, deleting files, modifying file attribute, and modifying file name
+  |      |      |      |      |      |      |-- U_DISK_EXAM11: enumerate files in the root directory or specified directory
+  |      |      |      |      |      |      |-- U_DISK_EXAM13: create files with long file name
   |      |      |      |      |      |-- USB_LIB: U disk file system library file
+  |      |      |      |-- WWDG: window watchdog (WWDG) routine
   |      |      |      |-- BLE
   |      |      |      |      |-- Broadcaster: broadcaster routine, always broadcast when in broadcast status
   |      |      |      |      |-- CyclingSensor: cycling sensor routine, upload speed and cadence regularly after connected to the host
@@ -74,9 +92,11 @@ Directory
   |      |      |      |      |-- MultiCentral: multicentral routine, actively scan surrounding devices, conect to the specified three peripheral addresses, search custom services and characteristics, execute read/write commands, peripheral routine is needed, and modify the peripheral address to this routine target address, the addresses of these peripherals are (84:C2:E4:03:02:02), (84:C2:E4:03:02:03) and (84:C2:E4:03:02:04) by default
   |      |      |      |      |-- Observer: observer routine, scan regularly, print the scanned broadcast address if the scanning result is not empty
   |      |      |      |      |-- Direct_Test_Mode£ºDTM test routine, combined with RF test tools
-  |      |      |      |      |-- RF_PHY: non-standard wireless transceiver routines
+  |      |      |      |      |-- RF_PHY_Rx: non-standard wireless receiver routine, enters receive state and auto-acknowledges after power-on
+  |      |      |      |      |-- RF_PHY_Tx: non-standard wireless transmitter routine, transmits periodically and waits for acknowledgment
   |      |      |      |      |-- RF_PHY_Hop: non-standard wireless frequency hopping transceiver routine
-  |      |      |      |      |-- IoCHub-Net: BLE+IoChub Simple Light Control Switch Routine
+  |      |      |      |      |-- IoCHub_NET: BLE+IoChub Simple Light Control Switch Routine
+  |      |      |      |      |-- LWNS: lightweight wireless network stack routine, including mesh networking and reliable unicast examples
   |      |      |      |      |-- MESH
   |      |      |      |      |      |-- adv_ali_light: Tmall Genie light routine, devices can be found and provisioned network via Tmall Genie, to control the switch state. By default, only switch attribute can be controlled. If other attributes (brightness, power, temperature, etc.) are needed, add the corresponding processing function and status report function according to the attribute description of the Alibaba Cloud product configuration.
   |      |      |      |      |      |-- adv_ali_light_add_lightness: MESH general attribute adding routine. On the basis of the Tmall Genie light routine, the brightness attribute is added, which is used to compare the original Tmall Genie light routine to quickly become familiar with the method of adding other MESH general attributes.
@@ -104,12 +124,13 @@ Directory
   |      |      |      |      |-- OnlyUpdateApp_Peripheral: the only library wireless upgrade user routine, on the basis of peripheral routine, the jumping to IAP program is added for subsequent upgrades
   |      |      |      |      |-- BLE_UART: BLE and UART transparent transmission routine, for detailed instructions, please refer to the <description.txt> document in the root directory
   |      |      |      |      |-- BLE_USB: Bluetooth with USB routine, USB emulation 340 device forwards bluetooth data 
+  |      |      |      |      |-- SpeedTest_Central: BLE speed test central routine, measures bidirectional throughput
+  |      |      |      |      |-- SpeedTest_Peripheral: BLE speed test peripheral routine, measures bidirectional throughput
   |      |      |      |      |-- SYNC_ADV: cycle synchronization advertising routine
   |      |      |      |      |-- SYNC_SCAN: cycle synchronization scanning routine
   |      |      |      |      |-- HAL: Hardware-related files shared by routines
   |      |      |      |      |-- LIB: BLE protocol stack library file and header file
   |      |      |      |      |-- Qinheng Low Energy Bluetooth Software Development Reference Manual.pdf
   |      |      |      |      |-- WCH Bluetooth Over-the-Air Upgrade (BLE OTA).PDF
-  |      |      |      |      |-- BLE Certification: Product: WCH CH59x QDID: 179771
-  |      |      |-- PUB: CH592EVT evaluation board schematic and manual
+  |      |      |-- PUB: CH592EVT evaluation board schematic, manual and PCB design notes
   |

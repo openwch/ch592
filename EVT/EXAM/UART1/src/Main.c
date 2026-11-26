@@ -23,7 +23,7 @@ uint8_t trigB;
  *
  * @return  none
  */
-int main()
+int main(void)
 {
     uint8_t len;
 

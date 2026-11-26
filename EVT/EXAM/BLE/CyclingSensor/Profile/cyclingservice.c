@@ -340,7 +340,7 @@ void cycling_ProcessGATTMsg(gattMsgEvent_t *pMsg)
 static BOOL cycling_SensorLocSupported(uint8_t sensorLoc)
 {
     uint8_t i;
-    for(i = 0; i <= supportedSensors; i++)
+    for(i = 0; i < supportedSensors; i++)
     {
         if(supportedSensorLocations[i] == sensorLoc)
         {

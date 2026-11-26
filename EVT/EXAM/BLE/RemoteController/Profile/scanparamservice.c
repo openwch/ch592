@@ -347,7 +347,7 @@ static bStatus_t scanParamWriteAttrCB(uint16_t connHandle, gattAttribute_t *pAtt
         if(len == SCAN_INTERVAL_WINDOW_CHAR_LEN)
         {
             uint16_t interval = BUILD_UINT16(pValue[0], pValue[1]);
-            uint16_t window = BUILD_UINT16(pValue[0], pValue[1]);
+            uint16_t window = BUILD_UINT16(pValue[2], pValue[3]);
 
             // Validate values
             if(window <= interval)

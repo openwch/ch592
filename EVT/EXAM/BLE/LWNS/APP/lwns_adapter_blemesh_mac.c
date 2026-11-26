@@ -12,8 +12,10 @@
 #include "lwns_adapter_blemesh_mac.h"
 #include "lwns_sec.h"
 
-/* 每个文件单独debug打印的开关，置0可以禁止本文件内部打印 */
-#define DEBUG_PRINT_IN_THIS_FILE    1
+/* 每个文件单独debug打印的开关，置0可以禁止本文件内部打印。
+ * RF_2G4StatusCallBack runs in ISR context, where the blocking PRINTF is
+ * unsafe, so the in-file debug prints are disabled. */
+#define DEBUG_PRINT_IN_THIS_FILE    0
 #if DEBUG_PRINT_IN_THIS_FILE
 #define PRINTF(...)       PRINT(__VA_ARGS__)
 #else
@@ -292,7 +294,7 @@ static void ble_new_neighbor_callback(lwns_addr_t *n)
  * @param   dataptr     - 待发送的数据缓冲头指针.
  * @param   len         - 待发送的数据缓冲长度.
  *
- * @return  TRUE if success, FLASE is failed.
+ * @return  TRUE if success, FALSE is failed.
  */
 static BOOL ble_phy_output(uint8_t *dataptr, uint8_t len)
 {
@@ -435,6 +437,8 @@ static uint16_t lwns_phyoutput_ProcessEvent(uint8_t task_id, uint16_t events)
     }
     if (events & LWNS_PHY_OUTPUT_FINISH_EVT)    /* 发送完成任务 */
     {
+        if(blemesh_phy_manage_list_head != NULL)
+        {
         if (ble_phy_channelmap_send_seq < sizeof(ble_phy_channelmap))
         {
             if (ble_phy_channelmap_send_seq == 0)
@@ -444,10 +448,10 @@ static uint16_t lwns_phyoutput_ProcessEvent(uint8_t task_id, uint16_t events)
                 tmos_clear_event(lwns_adapter_taskid, LWNS_PHY_RX_CHANGE_CHANNEL_EVT); /* 停止可能已经置位的、可能会打开接收的任务 */
                 tmos_clear_event(lwns_adapter_taskid, LWNS_PHY_RX_OPEN_EVT);           /* 停止可能已经置位的、可能会打开接收的任务 */
             }
-            ble_phy_channelmap_send_seq++;
             tmos_start_reload_task(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_FINISH_EVT, MS1_TO_SYSTEM_TIME(LWNS_PHY_OUTPUT_TIMEOUT_MS)); /* 开始发送超时计数，防止有意外打断发送，导致无法继续发送 */
             RF_Shut();
             RF_SetChannel(ble_phy_channelmap[ble_phy_channelmap_send_seq]); /* 周期性更改发送通道 */
+            ble_phy_channelmap_send_seq++;
             tx_end_flag = 0;
             if (!RF_Tx((uint8_t *)(blemesh_phy_manage_list_head->data + 1),
                        blemesh_phy_manage_list_head->data[0], USER_RF_RX_TX_TYPE,
@@ -480,6 +484,7 @@ static uint16_t lwns_phyoutput_ProcessEvent(uint8_t task_id, uint16_t events)
                 }
             }
             tmos_start_reload_task(lwns_phyoutput_taskid, LWNS_PHY_OUTPUT_FINISH_EVT, TMOS_TASK_STOP_RELOAD_TIME);      /* 变相停止任务，占用内存不释放 */
+        }
         }
         return (events ^ LWNS_PHY_OUTPUT_FINISH_EVT);
     }

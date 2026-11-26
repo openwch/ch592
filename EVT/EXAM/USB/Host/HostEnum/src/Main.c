@@ -22,7 +22,7 @@ __attribute__((aligned(4))) uint8_t TxBuffer[MAX_PACKET_SIZE]; // OUT, must even
  *
  * @return  none
  */
-int main()
+int main(void)
 {
     uint8_t i, s, k, len, endp;
     uint16_t  loc;
@@ -90,6 +90,7 @@ int main()
                     else
                         ThisUsbDev.GpVar[0] = endp;
                     len = R8_USB_RX_LEN; // 接收到的数据长度
+                    if(len > MAX_PACKET_SIZE) len = MAX_PACKET_SIZE; /* clamp to RxBuffer size */
                     if(len)
                     {
                         PRINT("Mouse data: ");
@@ -131,6 +132,7 @@ int main()
                     else
                         ThisUsbDev.GpVar[0] = endp;
                     len = R8_USB_RX_LEN; // 接收到的数据长度
+                    if(len > MAX_PACKET_SIZE) len = MAX_PACKET_SIZE; /* clamp to RxBuffer size */
                     if(len)
                     {
                         SETorOFFNumLock(RxBuffer);

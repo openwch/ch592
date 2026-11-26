@@ -166,7 +166,6 @@ static struct rt_thread* _scheduler_get_highest_priority_thread(rt_ubase_t *high
     return highest_priority_thread;
 }
 #else
-__attribute__((section(".highcode")))
 static struct rt_thread* _scheduler_get_highest_priority_thread(rt_ubase_t *highest_prio)
 {
     struct rt_thread *highest_priority_thread;
@@ -421,7 +420,6 @@ __exit:
  * @brief This function will perform scheduling once. It will select one thread
  *        with the highest priority, and switch to it immediately.
  */
-__attribute__((section(".highcode")))
 void rt_schedule(void)
 {
     rt_base_t level;
@@ -738,7 +736,6 @@ __exit:
     rt_hw_interrupt_enable(level);
 }
 #else
-__attribute__((section(".highcode")))
 void rt_schedule_insert_thread(struct rt_thread *thread)
 {
     rt_base_t level;
@@ -845,7 +842,6 @@ void rt_schedule_remove_thread(struct rt_thread *thread)
     rt_hw_interrupt_enable(level);
 }
 #else
-__attribute__((section(".highcode")))
 void rt_schedule_remove_thread(struct rt_thread *thread)
 {
     rt_base_t level;
@@ -922,7 +918,6 @@ void rt_enter_critical(void)
     rt_hw_local_irq_enable(level);
 }
 #else
-__attribute__((section(".highcode")))
 void rt_enter_critical(void)
 {
     rt_base_t level;
@@ -987,7 +982,6 @@ void rt_exit_critical(void)
     }
 }
 #else
-__attribute__((section(".highcode")))
 void rt_exit_critical(void)
 {
     rt_base_t level;
@@ -1022,7 +1016,6 @@ RTM_EXPORT(rt_exit_critical);
  *
  * @return the level of the scheduler lock. 0 means unlocked.
  */
-__attribute__((section(".highcode")))
 rt_uint16_t rt_critical_level(void)
 {
 #ifdef RT_USING_SMP

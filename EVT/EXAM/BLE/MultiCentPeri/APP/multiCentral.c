@@ -151,9 +151,9 @@ static gapDevRec_t centralDevList[DEFAULT_MAX_SCAN_RES];
 // Peer device address
 static peerAddrDefItem_t PeerAddrDef[CENTRAL_MAX_CONNECTION] = {
 
-    {0x02, 0x02, 0x03, 0xE4, 0xC2, 0x84},
-    {0x03, 0x02, 0x03, 0xE4, 0xC2, 0x84},
-    {0x04, 0x02, 0x03, 0xE4, 0xC2, 0x84}
+    {0x02, 0x02, 0x03, 0xE4, 0xC2, 0x84|0xC0},
+    {0x03, 0x02, 0x03, 0xE4, 0xC2, 0x84|0xC0},
+    {0x04, 0x02, 0x03, 0xE4, 0xC2, 0x84|0xC0}
 };
 
 // Connection item list
@@ -340,10 +340,6 @@ uint16_t Central_ProcessEvent(uint8_t task_id, uint16_t events)
     {
         return connect_ProcessEvent(task_id, events);
     }
-    else if(task_id == centralConnList[CONNECT3_ITEM].taskID)
-    {
-        return connect_ProcessEvent(task_id, events);
-    }
     // Discard unknown events
     return 0;
 }
@@ -506,6 +502,7 @@ static void centralProcessGATTMsg(gattMsgEvent_t *pMsg)
     }
     if(connItem == CENTRAL_MAX_CONNECTION)
     {
+        GATT_bm_free(&pMsg->msg, pMsg->method);
         return;
         // Should not go there
     }
@@ -626,7 +623,10 @@ static void centralEventCB(gapRoleEvent_t *pEvent)
     {
         case GAP_DEVICE_INIT_DONE_EVENT:
         {
+            uint8_t ownAddr[6];
             PRINT("Discovering...\n");
+            GAPRole_GetParameter(GAPROLE_BD_ADDR, ownAddr);
+            GAP_ConfigDeviceAddr(ADDRTYPE_STATIC, ownAddr);
             GAPRole_CentralStartDiscovery(DEFAULT_DISCOVERY_MODE,
                                           DEFAULT_DISCOVERY_ACTIVE_SCAN,
                                           DEFAULT_DISCOVERY_WHITE_LIST);
@@ -768,6 +768,7 @@ static void centralEventCB(gapRoleEvent_t *pEvent)
             if(connItem == CENTRAL_MAX_CONNECTION)
             {
                 // Should not go there
+                return;
             }
             PRINT("  %x  Disconnected...Reason:%x\n", centralConnList[connItem].connHandle, pEvent->linkTerminate.reason);
             centralConnList[connItem].state = BLE_STATE_IDLE;
